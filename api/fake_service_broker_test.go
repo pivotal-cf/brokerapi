@@ -1,7 +1,7 @@
 package api_test
 
 import (
-	"github.com/pivotal-cf-experimental/go-service-broker/api"
+	"github.com/pivotal-cf/go-service-broker/api"
 )
 
 type FakeServiceBroker struct {

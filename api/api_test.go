@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/go-service-broker/api"
+	"github.com/pivotal-cf/go-service-broker/api"
 )
 
 func configureBrokerTestSinkLogger(sink *gosteno.TestingSink) *gosteno.Logger {
