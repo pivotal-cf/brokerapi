@@ -29,6 +29,10 @@ func (fakeBroker FakeServiceBroker) Services() []api.Service {
 					ID:          "ABE176EE-F69F-4A96-80CE-142595CC24E3",
 					Name:        "default",
 					Description: "The default Cassandra plan",
+					Metadata: api.ServicePlanMetadata{
+						Bullets:     []string{},
+						DisplayName: "Cassandra",
+					},
 				},
 			},
 			Metadata: api.ServiceMetadata{

@@ -9,7 +9,11 @@
                 {
                     "description": "The default Cassandra plan",
                     "id": "ABE176EE-F69F-4A96-80CE-142595CC24E3",
-                    "name": "default"
+                    "name": "default",
+                    "metadata": {
+                        "bullets": [],
+                        "displayName": "Cassandra"
+                    }
                 }
             ],
             "metadata": {

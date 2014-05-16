@@ -11,9 +11,15 @@ type Service struct {
 }
 
 type ServicePlan struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          string              `json:"id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Metadata    ServicePlanMetadata `json:"metadata"`
+}
+
+type ServicePlanMetadata struct {
+	Bullets     []string `json:"bullets"`
+	DisplayName string   `json:"displayName"`
 }
 
 type ServiceMetadata struct {
