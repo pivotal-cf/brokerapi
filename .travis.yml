@@ -8,5 +8,8 @@ go:
 before_install:
 - export GOPATH=$PWD/Godeps/_workspace:$GOPATH
 
+install:
+- go install github.com/onsi/ginkgo/ginkgo
+
 script:
 - ginkgo -r
