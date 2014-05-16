@@ -6,6 +6,7 @@ go:
 - tip
 
 before_install:
+- export PATH=$HOME/gopath/bin:$PWD/Godeps/_workspace/bin:$PATH
 - export GOPATH=$PWD/Godeps/_workspace:$GOPATH
 
 install:
