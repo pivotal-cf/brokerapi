@@ -1,0 +1,34 @@
+{
+    "services": [
+        {
+            "bindable": true,
+            "description": "Cassandra service for application development and testing",
+            "id": "0A789746-596F-4CEA-BFAC-A0795DA056E3",
+            "name": "p-cassandra",
+            "plans": [
+                {
+                    "description": "The default Cassandra plan",
+                    "id": "ABE176EE-F69F-4A96-80CE-142595CC24E3",
+                    "name": "default"
+                }
+            ],
+            "metadata": {
+                "displayName": "Cassandra",
+                "longDescription": "Long description",
+                "documentationUrl": "http://thedocs.com",
+                "supportUrl": "http://helpme.no",
+                "listing": {
+                    "blurb": "blah blah",
+                    "imageUrl": "http://foo.com/thing.png"
+                },
+                "provider": {
+                    "name": "Pivotal"
+                }
+            },
+            "tags": [
+                "pivotal",
+                "cassandra"
+            ]
+        }
+    ]
+}
