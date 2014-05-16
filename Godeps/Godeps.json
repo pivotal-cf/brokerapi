@@ -1,0 +1,44 @@
+{
+	"ImportPath": "github.com/pivotal-cf-experimental/go-service-broker",
+	"GoVersion": "go1.2.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go-uuid/uuid",
+			"Comment": "null-10",
+			"Rev": "5fac954758f5aa282478dc07fbb8709fe9575184"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/gosteno",
+			"Comment": "scotty_09012012-38-g969c2c5",
+			"Rev": "969c2c565f5f1638b45702f3a07f6c39013bf375"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/inject",
+			"Rev": "9aea7a2fa5b79ef7fc00f63a575e72df33b4e886"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/martini",
+			"Comment": "v0.1-105-gcab2ee6",
+			"Rev": "cab2ee60a6dfb2ab2cd742fbc0ba35b135b1205d"
+		},
+		{
+			"ImportPath": "github.com/drewolson/testflight",
+			"Rev": "1316579552caed520619a39e11456c4dff3b1d75"
+		},
+		{
+			"ImportPath": "github.com/martini-contrib/render",
+			"Rev": "68eb61a5313c3eff5625a16f6eee8f29b4835ff7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo",
+			"Rev": "d941db095ac86d29f8304472895d2fd512bf8f57"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega",
+			"Rev": "3da99a5a1412b006dac6662a2244f3da7ee3155b"
+		}
+	]
+}
