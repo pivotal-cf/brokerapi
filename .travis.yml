@@ -1,0 +1,12 @@
+language: go
+
+go:
+- 1.2
+- 1.2.1
+- tip
+
+before_install:
+- export GOPATH=$PWD/Godeps/_workspace:$GOPATH
+
+script:
+- ginkgo -r
