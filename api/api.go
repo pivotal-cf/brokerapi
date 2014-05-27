@@ -84,8 +84,11 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger *gost
 					Description: err.Error(),
 				})
 			default:
+				errorLog := fmt.Sprintf(err.Error())
+				brokerLogger.Error(errorLog)
+
 				r.JSON(500, ErrorResponse{
-					Description: err.Error(),
+					Description: ErrOtherInternal.Error(),
 				})
 			}
 			return

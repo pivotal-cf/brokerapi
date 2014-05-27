@@ -325,13 +325,18 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the binding returns an error", func() {
 				BeforeEach(func() {
-					fakeServiceBroker.BindError = errors.New("everything is kind of wrong")
+					fakeServiceBroker.BindError = errors.New("random error")
 				})
 
-				It("returns a 500 error response", func() {
+				It("returns a generic 500 error response", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
 					Expect(response.StatusCode).To(Equal(500))
-					Expect(response.Body).To(MatchJSON(`{"description":"everything is kind of wrong"}`))
+					Expect(response.Body).To(MatchJSON(`{"description":"Internal service error: please contact support"}`))
+				})
+
+				It("logs a detailed error message", func() {
+					makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					Expect(sinkContains(sink, "random error")).To(BeTrue())
 				})
 			})
 		})
