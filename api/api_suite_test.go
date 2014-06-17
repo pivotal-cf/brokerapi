@@ -48,12 +48,3 @@ func uniqueInstanceID() string {
 func uniqueBindingID() string {
 	return uniqueID()
 }
-
-func sliceContains(needle string, haystack []string) bool {
-	for _, element := range haystack {
-		if element == needle {
-			return true
-		}
-	}
-	return false
-}

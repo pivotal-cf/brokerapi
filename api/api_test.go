@@ -47,7 +47,7 @@ func sinkContains(sink *gosteno.TestingSink, loggingMessage string) bool {
 }
 
 var _ = Describe("Service Broker API", func() {
-	var fakeServiceBroker *FakeServiceBroker
+	var fakeServiceBroker *api.FakeServiceBroker
 	var brokerAPI *martini.ClassicMartini
 	var sink *gosteno.TestingSink
 
@@ -61,7 +61,7 @@ var _ = Describe("Service Broker API", func() {
 	}
 
 	BeforeEach(func() {
-		fakeServiceBroker = &FakeServiceBroker{
+		fakeServiceBroker = &api.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
 		sink = gosteno.NewTestingSink()
