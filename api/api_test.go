@@ -49,7 +49,7 @@ func sinkContains(sink *gosteno.TestingSink, loggingMessage string) bool {
 var _ = Describe("Service Broker API", func() {
 	var fakeServiceBroker *api.FakeServiceBroker
 	var brokerAPI *martini.ClassicMartini
-	var sink *gosteno.TestingSink
+	var logSink *gosteno.TestingSink
 
 	makeInstanceProvisioningRequest := func(instanceID string) *testflight.Response {
 		response := &testflight.Response{}
@@ -64,8 +64,8 @@ var _ = Describe("Service Broker API", func() {
 		fakeServiceBroker = &api.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
-		sink = gosteno.NewTestingSink()
-		brokerLogger := configureBrokerTestSinkLogger(sink)
+		logSink = gosteno.NewTestingSink()
+		brokerLogger := configureBrokerTestSinkLogger(logSink)
 
 		brokerAPI = api.New(fakeServiceBroker, nullLogger(), brokerLogger)
 	})
@@ -137,7 +137,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(uniqueInstanceID())
-						Expect(sinkContains(sink, "Provisioning error: instance limit for this service has been reached")).To(BeTrue())
+						Expect(sinkContains(logSink, "Provisioning error: instance limit for this service has been reached")).To(BeTrue())
 					})
 				})
 
@@ -158,7 +158,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(uniqueInstanceID())
-						Expect(sinkContains(sink, "Provisioning error: broker failed")).To(BeTrue())
+						Expect(sinkContains(logSink, "Provisioning error: broker failed")).To(BeTrue())
 					})
 				})
 
@@ -185,7 +185,7 @@ var _ = Describe("Service Broker API", func() {
 				It("logs an appropriate error", func() {
 					makeInstanceProvisioningRequest(instanceID)
 					errorLog := fmt.Sprintf("Provisioning error: instance %s already exists", instanceID)
-					Expect(sinkContains(sink, errorLog)).To(BeTrue())
+					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
 				})
 			})
 		})
@@ -233,7 +233,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeInstanceDeprovisioningRequest(instanceID)
 					errorLog := fmt.Sprintf("Deprovisioning error: instance %s does not exist", instanceID)
-					Expect(sinkContains(sink, errorLog)).To(BeTrue())
+					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
 				})
 			})
 		})
@@ -293,7 +293,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeBindingRequest(instanceID, uniqueBindingID())
 					errorLog := fmt.Sprintf("Binding error: instance %s does not exist", instanceID)
-					Expect(sinkContains(sink, errorLog)).To(BeTrue())
+					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
 				})
 			})
 
@@ -318,8 +318,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeBindingRequest(instanceID, uniqueBindingID())
 					makeBindingRequest(instanceID, uniqueBindingID())
-					errorLog := fmt.Sprintf("Binding error: binding already exists")
-					Expect(sinkContains(sink, errorLog)).To(BeTrue())
+					Expect(sinkContains(logSink, "Binding error: binding already exists")).To(BeTrue())
 				})
 			})
 
@@ -336,7 +335,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("logs a detailed error message", func() {
 					makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(sinkContains(sink, "random error")).To(BeTrue())
+					Expect(sinkContains(logSink, "random error")).To(BeTrue())
 				})
 			})
 		})
@@ -388,7 +387,7 @@ var _ = Describe("Service Broker API", func() {
 					It("logs an appropriate error message", func() {
 						makeUnbindingRequest(instanceID, "does-not-exist")
 						errorLog := fmt.Sprintf("Unbinding error: binding %s does not exist", "does-not-exist")
-						Expect(sinkContains(sink, errorLog)).To(BeTrue())
+						Expect(sinkContains(logSink, errorLog)).To(BeTrue())
 					})
 				})
 			})
@@ -410,7 +409,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeUnbindingRequest(instanceID, uniqueBindingID())
 					errorLog := fmt.Sprintf("Unbinding error: instance %s does not exist", instanceID)
-					Expect(sinkContains(sink, errorLog)).To(BeTrue())
+					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
 				})
 			})
 		})
