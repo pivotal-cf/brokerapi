@@ -24,7 +24,6 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger *gost
 
 	// Provision
 	m.Put("/v2/service_instances/:instance_id", func(params martini.Params, r render.Render) {
-		brokerLogger.Warn(params["instance_id"])
 		err := serviceBroker.Provision(params["instance_id"])
 
 		if err != nil {
