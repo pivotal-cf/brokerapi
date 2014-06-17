@@ -330,7 +330,7 @@ var _ = Describe("Service Broker API", func() {
 				It("returns a generic 500 error response", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
 					Expect(response.StatusCode).To(Equal(500))
-					Expect(response.Body).To(MatchJSON(`{"description":"Internal service error: please contact support"}`))
+					Expect(response.Body).To(MatchJSON(`{"description":"random error"}`))
 				})
 
 				It("logs a detailed error message", func() {

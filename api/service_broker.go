@@ -20,5 +20,4 @@ var (
 	ErrInstanceLimitMet      = errors.New("instance limit for this service has been reached")
 	ErrBindingAlreadyExists  = errors.New("binding already exists")
 	ErrBindingDoesNotExist   = errors.New("binding does not exist")
-	ErrOtherInternal         = errors.New("Internal service error: please contact support")
 )
