@@ -1,13 +1,11 @@
 package api
 
-import (
-	"errors"
-)
+import "errors"
 
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string) error
+	Provision(instanceID string, params map[string]string) error
 	Deprovision(instanceID string) error
 
 	Bind(instanceID, bindingID string) (interface{}, error)
