@@ -1,7 +1,6 @@
 package api_test
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,8 +16,6 @@ import (
 
 	"github.com/pivotal-cf/go-service-broker/api"
 )
-
-var authString string
 
 func configureBrokerTestSinkLogger(sink *gosteno.TestingSink) *gosteno.Logger {
 	logFlags := gosteno.EXCLUDE_DATA | gosteno.EXCLUDE_FILE | gosteno.EXCLUDE_LINE | gosteno.EXCLUDE_METHOD
@@ -52,12 +49,6 @@ func sinkContains(sink *gosteno.TestingSink, loggingMessage string) bool {
 	return foundMessage
 }
 
-var _ = BeforeSuite(func() {
-	data := []byte("username:password")
-	encoded := base64.StdEncoding.EncodeToString(data)
-	authString = "Basic " + encoded
-})
-
 var _ = Describe("Service Broker API", func() {
 	var fakeServiceBroker *api.FakeServiceBroker
 	var brokerAPI *martini.ClassicMartini
@@ -69,7 +60,7 @@ var _ = Describe("Service Broker API", func() {
 			path := "/v2/service_instances/" + instanceID
 			request, _ := http.NewRequest("PUT", path, strings.NewReader(""))
 			request.Header.Add("Content-Type", "application/json")
-			request.Header.Add("Authorization", authString)
+			request.SetBasicAuth("username", "password")
 
 			response = r.Do(request)
 		})
@@ -96,7 +87,7 @@ var _ = Describe("Service Broker API", func() {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
-				request.Header.Add("Authorization", authString)
+				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
 			})
@@ -114,7 +105,7 @@ var _ = Describe("Service Broker API", func() {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
-				request.Header.Add("Authorization", authString)
+				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
 			})
@@ -139,7 +130,7 @@ var _ = Describe("Service Broker API", func() {
 				path := "/v2/service_instances/" + instanceID
 				request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
 				request.Header.Add("Content-Type", "application/json")
-				request.Header.Add("Authorization", authString)
+				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
 
@@ -294,7 +285,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID, bindingID)
 				request, _ := http.NewRequest("PUT", path, strings.NewReader(""))
 				request.Header.Add("Content-Type", "application/json")
-				request.Header.Add("Authorization", authString)
+				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
 			})
@@ -399,7 +390,7 @@ var _ = Describe("Service Broker API", func() {
 						instanceID, bindingID)
 					request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
 					request.Header.Add("Content-Type", "application/json")
-					request.Header.Add("Authorization", authString)
+					request.SetBasicAuth("username", "password")
 
 					response = r.Do(request)
 				})
