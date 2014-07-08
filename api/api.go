@@ -1,8 +1,11 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 
 	"github.com/cloudfoundry/gosteno"
 	"github.com/codegangsta/martini"
@@ -27,8 +30,15 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger *gost
 	})
 
 	// Provision
-	m.Put("/v2/service_instances/:instance_id", func(params martini.Params, r render.Render) {
-		err := serviceBroker.Provision(params["instance_id"])
+	m.Put("/v2/service_instances/:instance_id", func(params martini.Params, r render.Render, req *http.Request) {
+		instanceID := params["instance_id"]
+		brokerLogger.Warn(instanceID)
+
+		serviceDetails := make(map[string]string)
+		body, _ := ioutil.ReadAll(req.Body)
+		json.Unmarshal(body, &serviceDetails)
+
+		err := serviceBroker.Provision(instanceID, serviceDetails)
 
 		if err != nil {
 			switch err {
