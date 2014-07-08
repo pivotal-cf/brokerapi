@@ -3,6 +3,9 @@ package api_test
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
 
 	"github.com/cloudfoundry/gosteno"
 	"github.com/codegangsta/martini"
@@ -54,17 +57,25 @@ var _ = Describe("Service Broker API", func() {
 	makeInstanceProvisioningRequest := func(instanceID string, params map[string]string) *testflight.Response {
 		response := &testflight.Response{}
 		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-			path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
-			response = r.Put(path, "application/json", `{
+			path := "/v2/service_instances/" + instanceID
+
+			request, _ := http.NewRequest("PUT", path, strings.NewReader(`{
           "planID":           "`+params["planID"]+`",
           "organizationGUID": "`+params["organizationGUID"]+`",
           "spaceGUID":        "`+params["spaceGUID"]+`"
-      }`)
+      }`))
+			request.Header.Add("Content-Type", "application/json")
+			request.SetBasicAuth("username", "password")
+
+			response = r.Do(request)
 		})
 		return response
 	}
 
 	BeforeEach(func() {
+		os.Setenv("BROKER_USER", "username")
+		os.Setenv("BROKER_PASSWORD", "password")
+
 		fakeServiceBroker = &api.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
@@ -74,11 +85,34 @@ var _ = Describe("Service Broker API", func() {
 		brokerAPI = api.New(fakeServiceBroker, nullLogger(), brokerLogger)
 	})
 
+	Describe("authentication", func() {
+		makeRequestWithoutAuth := func() *testflight.Response {
+			os.Setenv("BROKER_USER", "fake_username")
+			os.Setenv("BROKER_PASSWORD", "fake_password")
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		It("fails when the authorization header doesn't match what is in the environment", func() {
+			response := makeRequestWithoutAuth()
+			Expect(response.StatusCode).To(Equal(401))
+		})
+	})
+
 	Describe("catalog endpoint", func() {
 		makeCatalogRequest := func() *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				response = r.Get("/v2/catalog")
+				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
 			})
 			return response
 		}
@@ -98,8 +132,13 @@ var _ = Describe("Service Broker API", func() {
 		makeInstanceDeprovisioningRequest := func(instanceID string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
-				response = r.Delete(path, "application/json", "")
+				path := "/v2/service_instances/" + instanceID
+				request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
+
 			})
 			return response
 		}
@@ -268,7 +307,11 @@ var _ = Describe("Service Broker API", func() {
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
 					instanceID, bindingID)
-				response = r.Put(path, "application/json", "")
+				request, _ := http.NewRequest("PUT", path, strings.NewReader(""))
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
 			})
 			return response
 		}
@@ -369,7 +412,11 @@ var _ = Describe("Service Broker API", func() {
 				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 					path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
 						instanceID, bindingID)
-					response = r.Delete(path, "application/json", "")
+					request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
+					request.Header.Add("Content-Type", "application/json")
+					request.SetBasicAuth("username", "password")
+
+					response = r.Do(request)
 				})
 				return response
 			}

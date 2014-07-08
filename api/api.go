@@ -10,12 +10,16 @@ import (
 	"github.com/cloudfoundry/gosteno"
 	"github.com/codegangsta/martini"
 	"github.com/martini-contrib/render"
+	"github.com/pivotal-cf/go-service-broker/api/handlers"
 )
 
 func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger *gosteno.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Map(httpLogger)
-	m.Use(render.Renderer())
+	m.Handlers(
+		handlers.CheckAuth(),
+		render.Renderer(),
+	)
 
 	// Catalog
 	m.Get("/v2/catalog", func(r render.Render) {
