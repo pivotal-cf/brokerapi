@@ -12,7 +12,8 @@
                     "name": "default",
                     "metadata": {
                         "bullets": [],
-                        "displayName": "Cassandra"
+                        "displayName": "Cassandra",
+                        "costs": []
                     }
                 }
             ],

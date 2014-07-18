@@ -30,6 +30,7 @@ func (fakeBroker FakeServiceBroker) Services() []Service {
 					Metadata: ServicePlanMetadata{
 						Bullets:     []string{},
 						DisplayName: "Cassandra",
+						Costs:       []ServicePlanMetadataCost{},
 					},
 				},
 			},

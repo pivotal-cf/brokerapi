@@ -37,9 +37,10 @@ var _ = Describe("Catalog", func() {
 					Description: "A Cassandra Plan",
 					Metadata: api.ServicePlanMetadata{
 						Bullets: []string{},
+						Costs:   []api.ServicePlanMetadataCost{},
 					},
 				}
-				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","metadata":{"bullets":[],"displayName":""}}`
+				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","metadata":{"bullets":[],"displayName":"","costs":[]}}`
 
 				Expect(plan).To(MarshalToJSON(json))
 			})
@@ -52,10 +53,24 @@ var _ = Describe("Catalog", func() {
 				metadata := api.ServicePlanMetadata{
 					Bullets:     []string{},
 					DisplayName: "Some display name",
+					Costs:       []api.ServicePlanMetadataCost{},
 				}
-				json := `{"bullets":[],"displayName":"Some display name"}`
+				json := `{"bullets":[],"displayName":"Some display name","costs":[]}`
 
 				Expect(metadata).To(MarshalToJSON(json))
+			})
+		})
+	})
+
+	Describe("ServicePlanMetadataCost", func() {
+		Describe("JSON encoding", func() {
+			It("uses the correct keys", func() {
+				cost := api.ServicePlanMetadataCost{
+					Unit: "Free",
+				}
+				json := `{"unit":"Free"}`
+
+				Expect(cost).To(MarshalToJSON(json))
 			})
 		})
 	})

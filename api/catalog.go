@@ -18,8 +18,13 @@ type ServicePlan struct {
 }
 
 type ServicePlanMetadata struct {
-	Bullets     []string `json:"bullets"`
-	DisplayName string   `json:"displayName"`
+	Bullets     []string                  `json:"bullets"`
+	DisplayName string                    `json:"displayName"`
+	Costs       []ServicePlanMetadataCost `json:"costs"`
+}
+
+type ServicePlanMetadataCost struct {
+	Unit string `json:"unit"`
 }
 
 type ServiceMetadata struct {
