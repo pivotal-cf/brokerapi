@@ -66,9 +66,12 @@ var _ = Describe("Catalog", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
 				cost := api.ServicePlanMetadataCost{
-					Unit: "Free",
+					Unit: "Some unit",
+					Amount: map[string]float64{
+						"usd": 10.1,
+					},
 				}
-				json := `{"unit":"Free"}`
+				json := `{"amount":{"usd":10.1},"unit":"Some unit"}`
 
 				Expect(cost).To(MarshalToJSON(json))
 			})

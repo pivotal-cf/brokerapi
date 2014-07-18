@@ -24,7 +24,8 @@ type ServicePlanMetadata struct {
 }
 
 type ServicePlanMetadataCost struct {
-	Unit string `json:"unit"`
+	Amount map[string]float64 `json:"amount"`
+	Unit   string             `json:"unit"`
 }
 
 type ServiceMetadata struct {
