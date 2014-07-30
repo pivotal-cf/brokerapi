@@ -2,15 +2,16 @@ package specrunner
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/internal/leafnodes"
 	"github.com/onsi/ginkgo/internal/spec"
 	Writer "github.com/onsi/ginkgo/internal/writer"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/ginkgo/types"
-	"os"
-	"os/signal"
-	"sync"
 
 	"time"
 )
@@ -58,7 +59,7 @@ func (runner *SpecRunner) Run() bool {
 
 	suitePassed = runner.runAfterSuite() && suitePassed
 
-	runner.reportSuiteDidEnd()
+	runner.reportSuiteDidEnd(suitePassed)
 
 	return suitePassed
 }
@@ -68,8 +69,12 @@ func (runner *SpecRunner) runBeforeSuite() bool {
 		return true
 	}
 
+	runner.writer.Truncate()
 	conf := runner.config
 	passed := runner.beforeSuiteNode.Run(conf.ParallelNode, conf.ParallelTotal, conf.SyncHost)
+	if !passed {
+		runner.writer.DumpOut()
+	}
 	runner.reportBeforeSuite(runner.beforeSuiteNode.Summary())
 	return passed
 }
@@ -79,17 +84,25 @@ func (runner *SpecRunner) runAfterSuite() bool {
 		return true
 	}
 
+	runner.writer.Truncate()
 	conf := runner.config
 	passed := runner.afterSuiteNode.Run(conf.ParallelNode, conf.ParallelTotal, conf.SyncHost)
+	if !passed {
+		runner.writer.DumpOut()
+	}
 	runner.reportAfterSuite(runner.afterSuiteNode.Summary())
 	return passed
 }
 
 func (runner *SpecRunner) runSpecs() bool {
 	suiteFailed := false
+	skipRemainingSpecs := false
 	for _, spec := range runner.specs.Specs() {
 		if runner.wasInterrupted() {
 			return suiteFailed
+		}
+		if skipRemainingSpecs {
+			spec.Skip()
 		}
 		runner.writer.Truncate()
 
@@ -108,6 +121,10 @@ func (runner *SpecRunner) runSpecs() bool {
 		}
 
 		runner.reportSpecDidComplete(spec)
+
+		if spec.Failed() && runner.config.FailFast {
+			skipRemainingSpecs = true
+		}
 	}
 
 	return !suiteFailed
@@ -133,13 +150,13 @@ func (runner *SpecRunner) registerForInterrupts() {
 		fmt.Fprintln(os.Stderr, "\nReceived interrupt.  Running AfterSuite...\n^C again to terminate immediately")
 		runner.runAfterSuite()
 	}
-	runner.reportSuiteDidEnd()
+	runner.reportSuiteDidEnd(false)
 	os.Exit(1)
 }
 
 func (runner *SpecRunner) registerForHardInterrupts() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	<-c
 	fmt.Fprintln(os.Stderr, "\nReceived second interrupt.  Shutting down.")
@@ -170,7 +187,7 @@ func (runner *SpecRunner) wasInterrupted() bool {
 
 func (runner *SpecRunner) reportSuiteWillBegin() {
 	runner.startTime = time.Now()
-	summary := runner.summary()
+	summary := runner.summary(true)
 	for _, reporter := range runner.reporters {
 		reporter.SpecSuiteWillBegin(runner.config, summary)
 	}
@@ -202,8 +219,8 @@ func (runner *SpecRunner) reportSpecDidComplete(spec *spec.Spec) {
 	}
 }
 
-func (runner *SpecRunner) reportSuiteDidEnd() {
-	summary := runner.summary()
+func (runner *SpecRunner) reportSuiteDidEnd(success bool) {
+	summary := runner.summary(success)
 	summary.RunTime = time.Since(runner.startTime)
 	for _, reporter := range runner.reporters {
 		reporter.SpecSuiteDidEnd(summary)
@@ -222,7 +239,7 @@ func (runner *SpecRunner) countSpecsSatisfying(filter func(ex *spec.Spec) bool) 
 	return count
 }
 
-func (runner *SpecRunner) summary() *types.SuiteSummary {
+func (runner *SpecRunner) summary(success bool) *types.SuiteSummary {
 	numberOfSpecsThatWillBeRun := runner.countSpecsSatisfying(func(ex *spec.Spec) bool {
 		return !ex.Skipped() && !ex.Pending()
 	})
@@ -243,19 +260,8 @@ func (runner *SpecRunner) summary() *types.SuiteSummary {
 		return ex.Failed()
 	})
 
-	success := true
-
-	if numberOfFailedSpecs > 0 {
-		success = false
-	} else if numberOfPendingSpecs > 0 && runner.config.FailOnPending {
-		success = false
-	} else if runner.beforeSuiteNode != nil && !runner.beforeSuiteNode.Passed() {
-		success = false
+	if runner.beforeSuiteNode != nil && !runner.beforeSuiteNode.Passed() {
 		numberOfFailedSpecs = numberOfSpecsThatWillBeRun
-	} else if runner.afterSuiteNode != nil && !runner.afterSuiteNode.Passed() {
-		success = false
-	} else if runner.wasInterrupted() {
-		success = false
 	}
 
 	return &types.SuiteSummary{

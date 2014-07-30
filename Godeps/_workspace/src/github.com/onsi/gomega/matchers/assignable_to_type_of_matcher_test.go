@@ -22,10 +22,9 @@ var _ = Describe("AssignableToTypeOf", func() {
 
 	Context("When asserting nil values", func() {
 		It("should error", func() {
-			success, _, err := (&AssignableToTypeOfMatcher{Expected: nil}).Match(nil)
-
+			success, err := (&AssignableToTypeOfMatcher{Expected: nil}).Match(nil)
 			Ω(success).Should(BeFalse())
-			Ω(err).Should(HaveOccured())
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 })

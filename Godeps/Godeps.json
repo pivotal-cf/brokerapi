@@ -1,6 +1,6 @@
 {
-	"ImportPath": "github.com/pivotal-cf-experimental/go-service-broker",
-	"GoVersion": "go1.2.1",
+	"ImportPath": "github.com/pivotal-cf/go-service-broker",
+	"GoVersion": "go1.2.2",
 	"Packages": [
 		"./..."
 	],
@@ -26,7 +26,7 @@
 		},
 		{
 			"ImportPath": "github.com/drewolson/testflight",
-			"Rev": "1316579552caed520619a39e11456c4dff3b1d75"
+			"Rev": "922f722f568944e2107c78b4bcb5f15e9c811253"
 		},
 		{
 			"ImportPath": "github.com/martini-contrib/render",
@@ -34,11 +34,12 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Rev": "d941db095ac86d29f8304472895d2fd512bf8f57"
+			"Comment": "v1.0.0-28-g6481765",
+			"Rev": "6481765dda39cbaae281109e6945449642329197"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Rev": "3da99a5a1412b006dac6662a2244f3da7ee3155b"
+			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
 		}
 	]
 }

@@ -2,9 +2,11 @@ package format_test
 
 import (
 	"fmt"
+	"strings"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/format"
+	"github.com/onsi/gomega/types"
 )
 
 //recursive struct
@@ -51,12 +53,46 @@ type SecretiveStruct struct {
 	interfaceValue interface{}
 }
 
+type GoStringer struct {
+}
+
+func (g GoStringer) GoString() string {
+	return "go-string"
+}
+
+func (g GoStringer) String() string {
+	return "string"
+}
+
+type Stringer struct {
+}
+
+func (g Stringer) String() string {
+	return "string"
+}
+
 var _ = Describe("Format", func() {
-	match := func(typeRepresentation string, valueRepresentation string, args ...interface{}) OmegaMatcher {
+	match := func(typeRepresentation string, valueRepresentation string, args ...interface{}) types.GomegaMatcher {
 		if len(args) > 0 {
 			valueRepresentation = fmt.Sprintf(valueRepresentation, args...)
 		}
 		return Equal(fmt.Sprintf("%s<%s>: %s", Indent, typeRepresentation, valueRepresentation))
+	}
+
+	matchRegexp := func(typeRepresentation string, valueRepresentation string, args ...interface{}) types.GomegaMatcher {
+		if len(args) > 0 {
+			valueRepresentation = fmt.Sprintf(valueRepresentation, args...)
+		}
+		return MatchRegexp(fmt.Sprintf("%s<%s>: %s", Indent, typeRepresentation, valueRepresentation))
+	}
+
+	hashMatchingRegexp := func(entries ...string) string {
+		entriesSwitch := "(" + strings.Join(entries, "|") + ")"
+		arr := make([]string, len(entries))
+		for i := range arr {
+			arr[i] = entriesSwitch
+		}
+		return "{" + strings.Join(arr, ", ") + "}"
 	}
 
 	Describe("Message", func() {
@@ -128,7 +164,7 @@ var _ = Describe("Format", func() {
 		Describe("formatting []byte slices", func() {
 			It("should present them as strings", func() {
 				b := []byte("a\nb\nc")
-				Ω(Object(b, 1)).Should(match("[]uint8 | len:5, cap:5", `a
+				Ω(Object(b, 1)).Should(matchRegexp(`\[\]uint8 \| len:5, cap:\d+`, `a
     b
     c`))
 			})
@@ -209,7 +245,7 @@ var _ = Describe("Format", func() {
 				m := make(map[int]bool, 5)
 				m[3] = true
 				m[4] = false
-				Ω(Object(m, 1)).Should(match("map[int]bool | len:2", "{3: true, 4: false}"))
+				Ω(Object(m, 1)).Should(matchRegexp(`map\[int\]bool \| len:2`, hashMatchingRegexp("3: true", "4: false")))
 			})
 
 			Context("when the slice contains long entries", func() {
@@ -219,11 +255,11 @@ var _ = Describe("Format", func() {
 					m["Toby Ziegler"] = []byte("Richard Schiff")
 					m["CJ Cregg"] = []byte("Allison Janney")
 					expected := `{
-        "Josiah Edward Bartlet": "Martin Sheen",
-        "Toby Ziegler": "Richard Schiff",
-        "CJ Cregg": "Allison Janney",
+        ("Josiah Edward Bartlet": "Martin Sheen"|"Toby Ziegler": "Richard Schiff"|"CJ Cregg": "Allison Janney"),
+        ("Josiah Edward Bartlet": "Martin Sheen"|"Toby Ziegler": "Richard Schiff"|"CJ Cregg": "Allison Janney"),
+        ("Josiah Edward Bartlet": "Martin Sheen"|"Toby Ziegler": "Richard Schiff"|"CJ Cregg": "Allison Janney"),
     }`
-					Ω(Object(m, 1)).Should(match("map[string][]uint8 | len:3", expected))
+					Ω(Object(m, 1)).Should(matchRegexp(`map\[string\]\[\]uint8 \| len:3`, expected))
 				})
 			})
 		})
@@ -279,7 +315,7 @@ var _ = Describe("Format", func() {
 		Describe("formatting aliased types", func() {
 			It("should print out the correct alias type", func() {
 				Ω(Object(StringAlias("alias"), 1)).Should(match("format_test.StringAlias", `alias`))
-				Ω(Object(ByteAlias("alias"), 1)).Should(match("format_test.ByteAlias | len:5, cap:5", `alias`))
+				Ω(Object(ByteAlias("alias"), 1)).Should(matchRegexp(`format_test\.ByteAlias \| len:5, cap:\d+`, `alias`))
 				Ω(Object(IntAlias(3), 1)).Should(match("format_test.IntAlias", "3"))
 			})
 		})
@@ -298,8 +334,8 @@ var _ = Describe("Format", func() {
 					},
 				}
 				expected := `{
-        Strings: ["lots", "of", "short", "strings"],
-        SimpleThings: [
+        Strings: \["lots", "of", "short", "strings"\],
+        SimpleThings: \[
             {Name: "short", Enumeration: 7, Veritas: true, Data: "succinct", secret: 17},
             {
                 Name: "something longer",
@@ -308,13 +344,13 @@ var _ = Describe("Format", func() {
                 Data: "designed to wrap around nicely",
                 secret: 30,
             },
-        ],
+        \],
         DataMaps: {
-            17: "some substantially longer chunks of data",
-            1138: "that should make things wrap",
+            (17: "some substantially longer chunks of data"|1138: "that should make things wrap"),
+            (17: "some substantially longer chunks of data"|1138: "that should make things wrap"),
         },
     }`
-				Ω(Object(s, 1)).Should(match("format_test.ComplexStruct", expected))
+				Ω(Object(s, 1)).Should(matchRegexp(`format_test\.ComplexStruct`, expected))
 			})
 		})
 	})
@@ -348,21 +384,21 @@ var _ = Describe("Format", func() {
         uintValue: 4,
         uintptrValue: 0x5,
         floatValue: 6,
-        complexValue: (5+3i),
+        complexValue: \(5\+3i\),
         chanValue: %p,
         funcValue: %p,
         pointerValue: 5,
-        sliceValue: ["string", "slice"],
+        sliceValue: \["string", "slice"\],
         byteSliceValue: "bytes",
         stringValue: "a string",
-        arrValue: [11, 12, 13],
-        byteArrValue: [17, 20, 32],
-        mapValue: {"a key": 20, "b key": 30},
+        arrValue: \[11, 12, 13\],
+        byteArrValue: \[17, 20, 32\],
+        mapValue: %s,
         structValue: {Exported: "exported"},
         interfaceValue: {"a key": 17},
-    }`, s.chanValue, s.funcValue)
+    }`, s.chanValue, s.funcValue, hashMatchingRegexp(`"a key": 20`, `"b key": 30`))
 
-			Ω(Object(s, 1)).Should(match("format_test.SecretiveStruct", expected))
+			Ω(Object(s, 1)).Should(matchRegexp(`format_test\.SecretiveStruct`, expected))
 		})
 	})
 
@@ -375,7 +411,8 @@ var _ = Describe("Format", func() {
 			outerHash["integer"] = 2
 			outerHash["map"] = innerHash
 
-			Ω(Object(outerHash, 1)).Should(match("map[string]interface {} | len:2", `{"integer": 2, "map": {"inner": 3}}`))
+			expected := hashMatchingRegexp(`"integer": 2`, `"map": {"inner": 3}`)
+			Ω(Object(outerHash, 1)).Should(matchRegexp(`map\[string\]interface {} \| len:2`, expected))
 		})
 	})
 
@@ -384,7 +421,29 @@ var _ = Describe("Format", func() {
 			m := map[string]interface{}{}
 			m["integer"] = 2
 			m["map"] = m
-			Ω(Object(m, 1)).Should(ContainSubstring("Too deep for me, man..."))
+			Ω(Object(m, 1)).Should(ContainSubstring("..."))
+		})
+	})
+
+	Describe("When instructed to use the Stringer representation", func() {
+		BeforeEach(func() {
+			UseStringerRepresentation = true
+		})
+
+		AfterEach(func() {
+			UseStringerRepresentation = false
+		})
+
+		Context("when passed a GoStringer", func() {
+			It("should use what GoString() returns", func() {
+				Ω(Object(GoStringer{}, 1)).Should(ContainSubstring("<format_test.GoStringer>: go-string"))
+			})
+		})
+
+		Context("when passed a stringer", func() {
+			It("should use what String() returns", func() {
+				Ω(Object(Stringer{}, 1)).Should(ContainSubstring("<format_test.Stringer>: string"))
+			})
 		})
 	})
 })

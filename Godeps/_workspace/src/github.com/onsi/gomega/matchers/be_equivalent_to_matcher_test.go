@@ -9,10 +9,10 @@ import (
 var _ = Describe("BeEquivalentTo", func() {
 	Context("when asserting that nil is equivalent to nil", func() {
 		It("should error", func() {
-			success, _, err := (&BeEquivalentToMatcher{Expected: nil}).Match(nil)
+			success, err := (&BeEquivalentToMatcher{Expected: nil}).Match(nil)
 
 			Ω(success).Should(BeFalse())
-			Ω(err).Should(HaveOccured())
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 

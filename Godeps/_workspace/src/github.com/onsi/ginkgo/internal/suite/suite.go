@@ -1,6 +1,9 @@
 package suite
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/internal/containernode"
 	"github.com/onsi/ginkgo/internal/failer"
@@ -10,8 +13,6 @@ import (
 	"github.com/onsi/ginkgo/internal/writer"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/ginkgo/types"
-	"math/rand"
-	"time"
 )
 
 type ginkgoTestingT interface {
@@ -26,6 +27,7 @@ type Suite struct {
 	afterSuiteNode    leafnodes.SuiteNode
 	runner            *specrunner.SpecRunner
 	failer            *failer.Failer
+	running           bool
 }
 
 func New(failer *failer.Failer) *Suite {
@@ -39,7 +41,7 @@ func New(failer *failer.Failer) *Suite {
 	}
 }
 
-func (suite *Suite) Run(t ginkgoTestingT, description string, reporters []reporters.Reporter, writer writer.WriterInterface, config config.GinkgoConfigType) bool {
+func (suite *Suite) Run(t ginkgoTestingT, description string, reporters []reporters.Reporter, writer writer.WriterInterface, config config.GinkgoConfigType) (bool, bool) {
 	if config.ParallelTotal < 1 {
 		panic("ginkgo.parallel.total must be >= 1")
 	}
@@ -53,11 +55,12 @@ func (suite *Suite) Run(t ginkgoTestingT, description string, reporters []report
 	specs := suite.generateSpecs(description, config)
 	suite.runner = specrunner.New(description, suite.beforeSuiteNode, specs, suite.afterSuiteNode, reporters, writer, config)
 
+	suite.running = true
 	success := suite.runner.Run()
 	if !success {
 		t.Fail()
 	}
-	return success
+	return success, specs.HasProgrammaticFocus()
 }
 
 func (suite *Suite) generateSpecs(description string, config config.GinkgoConfigType) *spec.Specs {
@@ -132,21 +135,36 @@ func (suite *Suite) PushContainerNode(text string, body func(), flag types.FlagT
 }
 
 func (suite *Suite) PushItNode(text string, body interface{}, flag types.FlagType, codeLocation types.CodeLocation, timeout time.Duration) {
+	if suite.running {
+		suite.failer.Fail("You may only call It from within another It/Measure/BeforeEach/JustBeforeEach/AfterEach", codeLocation)
+	}
 	suite.currentContainer.PushSubjectNode(leafnodes.NewItNode(text, body, flag, codeLocation, timeout, suite.failer, suite.containerIndex))
 }
 
 func (suite *Suite) PushMeasureNode(text string, body interface{}, flag types.FlagType, codeLocation types.CodeLocation, samples int) {
+	if suite.running {
+		suite.failer.Fail("You may only call Measure from within another It/Measure/BeforeEach/JustBeforeEach/AfterEach", codeLocation)
+	}
 	suite.currentContainer.PushSubjectNode(leafnodes.NewMeasureNode(text, body, flag, codeLocation, samples, suite.failer, suite.containerIndex))
 }
 
 func (suite *Suite) PushBeforeEachNode(body interface{}, codeLocation types.CodeLocation, timeout time.Duration) {
+	if suite.running {
+		suite.failer.Fail("You may only call BeforeEach from within another It/Measure/BeforeEach/JustBeforeEach/AfterEach", codeLocation)
+	}
 	suite.currentContainer.PushSetupNode(leafnodes.NewBeforeEachNode(body, codeLocation, timeout, suite.failer, suite.containerIndex))
 }
 
 func (suite *Suite) PushJustBeforeEachNode(body interface{}, codeLocation types.CodeLocation, timeout time.Duration) {
+	if suite.running {
+		suite.failer.Fail("You may only call JustBeforeEach from within another It/Measure/BeforeEach/JustBeforeEach/AfterEach", codeLocation)
+	}
 	suite.currentContainer.PushSetupNode(leafnodes.NewJustBeforeEachNode(body, codeLocation, timeout, suite.failer, suite.containerIndex))
 }
 
 func (suite *Suite) PushAfterEachNode(body interface{}, codeLocation types.CodeLocation, timeout time.Duration) {
+	if suite.running {
+		suite.failer.Fail("You may only call AfterEach from within another It/Measure/BeforeEach/JustBeforeEach/AfterEach", codeLocation)
+	}
 	suite.currentContainer.PushSetupNode(leafnodes.NewAfterEachNode(body, codeLocation, timeout, suite.failer, suite.containerIndex))
 }

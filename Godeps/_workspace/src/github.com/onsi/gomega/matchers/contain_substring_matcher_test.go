@@ -28,9 +28,9 @@ var _ = Describe("ContainSubstringMatcher", func() {
 
 	Context("when actual is neither a string nor a stringer", func() {
 		It("should error", func() {
-			success, _, err := (&ContainSubstringMatcher{Substr: "2"}).Match(2)
+			success, err := (&ContainSubstringMatcher{Substr: "2"}).Match(2)
 			Ω(success).Should(BeFalse())
-			Ω(err).Should(HaveOccured())
+			Ω(err).Should(HaveOccurred())
 		})
 	})
 })

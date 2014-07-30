@@ -8,38 +8,48 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/ginkgo/testsuite"
 	"github.com/onsi/ginkgo/internal/remote"
 	"github.com/onsi/ginkgo/reporters/stenographer"
+	"github.com/onsi/ginkgo/types"
 )
 
 type TestRunner struct {
-	suite *testsuite.TestSuite
+	Suite    testsuite.TestSuite
+	compiled bool
 
 	numCPU         int
 	parallelStream bool
 	race           bool
 	cover          bool
+	tags           string
 	additionalArgs []string
 }
 
-func New(suite *testsuite.TestSuite, numCPU int, parallelStream bool, race bool, cover bool, additionalArgs []string) *TestRunner {
+func New(suite testsuite.TestSuite, numCPU int, parallelStream bool, race bool, cover bool, tags string, additionalArgs []string) *TestRunner {
 	return &TestRunner{
-		suite:          suite,
+		Suite:          suite,
 		numCPU:         numCPU,
 		parallelStream: parallelStream,
 		race:           race,
 		cover:          cover,
+		tags:           tags,
 		additionalArgs: additionalArgs,
 	}
 }
 
 func (t *TestRunner) Compile() error {
+	if t.compiled {
+		return nil
+	}
+
 	os.Remove(t.compiledArtifact())
 
 	args := []string{"test", "-c", "-i"}
@@ -49,63 +59,93 @@ func (t *TestRunner) Compile() error {
 	if t.cover {
 		args = append(args, "-cover", "-covermode=atomic")
 	}
+	if t.tags != "" {
+		args = append(args, fmt.Sprintf("-tags=%s", t.tags))
+	}
 
 	cmd := exec.Command("go", args...)
 
-	cmd.Dir = t.suite.Path
+	cmd.Dir = t.Suite.Path
 
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
+		fixedOutput := fixCompilationOutput(string(output), t.Suite.Path)
 		if len(output) > 0 {
-			return fmt.Errorf("Failed to compile %s:\n\n%s", t.suite.PackageName, output)
+			return fmt.Errorf("Failed to compile %s:\n\n%s", t.Suite.PackageName, fixedOutput)
 		}
 		return fmt.Errorf("")
 	}
 
+	t.compiled = true
 	return nil
 }
 
-func (t *TestRunner) Run() bool {
-	var success bool
+/*
+go test -c -i spits package.test out into the cwd. there's no way to change this.
 
-	if t.suite.IsGinkgo {
-		if t.numCPU > 1 {
-			if t.parallelStream {
-				success = t.runAndStreamParallelGinkgoSuite()
-			} else {
-				success = t.runParallelGinkgoSuite()
-			}
-		} else {
-			success = t.runSerialGinkgoSuite()
+to make sure it doesn't generate conflicting .test files in the cwd, Compile() must switch the cwd to the test package.
+
+unfortunately, this causes go test's compile output to be expressed *relative to the test package* instead of the cwd.
+
+this makes it hard to reason about what failed, and also prevents iterm's Cmd+click from working.
+
+fixCompilationOutput..... rewrites the output to fix the paths.
+
+yeah......
+*/
+func fixCompilationOutput(output string, relToPath string) string {
+	re := regexp.MustCompile(`^(\S.*\.go)\:\d+\:`)
+	lines := strings.Split(output, "\n")
+	for i, line := range lines {
+		indices := re.FindStringSubmatchIndex(line)
+		if len(indices) == 0 {
+			continue
 		}
-	} else {
-		success = t.runGoTestSuite()
-	}
 
-	return success
+		path := line[indices[2]:indices[3]]
+		path = filepath.Join(relToPath, path)
+		lines[i] = path + line[indices[3]:]
+	}
+	return strings.Join(lines, "\n")
 }
 
-func (t *TestRunner) CleanUp(signal ...os.Signal) {
+func (t *TestRunner) Run() RunResult {
+	if t.Suite.IsGinkgo {
+		if t.numCPU > 1 {
+			if t.parallelStream {
+				return t.runAndStreamParallelGinkgoSuite()
+			} else {
+				return t.runParallelGinkgoSuite()
+			}
+		} else {
+			return t.runSerialGinkgoSuite()
+		}
+	} else {
+		return t.runGoTestSuite()
+	}
+}
+
+func (t *TestRunner) CleanUp() {
 	os.Remove(t.compiledArtifact())
 }
 
 func (t *TestRunner) compiledArtifact() string {
-	compiledArtifact, _ := filepath.Abs(filepath.Join(t.suite.Path, fmt.Sprintf("%s.test", t.suite.PackageName)))
+	compiledArtifact, _ := filepath.Abs(filepath.Join(t.Suite.Path, fmt.Sprintf("%s.test", t.Suite.PackageName)))
 	return compiledArtifact
 }
 
-func (t *TestRunner) runSerialGinkgoSuite() bool {
+func (t *TestRunner) runSerialGinkgoSuite() RunResult {
 	ginkgoArgs := config.BuildFlagArgs("ginkgo", config.GinkgoConfig, config.DefaultReporterConfig)
 	return t.run(t.cmd(ginkgoArgs, os.Stdout, 1), nil)
 }
 
-func (t *TestRunner) runGoTestSuite() bool {
+func (t *TestRunner) runGoTestSuite() RunResult {
 	return t.run(t.cmd([]string{"-test.v"}, os.Stdout, 1), nil)
 }
 
-func (t *TestRunner) runAndStreamParallelGinkgoSuite() bool {
-	completions := make(chan bool)
+func (t *TestRunner) runAndStreamParallelGinkgoSuite() RunResult {
+	completions := make(chan RunResult)
 	writers := make([]*logWriter, t.numCPU)
 
 	server, err := remote.NewServer(t.numCPU)
@@ -137,10 +177,10 @@ func (t *TestRunner) runAndStreamParallelGinkgoSuite() bool {
 		go t.run(cmd, completions)
 	}
 
-	passed := true
+	res := PassingRunResult()
 
 	for cpu := 0; cpu < t.numCPU; cpu++ {
-		passed = <-completions && passed
+		res = res.Merge(<-completions)
 	}
 
 	for _, writer := range writers {
@@ -153,12 +193,12 @@ func (t *TestRunner) runAndStreamParallelGinkgoSuite() bool {
 		t.combineCoverprofiles()
 	}
 
-	return passed
+	return res
 }
 
-func (t *TestRunner) runParallelGinkgoSuite() bool {
+func (t *TestRunner) runParallelGinkgoSuite() RunResult {
 	result := make(chan bool)
-	completions := make(chan bool)
+	completions := make(chan RunResult)
 	writers := make([]*logWriter, t.numCPU)
 	reports := make([]*bytes.Buffer, t.numCPU)
 
@@ -196,10 +236,10 @@ func (t *TestRunner) runParallelGinkgoSuite() bool {
 		go t.run(cmd, completions)
 	}
 
-	passed := true
+	res := PassingRunResult()
 
 	for cpu := 0; cpu < t.numCPU; cpu++ {
-		passed = <-completions && passed
+		res = res.Merge(<-completions)
 	}
 
 	//all test processes are done, at this point
@@ -240,13 +280,13 @@ func (t *TestRunner) runParallelGinkgoSuite() bool {
 		t.combineCoverprofiles()
 	}
 
-	return passed
+	return res
 }
 
 func (t *TestRunner) cmd(ginkgoArgs []string, stream io.Writer, node int) *exec.Cmd {
 	args := []string{"-test.timeout=24h"}
 	if t.cover {
-		coverprofile := "--test.coverprofile=" + t.suite.PackageName + ".coverprofile"
+		coverprofile := "--test.coverprofile=" + t.Suite.PackageName + ".coverprofile"
 		if t.numCPU > 1 {
 			coverprofile = fmt.Sprintf("%s.%d", coverprofile, node)
 		}
@@ -258,37 +298,41 @@ func (t *TestRunner) cmd(ginkgoArgs []string, stream io.Writer, node int) *exec.
 
 	cmd := exec.Command(t.compiledArtifact(), args...)
 
-	cmd.Dir = t.suite.Path
+	cmd.Dir = t.Suite.Path
 	cmd.Stderr = stream
 	cmd.Stdout = stream
 
 	return cmd
 }
 
-func (t *TestRunner) run(cmd *exec.Cmd, completions chan bool) bool {
-	var err error
+func (t *TestRunner) run(cmd *exec.Cmd, completions chan RunResult) RunResult {
+	var res RunResult
+
 	defer func() {
 		if completions != nil {
-			completions <- (err == nil)
+			completions <- res
 		}
 	}()
 
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		fmt.Printf("Failed to run test suite!\n\t%s", err.Error())
-		return false
+		return res
 	}
 
-	err = cmd.Wait()
+	cmd.Wait()
+	exitStatus := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+	res.Passed = (exitStatus == 0) || (exitStatus == types.GINKGO_FOCUS_EXIT_CODE)
+	res.HasProgrammaticFocus = (exitStatus == types.GINKGO_FOCUS_EXIT_CODE)
 
-	return err == nil
+	return res
 }
 
 func (t *TestRunner) combineCoverprofiles() {
 	profiles := []string{}
 	for cpu := 1; cpu <= t.numCPU; cpu++ {
-		coverFile := fmt.Sprintf("%s.coverprofile.%d", t.suite.PackageName, cpu)
-		coverFile = filepath.Join(t.suite.Path, coverFile)
+		coverFile := fmt.Sprintf("%s.coverprofile.%d", t.Suite.PackageName, cpu)
+		coverFile = filepath.Join(t.Suite.Path, coverFile)
 		coverProfile, err := ioutil.ReadFile(coverFile)
 		os.Remove(coverFile)
 
@@ -320,5 +364,5 @@ func (t *TestRunner) combineCoverprofiles() {
 		output = append(output, fmt.Sprintf("%s %d", line, count))
 	}
 	finalOutput := strings.Join(output, "\n")
-	ioutil.WriteFile(filepath.Join(t.suite.Path, fmt.Sprintf("%s.coverprofile", t.suite.PackageName)), []byte(finalOutput), 0666)
+	ioutil.WriteFile(filepath.Join(t.Suite.Path, fmt.Sprintf("%s.coverprofile", t.Suite.PackageName)), []byte(finalOutput), 0666)
 }
