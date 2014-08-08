@@ -11,11 +11,6 @@
 			"Rev": "5fac954758f5aa282478dc07fbb8709fe9575184"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry/gosteno",
-			"Comment": "scotty_09012012-38-g969c2c5",
-			"Rev": "969c2c565f5f1638b45702f3a07f6c39013bf375"
-		},
-		{
 			"ImportPath": "github.com/codegangsta/inject",
 			"Rev": "9aea7a2fa5b79ef7fc00f63a575e72df33b4e886"
 		},
@@ -40,6 +35,10 @@
 		{
 			"ImportPath": "github.com/onsi/gomega",
 			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/lager",
+			"Rev": "ada65d2c262ba5474d357bf57bc0f8b8deaa9196"
 		}
 	]
 }

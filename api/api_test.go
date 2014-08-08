@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cloudfoundry/gosteno"
 	"github.com/codegangsta/martini"
 	"github.com/drewolson/testflight"
+	"github.com/pivotal-golang/lager"
+	"github.com/pivotal-golang/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,42 +18,10 @@ import (
 	"github.com/pivotal-cf/go-service-broker/api"
 )
 
-func configureBrokerTestSinkLogger(sink *gosteno.TestingSink) *gosteno.Logger {
-	logFlags := gosteno.EXCLUDE_DATA | gosteno.EXCLUDE_FILE | gosteno.EXCLUDE_LINE | gosteno.EXCLUDE_METHOD
-	gostenoConfig := &gosteno.Config{
-		Sinks:     []gosteno.Sink{sink},
-		Level:     gosteno.LOG_INFO,
-		Codec:     gosteno.NewJsonPrettifier(logFlags),
-		EnableLOC: true,
-	}
-	gosteno.Init(gostenoConfig)
-	return gosteno.NewLogger("brokerLogger")
-}
-
-func sinkContains(sink *gosteno.TestingSink, loggingMessage string) bool {
-	foundMessage := false
-	for _, record := range sink.Records {
-		if record.Message == loggingMessage {
-			foundMessage = true
-			break
-		}
-	}
-
-	if !foundMessage {
-		fmt.Printf("Didn't find [%s]\n", loggingMessage)
-
-		for index, record := range sink.Records {
-			fmt.Printf("Index %d: [%s] \n", index, record.Message)
-		}
-	}
-
-	return foundMessage
-}
-
 var _ = Describe("Service Broker API", func() {
 	var fakeServiceBroker *api.FakeServiceBroker
 	var brokerAPI *martini.ClassicMartini
-	var logSink *gosteno.TestingSink
+	var brokerLogger *lagertest.TestLogger
 
 	makeInstanceProvisioningRequest := func(instanceID string, params map[string]string) *testflight.Response {
 		response := &testflight.Response{}
@@ -72,6 +41,10 @@ var _ = Describe("Service Broker API", func() {
 		return response
 	}
 
+	lastLogLine := func() lager.LogFormat {
+		return brokerLogger.Logs()[0]
+	}
+
 	BeforeEach(func() {
 		os.Setenv("BROKER_USER", "username")
 		os.Setenv("BROKER_PASSWORD", "password")
@@ -79,9 +52,7 @@ var _ = Describe("Service Broker API", func() {
 		fakeServiceBroker = &api.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
-		logSink = gosteno.NewTestingSink()
-		brokerLogger := configureBrokerTestSinkLogger(logSink)
-
+		brokerLogger = lagertest.NewTestLogger("broker-api")
 		brokerAPI = api.New(fakeServiceBroker, nullLogger(), brokerLogger)
 	})
 
@@ -196,7 +167,9 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(instanceID, params)
-						Expect(sinkContains(logSink, "Provisioning error: instance limit for this service has been reached")).To(BeTrue())
+
+						Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-limit-reached"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance limit for this service has been reached"))
 					})
 				})
 
@@ -217,7 +190,8 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(instanceID, params)
-						Expect(sinkContains(logSink, "Provisioning error: broker failed")).To(BeTrue())
+						Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
 					})
 				})
 
@@ -240,8 +214,8 @@ var _ = Describe("Service Broker API", func() {
 
 				It("logs an appropriate error", func() {
 					makeInstanceProvisioningRequest(instanceID, params)
-					errorLog := fmt.Sprintf("Provisioning error: instance %s already exists", instanceID)
-					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
+					Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-already-exists"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance already exists"))
 				})
 			})
 		})
@@ -294,8 +268,8 @@ var _ = Describe("Service Broker API", func() {
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
 					makeInstanceDeprovisioningRequest(instanceID)
-					errorLog := fmt.Sprintf("Deprovisioning error: instance %s does not exist", instanceID)
-					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
+					Expect(lastLogLine().Message).To(ContainSubstring("deprovision.instance-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
 		})
@@ -317,7 +291,6 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		Describe("binding", func() {
-
 			Context("when the associated instance exists", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
 					instanceID := uniqueInstanceID()
@@ -358,8 +331,8 @@ var _ = Describe("Service Broker API", func() {
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
 					makeBindingRequest(instanceID, uniqueBindingID())
-					errorLog := fmt.Sprintf("Binding error: instance %s does not exist", instanceID)
-					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
+					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
 
@@ -384,7 +357,9 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeBindingRequest(instanceID, uniqueBindingID())
 					makeBindingRequest(instanceID, uniqueBindingID())
-					Expect(sinkContains(logSink, "Binding error: binding already exists")).To(BeTrue())
+
+					Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-already-exists"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding already exists"))
 				})
 			})
 
@@ -401,7 +376,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("logs a detailed error message", func() {
 					makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(sinkContains(logSink, "random error")).To(BeTrue())
+
+					Expect(lastLogLine().Message).To(ContainSubstring("bind.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("random error"))
 				})
 			})
 		})
@@ -462,8 +439,9 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error message", func() {
 						makeUnbindingRequest(instanceID, "does-not-exist")
-						errorLog := fmt.Sprintf("Unbinding error: binding %s does not exist", "does-not-exist")
-						Expect(sinkContains(logSink, errorLog)).To(BeTrue())
+
+						Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-missing"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding does not exist"))
 					})
 				})
 			})
@@ -484,8 +462,9 @@ var _ = Describe("Service Broker API", func() {
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
 					makeUnbindingRequest(instanceID, uniqueBindingID())
-					errorLog := fmt.Sprintf("Unbinding error: instance %s does not exist", instanceID)
-					Expect(sinkContains(logSink, errorLog)).To(BeTrue())
+
+					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
 		})
