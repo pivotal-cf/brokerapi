@@ -26,6 +26,16 @@ func getBaseEncodedUserPlusPass() string {
 
 func parseAuthHeader(req *http.Request) string {
 	authString := req.Header.Get("Authorization")
-	encryptedKey := strings.Split(authString, " ")[1]
-	return "basic " + encryptedKey
+
+	authHeaderparts := strings.Split(authString, " ")
+
+	if len(authHeaderparts) != 2 {
+		return ""
+	}
+
+	if strings.ToLower(authHeaderparts[0]) != "basic" {
+		return ""
+	}
+
+	return "basic " + authHeaderparts[1]
 }

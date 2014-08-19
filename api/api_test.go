@@ -58,20 +58,55 @@ var _ = Describe("Service Broker API", func() {
 
 	Describe("authentication", func() {
 		makeRequestWithoutAuth := func() *testflight.Response {
-			os.Setenv("BROKER_USER", "fake_username")
-			os.Setenv("BROKER_PASSWORD", "fake_password")
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
-				request.SetBasicAuth("username", "password")
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		makeRequestWithAuth := func(username string, password string) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+				request.SetBasicAuth(username, password)
 
 				response = r.Do(request)
 			})
 			return response
 		}
 
-		It("fails when the authorization header doesn't match what is in the environment", func() {
+		makeRequestWithUnrecognizedAuth := func() *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+				// dXNlcm5hbWU6cGFzc3dvcmQ= is base64 encoding of 'username:password',
+				// ie, a correctly encoded basic authorization header
+				request.Header["Authorization"] = []string{"NOTBASIC dXNlcm5hbWU6cGFzc3dvcmQ="}
+
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		It("returns 401 when the authorization header has an incorrect password", func() {
+			response := makeRequestWithAuth("username", "fake_password")
+			Expect(response.StatusCode).To(Equal(401))
+		})
+
+		It("returns 401 when the authorization header has an incorrect username", func() {
+			response := makeRequestWithAuth("fake_username", "password")
+			Expect(response.StatusCode).To(Equal(401))
+		})
+
+		It("returns 401 when there is no authorization header", func() {
 			response := makeRequestWithoutAuth()
+			Expect(response.StatusCode).To(Equal(401))
+		})
+
+		It("returns 401 when there is a unrecognized authorization header", func() {
+			response := makeRequestWithUnrecognizedAuth()
 			Expect(response.StatusCode).To(Equal(401))
 		})
 	})
