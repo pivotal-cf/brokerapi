@@ -7,11 +7,19 @@ import (
 )
 
 func CheckAuth(username, password string) http.HandlerFunc {
+	const notAuthorized = "Not Authorized"
+
 	return func(res http.ResponseWriter, req *http.Request) {
+		if username == "" || password == "" {
+			http.Error(res, notAuthorized, http.StatusUnauthorized)
+			return
+		}
+
 		expectedHeader := getBaseEncodedUserPlusPass(username, password)
 		authHeader := parseAuthHeader(req)
+
 		if expectedHeader != authHeader {
-			http.Error(res, "Not Authorized", http.StatusUnauthorized)
+			http.Error(res, notAuthorized, http.StatusUnauthorized)
 		}
 	}
 }
