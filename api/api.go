@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -41,9 +40,8 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 	// Provision
 	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
-		serviceDetails := make(map[string]string)
-		body, _ := ioutil.ReadAll(req.Body)
-		json.Unmarshal(body, &serviceDetails)
+		var serviceDetails ServiceDetails
+		json.NewDecoder(req.Body).Decode(&serviceDetails)
 
 		vars := mux.Vars(req)
 		instanceID := vars["instance_id"]

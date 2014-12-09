@@ -1,7 +1,7 @@
 package api
 
 type FakeServiceBroker struct {
-	Params map[string]string
+	ServiceDetails ServiceDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -54,7 +54,7 @@ func (fakeBroker FakeServiceBroker) Services() []Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, params map[string]string) error {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails ServiceDetails) error {
 	if fakeBroker.ProvisionError != nil {
 		return fakeBroker.ProvisionError
 	}
@@ -67,7 +67,7 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, params map[str
 		return ErrInstanceAlreadyExists
 	}
 
-	fakeBroker.Params = params
+	fakeBroker.ServiceDetails = serviceDetails
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return nil
 }
