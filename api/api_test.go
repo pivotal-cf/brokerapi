@@ -243,7 +243,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns an empty JSON object", func() {
 					response := makeInstanceProvisioningRequest(instanceID, params)
-					Expect(response.Body).To(Equal(`{}`))
+					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {

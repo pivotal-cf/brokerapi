@@ -19,13 +19,12 @@ func proxy(classicHandler *martini.ClassicMartini, newHandler http.Handler) http
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		url := r.URL.String()
-		method := r.Method
 		parts := strings.Split(url[1:], "/")
 
 		if strings.HasPrefix(url, "/v2/catalog") {
 			auth(w, r)
 			newHandler.ServeHTTP(w, r)
-		} else if strings.HasPrefix(url, "/v2/service_instances") && method == "DELETE" && len(parts) == 3 {
+		} else if strings.HasPrefix(url, "/v2/service_instances") && len(parts) == 3 {
 			auth(w, r)
 			newHandler.ServeHTTP(w, r)
 		} else {
@@ -53,6 +52,52 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		json.NewEncoder(w).Encode(catalog)
 	})
 
+	// Provision
+	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+		serviceDetails := make(map[string]string)
+		body, _ := ioutil.ReadAll(req.Body)
+		json.Unmarshal(body, &serviceDetails)
+
+		vars := mux.Vars(req)
+		instanceID := vars["instance_id"]
+		err := serviceBroker.Provision(instanceID, serviceDetails)
+
+		logger := brokerLogger.Session("provision", lager.Data{
+			"instance-id":      instanceID,
+			"instance-details": serviceDetails,
+		})
+
+		encoder := json.NewEncoder(w)
+
+		if err != nil {
+			switch err {
+			case ErrInstanceAlreadyExists:
+				logger.Error("instance-already-exists", err)
+				w.WriteHeader(http.StatusConflict)
+				encoder.Encode(EmptyResponse{})
+			case ErrInstanceLimitMet:
+				logger.Error("instance-limit-reached", err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				encoder.Encode(ErrorResponse{
+					Description: err.Error(),
+				})
+			default:
+				logger.Error("unknown-error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+
+				encoder.Encode(ErrorResponse{
+					Description: "an unexpected error occurred",
+				})
+			}
+
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		encoder.Encode(ProvisioningResponse{})
+	}).Methods("PUT")
+
 	// Deprovision
 	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -67,45 +112,7 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		}
 
 		json.NewEncoder(w).Encode(EmptyResponse{})
-	})
-
-	// Provision
-	m.Put("/v2/service_instances/:instance_id", func(params martini.Params, r render.Render, req *http.Request) {
-		serviceDetails := make(map[string]string)
-		body, _ := ioutil.ReadAll(req.Body)
-		json.Unmarshal(body, &serviceDetails)
-
-		instanceID := params["instance_id"]
-		err := serviceBroker.Provision(instanceID, serviceDetails)
-
-		logger := brokerLogger.Session("provision", lager.Data{
-			"instance-id":      instanceID,
-			"instance-details": serviceDetails,
-		})
-
-		if err != nil {
-			switch err {
-			case ErrInstanceAlreadyExists:
-				logger.Error("instance-already-exists", err)
-				r.JSON(409, EmptyResponse{})
-			case ErrInstanceLimitMet:
-				logger.Error("instance-limit-reached", err)
-				r.JSON(500, ErrorResponse{
-					Description: err.Error(),
-				})
-			default:
-				logger.Error("unknown-error", err)
-
-				r.JSON(500, ErrorResponse{
-					Description: "an unexpected error occurred",
-				})
-			}
-
-			return
-		}
-
-		r.JSON(201, ProvisioningResponse{})
-	})
+	}).Methods("DELETE")
 
 	// Bind
 	m.Put("/v2/service_instances/:instance_id/service_bindings/:binding_id", func(params martini.Params, r render.Render) {
