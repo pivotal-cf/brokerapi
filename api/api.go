@@ -6,30 +6,21 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/codegangsta/martini"
 	"github.com/gorilla/mux"
-	"github.com/martini-contrib/render"
 	"github.com/pivotal-cf/go-service-broker/api/handlers"
 	"github.com/pivotal-golang/lager"
 )
 
-func proxy(classicHandler *martini.ClassicMartini, newHandler http.Handler) http.Handler {
+func auth(handler http.Handler) http.Handler {
 	auth := handlers.CheckAuth()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth(w, r)
-		newHandler.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 	})
 }
 
 func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager.Logger) http.Handler {
-	m := martini.Classic()
-	m.Map(httpLogger)
-	m.Handlers(
-		handlers.CheckAuth(),
-		render.Renderer(),
-	)
-
 	router := mux.NewRouter()
 
 	// Catalog
@@ -188,5 +179,5 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		encoder.Encode(EmptyResponse{})
 	}).Methods("DELETE")
 
-	return proxy(m, router)
+	return auth(router)
 }
