@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/go-service-broker/api/handlers"
 	"github.com/pivotal-golang/lager"
 )
@@ -18,7 +17,7 @@ type BrokerCredentials struct {
 	Password string
 }
 
-func auth(handler http.Handler, credentials BrokerCredentials) http.Handler {
+func auth(router HttpRouter, credentials BrokerCredentials) http.Handler {
 	checkAuth := handlers.CheckAuth(
 		credentials.Username,
 		credentials.Password,
@@ -26,15 +25,15 @@ func auth(handler http.Handler, credentials BrokerCredentials) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		checkAuth(w, r)
-		handler.ServeHTTP(w, r)
+		router.ServeHTTP(w, r)
 	})
 }
 
 func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
-	router := mux.NewRouter()
+	router := NewHttpRouter()
 
 	// Catalog
-	router.HandleFunc("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
+	router.Get("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
 		catalog := CatalogResponse{
 			Services: serviceBroker.Services(),
 		}
@@ -43,11 +42,11 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 	})
 
 	// Provision
-	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+	router.Put("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
 		var serviceDetails ServiceDetails
 		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
 
-		vars := mux.Vars(req)
+		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 
 		if err != nil {
@@ -98,11 +97,11 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 		w.WriteHeader(http.StatusCreated)
 		encoder.Encode(ProvisioningResponse{})
-	}).Methods("PUT")
+	})
 
 	// Deprovision
-	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
+	router.Delete("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 		logger := brokerLogger.Session("deprovision", lager.Data{
 			instance_id_log_key: instanceID,
@@ -114,11 +113,11 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		}
 
 		json.NewEncoder(w).Encode(EmptyResponse{})
-	}).Methods("DELETE")
+	})
 
 	// Bind
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
+	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 		bindingID := vars["binding_id"]
 
@@ -162,11 +161,11 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 		w.WriteHeader(http.StatusCreated)
 		encoder.Encode(bindingResponse)
-	}).Methods("PUT")
+	})
 
 	// Unbind
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
+	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 		bindingID := vars["binding_id"]
 
@@ -199,7 +198,7 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		}
 
 		encoder.Encode(EmptyResponse{})
-	}).Methods("DELETE")
+	})
 
 	return auth(router, brokerCredentials)
 }
