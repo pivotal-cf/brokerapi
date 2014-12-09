@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/codegangsta/martini"
+	"github.com/gorilla/mux"
 	"github.com/martini-contrib/render"
 	"github.com/pivotal-cf/go-service-broker/api/handlers"
 	"github.com/pivotal-golang/lager"
@@ -17,7 +18,14 @@ func proxy(classicHandler *martini.ClassicMartini, newHandler http.Handler) http
 	auth := handlers.CheckAuth()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.String(), "/v2/catalog") {
+		url := r.URL.String()
+		method := r.Method
+		parts := strings.Split(url[1:], "/")
+
+		if strings.HasPrefix(url, "/v2/catalog") {
+			auth(w, r)
+			newHandler.ServeHTTP(w, r)
+		} else if strings.HasPrefix(url, "/v2/service_instances") && method == "DELETE" && len(parts) == 3 {
 			auth(w, r)
 			newHandler.ServeHTTP(w, r)
 		} else {
@@ -34,15 +42,31 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		render.Renderer(),
 	)
 
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
 	// Catalog
-	mux.HandleFunc("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
+	router.HandleFunc("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
 		catalog := CatalogResponse{
 			Services: serviceBroker.Services(),
 		}
 
 		json.NewEncoder(w).Encode(catalog)
+	})
+
+	// Deprovision
+	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		instanceID := vars["instance_id"]
+		logger := brokerLogger.Session("deprovision", lager.Data{
+			"instance-id": instanceID,
+		})
+		err := serviceBroker.Deprovision(instanceID)
+		if err != nil {
+			logger.Error("instance-missing", err)
+			w.WriteHeader(http.StatusGone)
+		}
+
+		json.NewEncoder(w).Encode(EmptyResponse{})
 	})
 
 	// Provision
@@ -81,23 +105,6 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		}
 
 		r.JSON(201, ProvisioningResponse{})
-	})
-
-	// Deprovision
-	m.Delete("/v2/service_instances/:instance_id", func(params martini.Params, r render.Render) {
-		instanceID := params["instance_id"]
-		logger := brokerLogger.Session("deprovision", lager.Data{
-			"instance-id": instanceID,
-		})
-
-		err := serviceBroker.Deprovision(instanceID)
-		if err != nil {
-			logger.Error("instance-missing", err)
-			r.JSON(410, EmptyResponse{})
-			return
-		}
-
-		r.JSON(200, EmptyResponse{})
 	})
 
 	// Bind
@@ -176,5 +183,5 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		r.JSON(200, EmptyResponse{})
 	})
 
-	return proxy(m, mux)
+	return proxy(m, router)
 }

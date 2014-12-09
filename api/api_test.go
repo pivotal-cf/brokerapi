@@ -282,7 +282,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns an empty JSON object", func() {
 					response := makeInstanceDeprovisioningRequest(instanceID)
-					Expect(response.Body).To(Equal(`{}`))
+					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 			})
 
@@ -296,7 +296,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns an empty JSON object", func() {
 					response := makeInstanceDeprovisioningRequest(uniqueInstanceID())
-					Expect(response.Body).To(Equal(`{}`))
+					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
