@@ -226,7 +226,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns json with a description field and a useful error message", func() {
 						response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
-						Expect(response.Body).To(MatchJSON(fixture("unexpected_error.json")))
+						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
 					})
 
 					It("logs an appropriate error", func() {
@@ -257,7 +257,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 422 bad request", func() {
 						response := makeBadInstanceProvisioningRequest(instanceID)
-						Expect(response.StatusCode).Should(Equal(api.StatusUnprocessableEntity))
+						Expect(response.StatusCode).Should(Equal(422))
 					})
 
 					It("logs a message", func() {
