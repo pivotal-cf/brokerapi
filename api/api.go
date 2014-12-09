@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -20,7 +19,7 @@ func auth(handler http.Handler) http.Handler {
 	})
 }
 
-func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager.Logger) http.Handler {
+func New(serviceBroker ServiceBroker, brokerLogger lager.Logger) http.Handler {
 	router := mux.NewRouter()
 
 	// Catalog

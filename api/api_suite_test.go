@@ -3,8 +3,6 @@ package api_test
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 	"path"
 	"testing"
 
@@ -27,14 +25,6 @@ func fixture(name string) string {
 	}
 
 	return string(contents)
-}
-
-func nullLogger() *log.Logger {
-	devNull, err := os.Open(os.DevNull)
-	if err != nil {
-		panic("Could not make a null logger")
-	}
-	return log.New(devNull, "", 0)
 }
 
 func uniqueID() string {

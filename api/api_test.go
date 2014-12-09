@@ -52,7 +52,7 @@ var _ = Describe("Service Broker API", func() {
 			InstanceLimit: 3,
 		}
 		brokerLogger = lagertest.NewTestLogger("broker-api")
-		brokerAPI = api.New(fakeServiceBroker, nullLogger(), brokerLogger)
+		brokerAPI = api.New(fakeServiceBroker, brokerLogger)
 	})
 
 	Describe("authentication", func() {
