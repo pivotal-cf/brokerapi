@@ -19,12 +19,16 @@ func proxy(classicHandler *martini.ClassicMartini, newHandler http.Handler) http
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		url := r.URL.String()
+		method := r.Method
 		parts := strings.Split(url[1:], "/")
 
 		if strings.HasPrefix(url, "/v2/catalog") {
 			auth(w, r)
 			newHandler.ServeHTTP(w, r)
 		} else if strings.HasPrefix(url, "/v2/service_instances") && len(parts) == 3 {
+			auth(w, r)
+			newHandler.ServeHTTP(w, r)
+		} else if strings.HasPrefix(url, "/v2/service_instances") && len(parts) == 5 && method == "PUT" {
 			auth(w, r)
 			newHandler.ServeHTTP(w, r)
 		} else {
@@ -115,34 +119,39 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 	}).Methods("DELETE")
 
 	// Bind
-	m.Put("/v2/service_instances/:instance_id/service_bindings/:binding_id", func(params martini.Params, r render.Render) {
-		instanceID := params["instance_id"]
-		bindingID := params["binding_id"]
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		instanceID := vars["instance_id"]
+		bindingID := vars["binding_id"]
 
 		logger := brokerLogger.Session("bind", lager.Data{
 			"instance-id": instanceID,
 			"binding-id":  bindingID,
 		})
 		credentials, err := serviceBroker.Bind(instanceID, bindingID)
+		encoder := json.NewEncoder(w)
 
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error("instance-missing", err)
+				w.WriteHeader(http.StatusNotFound)
 
-				r.JSON(404, ErrorResponse{
+				encoder.Encode(ErrorResponse{
 					Description: err.Error(),
 				})
 			case ErrBindingAlreadyExists:
 				logger.Error("binding-already-exists", err)
+				w.WriteHeader(http.StatusConflict)
 
-				r.JSON(409, ErrorResponse{
+				encoder.Encode(ErrorResponse{
 					Description: err.Error(),
 				})
 			default:
 				logger.Error("unknown-error", err)
+				w.WriteHeader(http.StatusInternalServerError)
 
-				r.JSON(500, ErrorResponse{
+				encoder.Encode(ErrorResponse{
 					Description: err.Error(),
 				})
 			}
@@ -152,8 +161,10 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		bindingResponse := BindingResponse{
 			Credentials: credentials,
 		}
-		r.JSON(201, bindingResponse)
-	})
+
+		w.WriteHeader(http.StatusCreated)
+		encoder.Encode(bindingResponse)
+	}).Methods("PUT")
 
 	// Unbind
 	m.Delete("/v2/service_instances/:instance_id/service_bindings/:binding_id", func(params martini.Params, r render.Render) {
