@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/codegangsta/martini"
 	"github.com/martini-contrib/render"
@@ -12,7 +13,20 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager.Logger) *martini.ClassicMartini {
+func proxy(classicHandler *martini.ClassicMartini, newHandler http.Handler) http.Handler {
+	auth := handlers.CheckAuth()
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.String(), "/v2/catalog") {
+			auth(w, r)
+			newHandler.ServeHTTP(w, r)
+		} else {
+			classicHandler.ServeHTTP(w, r)
+		}
+	})
+}
+
+func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager.Logger) http.Handler {
 	m := martini.Classic()
 	m.Map(httpLogger)
 	m.Handlers(
@@ -20,12 +34,15 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		render.Renderer(),
 	)
 
+	mux := http.NewServeMux()
+
 	// Catalog
-	m.Get("/v2/catalog", func(r render.Render) {
+	mux.HandleFunc("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
 		catalog := CatalogResponse{
 			Services: serviceBroker.Services(),
 		}
-		r.JSON(200, catalog)
+
+		json.NewEncoder(w).Encode(catalog)
 	})
 
 	// Provision
@@ -159,5 +176,5 @@ func New(serviceBroker ServiceBroker, httpLogger *log.Logger, brokerLogger lager
 		r.JSON(200, EmptyResponse{})
 	})
 
-	return m
+	return proxy(m, mux)
 }

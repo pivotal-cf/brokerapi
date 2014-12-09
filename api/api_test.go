@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/codegangsta/martini"
 	"github.com/drewolson/testflight"
 	"github.com/pivotal-golang/lager"
 	"github.com/pivotal-golang/lager/lagertest"
@@ -20,7 +19,7 @@ import (
 
 var _ = Describe("Service Broker API", func() {
 	var fakeServiceBroker *api.FakeServiceBroker
-	var brokerAPI *martini.ClassicMartini
+	var brokerAPI http.Handler
 	var brokerLogger *lagertest.TestLogger
 
 	makeInstanceProvisioningRequest := func(instanceID string, params map[string]string) *testflight.Response {
