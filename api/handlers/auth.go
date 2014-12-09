@@ -3,23 +3,20 @@ package handlers
 import (
 	"encoding/base64"
 	"net/http"
-	"os"
 	"strings"
 )
 
-func CheckAuth() http.HandlerFunc {
+func CheckAuth(username, password string) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		envString := getBaseEncodedUserPlusPass()
+		expectedHeader := getBaseEncodedUserPlusPass(username, password)
 		authHeader := parseAuthHeader(req)
-		if envString != authHeader {
+		if expectedHeader != authHeader {
 			http.Error(res, "Not Authorized", http.StatusUnauthorized)
 		}
 	}
 }
 
-func getBaseEncodedUserPlusPass() string {
-	username := os.Getenv("BROKER_USER")
-	password := os.Getenv("BROKER_PASSWORD")
+func getBaseEncodedUserPlusPass(username, password string) string {
 	data := []byte(username + ":" + password)
 	return "basic " + base64.StdEncoding.EncodeToString(data)
 }

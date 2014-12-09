@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/drewolson/testflight"
@@ -21,6 +20,10 @@ var _ = Describe("Service Broker API", func() {
 	var fakeServiceBroker *api.FakeServiceBroker
 	var brokerAPI http.Handler
 	var brokerLogger *lagertest.TestLogger
+	var credentials = api.BrokerCredentials{
+		Username: "username",
+		Password: "password",
+	}
 
 	makeInstanceProvisioningRequest := func(instanceID string, params map[string]string) *testflight.Response {
 		response := &testflight.Response{}
@@ -33,7 +36,7 @@ var _ = Describe("Service Broker API", func() {
           "spaceGUID":        "`+params["spaceGUID"]+`"
       }`))
 			request.Header.Add("Content-Type", "application/json")
-			request.SetBasicAuth("username", "password")
+			request.SetBasicAuth(credentials.Username, credentials.Password)
 
 			response = r.Do(request)
 		})
@@ -45,14 +48,11 @@ var _ = Describe("Service Broker API", func() {
 	}
 
 	BeforeEach(func() {
-		os.Setenv("BROKER_USER", "username")
-		os.Setenv("BROKER_PASSWORD", "password")
-
 		fakeServiceBroker = &api.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
 		brokerLogger = lagertest.NewTestLogger("broker-api")
-		brokerAPI = api.New(fakeServiceBroker, brokerLogger)
+		brokerAPI = api.New(fakeServiceBroker, brokerLogger, credentials)
 	})
 
 	Describe("authentication", func() {

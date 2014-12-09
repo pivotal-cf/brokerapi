@@ -10,16 +10,24 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-func auth(handler http.Handler) http.Handler {
-	auth := handlers.CheckAuth()
+type BrokerCredentials struct {
+	Username string
+	Password string
+}
+
+func auth(handler http.Handler, credentials BrokerCredentials) http.Handler {
+	checkAuth := handlers.CheckAuth(
+		credentials.Username,
+		credentials.Password,
+	)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth(w, r)
+		checkAuth(w, r)
 		handler.ServeHTTP(w, r)
 	})
 }
 
-func New(serviceBroker ServiceBroker, brokerLogger lager.Logger) http.Handler {
+func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
 
 	// Catalog
@@ -178,5 +186,5 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger) http.Handler {
 		encoder.Encode(EmptyResponse{})
 	}).Methods("DELETE")
 
-	return auth(router)
+	return auth(router, brokerCredentials)
 }
