@@ -9,6 +9,10 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
+const instance_id_log_key = "instance-id"
+const instance_details_log_key = "instance-details"
+const StatusUnprocessableEntity = 422
+
 type BrokerCredentials struct {
 	Username string
 	Password string
@@ -41,15 +45,28 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 	// Provision
 	router.HandleFunc("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
 		var serviceDetails ServiceDetails
-		json.NewDecoder(req.Body).Decode(&serviceDetails)
+		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
 
 		vars := mux.Vars(req)
 		instanceID := vars["instance_id"]
-		err := serviceBroker.Provision(instanceID, serviceDetails)
+
+		if err != nil {
+			w.WriteHeader(StatusUnprocessableEntity)
+
+			logger := brokerLogger.Session("provision", lager.Data{
+				instance_id_log_key:      instanceID,
+				instance_details_log_key: nil,
+			})
+
+			logger.Error("invalid-service-details", err)
+			return
+		}
+
+		err = serviceBroker.Provision(instanceID, serviceDetails)
 
 		logger := brokerLogger.Session("provision", lager.Data{
-			"instance-id":      instanceID,
-			"instance-details": serviceDetails,
+			instance_id_log_key:      instanceID,
+			instance_details_log_key: serviceDetails,
 		})
 
 		encoder := json.NewEncoder(w)
@@ -88,7 +105,7 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		vars := mux.Vars(req)
 		instanceID := vars["instance_id"]
 		logger := brokerLogger.Session("deprovision", lager.Data{
-			"instance-id": instanceID,
+			instance_id_log_key: instanceID,
 		})
 		err := serviceBroker.Deprovision(instanceID)
 		if err != nil {
@@ -106,8 +123,8 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		bindingID := vars["binding_id"]
 
 		logger := brokerLogger.Session("bind", lager.Data{
-			"instance-id": instanceID,
-			"binding-id":  bindingID,
+			instance_id_log_key: instanceID,
+			"binding-id":        bindingID,
 		})
 		credentials, err := serviceBroker.Bind(instanceID, bindingID)
 		encoder := json.NewEncoder(w)
@@ -154,8 +171,8 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		bindingID := vars["binding_id"]
 
 		logger := brokerLogger.Session("unbind", lager.Data{
-			"instance-id": instanceID,
-			"binding-id":  bindingID,
+			instance_id_log_key: instanceID,
+			"binding-id":        bindingID,
 		})
 
 		err := serviceBroker.Unbind(instanceID, bindingID)

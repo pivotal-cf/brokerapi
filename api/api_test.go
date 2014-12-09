@@ -45,6 +45,12 @@ var _ = Describe("Service Broker API", func() {
 	}
 
 	lastLogLine := func() lager.LogFormat {
+		if len(brokerLogger.Logs()) == 0 {
+			// better way to raise error?
+			err := errors.New("expected some log lines but there were none!")
+			Expect(err).NotTo(HaveOccurred())
+		}
+
 		return brokerLogger.Logs()[0]
 	}
 
@@ -230,6 +236,35 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				Context("when we send invalid json", func() {
+					makeBadInstanceProvisioningRequest := func(instanceID string) *testflight.Response {
+						response := &testflight.Response{}
+
+						testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+							path := "/v2/service_instances/" + instanceID
+
+							body := strings.NewReader("{{{{{")
+							request, err := http.NewRequest("PUT", path, body)
+							Expect(err).NotTo(HaveOccurred())
+							request.Header.Add("Content-Type", "application/json")
+							request.SetBasicAuth(credentials.Username, credentials.Password)
+
+							response = r.Do(request)
+						})
+
+						return response
+					}
+
+					It("returns a 422 bad request", func() {
+						response := makeBadInstanceProvisioningRequest(instanceID)
+						Expect(response.StatusCode).Should(Equal(api.StatusUnprocessableEntity))
+					})
+
+					It("logs a message", func() {
+						makeBadInstanceProvisioningRequest(instanceID)
+						Expect(lastLogLine().Message).To(ContainSubstring("provision.invalid-service-details"))
+					})
+				})
 			})
 
 			Context("when the instance already exists", func() {
