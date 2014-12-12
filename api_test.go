@@ -1,4 +1,4 @@
-package api_test
+package brokerapi_test
 
 import (
 	"bytes"
@@ -16,18 +16,19 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
-	var fakeServiceBroker *api.FakeServiceBroker
+	var fakeServiceBroker *fakes.FakeServiceBroker
 	var brokerAPI http.Handler
 	var brokerLogger *lagertest.TestLogger
-	var credentials = api.BrokerCredentials{
+	var credentials = brokerapi.BrokerCredentials{
 		Username: "username",
 		Password: "password",
 	}
 
-	makeInstanceProvisioningRequest := func(instanceID string, serviceDetails api.ServiceDetails) *testflight.Response {
+	makeInstanceProvisioningRequest := func(instanceID string, serviceDetails brokerapi.ServiceDetails) *testflight.Response {
 		response := &testflight.Response{}
 		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 			path := "/v2/service_instances/" + instanceID
@@ -55,11 +56,11 @@ var _ = Describe("Service Broker API", func() {
 	}
 
 	BeforeEach(func() {
-		fakeServiceBroker = &api.FakeServiceBroker{
+		fakeServiceBroker = &fakes.FakeServiceBroker{
 			InstanceLimit: 3,
 		}
 		brokerLogger = lagertest.NewTestLogger("broker-api")
-		brokerAPI = api.New(fakeServiceBroker, brokerLogger, credentials)
+		brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 	})
 
 	Describe("authentication", func() {
@@ -164,11 +165,11 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("provisioning", func() {
 			var instanceID string
-			var serviceDetails api.ServiceDetails
+			var serviceDetails brokerapi.ServiceDetails
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
-				serviceDetails = api.ServiceDetails{
+				serviceDetails = brokerapi.ServiceDetails{
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
 					SpaceGUID:        "space-guid",
@@ -306,11 +307,11 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance exists", func() {
 				var instanceID string
-				var serviceDetails api.ServiceDetails
+				var serviceDetails brokerapi.ServiceDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = api.ServiceDetails{
+					serviceDetails = brokerapi.ServiceDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
@@ -352,11 +353,11 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when instance deprovisioning fails", func() {
 				var instanceID string
-				var serviceDetails api.ServiceDetails
+				var serviceDetails brokerapi.ServiceDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = api.ServiceDetails{
+					serviceDetails = brokerapi.ServiceDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
@@ -427,7 +428,7 @@ var _ = Describe("Service Broker API", func() {
 				var instanceID string
 
 				BeforeEach(func() {
-					fakeServiceBroker.BindError = api.ErrInstanceDoesNotExist
+					fakeServiceBroker.BindError = brokerapi.ErrInstanceDoesNotExist
 				})
 
 				It("returns a 404", func() {
@@ -452,7 +453,7 @@ var _ = Describe("Service Broker API", func() {
 				var instanceID string
 
 				BeforeEach(func() {
-					fakeServiceBroker.BindError = api.ErrBindingAlreadyExists
+					fakeServiceBroker.BindError = brokerapi.ErrBindingAlreadyExists
 				})
 
 				It("returns a 409", func() {
@@ -512,11 +513,11 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				var instanceID string
-				var serviceDetails api.ServiceDetails
+				var serviceDetails brokerapi.ServiceDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = api.ServiceDetails{
+					serviceDetails = brokerapi.ServiceDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",

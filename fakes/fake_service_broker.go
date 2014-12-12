@@ -1,7 +1,9 @@
-package api
+package fakes
+
+import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ServiceDetails ServiceDetails
+	ServiceDetails brokerapi.ServiceDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -18,36 +20,36 @@ type FakeServiceBroker struct {
 	BrokerCalled bool
 }
 
-func (fakeBroker *FakeServiceBroker) Services() []Service {
+func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	fakeBroker.BrokerCalled = true
 
-	return []Service{
-		Service{
+	return []brokerapi.Service{
+		brokerapi.Service{
 			ID:          "0A789746-596F-4CEA-BFAC-A0795DA056E3",
 			Name:        "p-cassandra",
 			Description: "Cassandra service for application development and testing",
 			Bindable:    true,
-			Plans: []ServicePlan{
-				ServicePlan{
+			Plans: []brokerapi.ServicePlan{
+				brokerapi.ServicePlan{
 					ID:          "ABE176EE-F69F-4A96-80CE-142595CC24E3",
 					Name:        "default",
 					Description: "The default Cassandra plan",
-					Metadata: ServicePlanMetadata{
+					Metadata: brokerapi.ServicePlanMetadata{
 						Bullets:     []string{},
 						DisplayName: "Cassandra",
 					},
 				},
 			},
-			Metadata: ServiceMetadata{
+			Metadata: brokerapi.ServiceMetadata{
 				DisplayName:      "Cassandra",
 				LongDescription:  "Long description",
 				DocumentationUrl: "http://thedocs.com",
 				SupportUrl:       "http://helpme.no",
-				Listing: ServiceMetadataListing{
+				Listing: brokerapi.ServiceMetadataListing{
 					Blurb:    "blah blah",
 					ImageUrl: "http://foo.com/thing.png",
 				},
-				Provider: ServiceMetadataProvider{
+				Provider: brokerapi.ServiceMetadataProvider{
 					Name: "Pivotal",
 				},
 			},
@@ -59,7 +61,7 @@ func (fakeBroker *FakeServiceBroker) Services() []Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails ServiceDetails) error {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
@@ -67,11 +69,11 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return ErrInstanceLimitMet
+		return brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return ErrInstanceAlreadyExists
+		return brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ServiceDetails = serviceDetails
@@ -91,7 +93,7 @@ func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		return nil
 	}
-	return ErrInstanceDoesNotExist
+	return brokerapi.ErrInstanceDoesNotExist
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interface{}, error) {
@@ -119,10 +121,10 @@ func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error 
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
 			return nil
 		}
-		return ErrBindingDoesNotExist
+		return brokerapi.ErrBindingDoesNotExist
 	}
 
-	return ErrInstanceDoesNotExist
+	return brokerapi.ErrInstanceDoesNotExist
 }
 
 type FakeCredentials struct {

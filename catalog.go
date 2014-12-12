@@ -1,4 +1,4 @@
-package api
+package brokerapi
 
 type Service struct {
 	ID          string          `json:"id"`

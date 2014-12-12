@@ -1,4 +1,4 @@
-package api_test
+package brokerapi_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -11,8 +11,8 @@ import (
 var _ = Describe("Catalog Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a list of services", func() {
-			catalogResponse := api.CatalogResponse{
-				Services: []api.Service{},
+			catalogResponse := brokerapi.CatalogResponse{
+				Services: []brokerapi.Service{},
 			}
 			json := `{"services":[]}`
 
@@ -25,7 +25,7 @@ var _ = Describe("Provisioning Response", func() {
 	Describe("JSON encoding", func() {
 		Context("when the dashboard URL is not present", func() {
 			It("does not return it in the JSON", func() {
-				provisioningResponse := api.ProvisioningResponse{}
+				provisioningResponse := brokerapi.ProvisioningResponse{}
 				json := `{}`
 
 				Expect(provisioningResponse).To(MarshalToJSON(json))
@@ -34,7 +34,7 @@ var _ = Describe("Provisioning Response", func() {
 
 		Context("when the dashboard URL is present", func() {
 			It("returns it in the JSON", func() {
-				provisioningResponse := api.ProvisioningResponse{
+				provisioningResponse := brokerapi.ProvisioningResponse{
 					DashboardURL: "http://example.com/broker",
 				}
 				json := `{"dashboard_url":"http://example.com/broker"}`
@@ -48,7 +48,7 @@ var _ = Describe("Provisioning Response", func() {
 var _ = Describe("Binding Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a credentials object", func() {
-			bindingResponse := api.BindingResponse{}
+			bindingResponse := brokerapi.BindingResponse{}
 			json := `{"credentials":null}`
 
 			Expect(bindingResponse).To(MarshalToJSON(json))
@@ -59,7 +59,7 @@ var _ = Describe("Binding Response", func() {
 var _ = Describe("Error Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a description field", func() {
-			errorResponse := api.ErrorResponse{
+			errorResponse := brokerapi.ErrorResponse{
 				Description: "a bad thing happened",
 			}
 			json := `{"description":"a bad thing happened"}`

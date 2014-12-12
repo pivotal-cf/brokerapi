@@ -1,4 +1,4 @@
-package api_test
+package brokerapi_test
 
 import (
 	"fmt"

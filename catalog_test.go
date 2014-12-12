@@ -1,4 +1,4 @@
-package api_test
+package brokerapi_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -12,13 +12,13 @@ var _ = Describe("Catalog", func() {
 	Describe("Service", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				service := api.Service{
+				service := brokerapi.Service{
 					ID:          "ID-1",
 					Name:        "Cassandra",
 					Description: "A Cassandra Plan",
 					Bindable:    true,
-					Plans:       []api.ServicePlan{},
-					Metadata:    api.ServiceMetadata{},
+					Plans:       []brokerapi.ServicePlan{},
+					Metadata:    brokerapi.ServiceMetadata{},
 					Tags:        []string{},
 				}
 				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[]}`
@@ -31,11 +31,11 @@ var _ = Describe("Catalog", func() {
 	Describe("ServicePlan", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				plan := api.ServicePlan{
+				plan := brokerapi.ServicePlan{
 					ID:          "ID-1",
 					Name:        "Cassandra",
 					Description: "A Cassandra Plan",
-					Metadata: api.ServicePlanMetadata{
+					Metadata: brokerapi.ServicePlanMetadata{
 						Bullets: []string{},
 					},
 				}
@@ -49,7 +49,7 @@ var _ = Describe("Catalog", func() {
 	Describe("ServicePlanMetadata", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				metadata := api.ServicePlanMetadata{
+				metadata := brokerapi.ServicePlanMetadata{
 					Bullets:     []string{},
 					DisplayName: "Some display name",
 				}
@@ -63,13 +63,13 @@ var _ = Describe("Catalog", func() {
 	Describe("ServiceMetadata", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				metadata := api.ServiceMetadata{
+				metadata := brokerapi.ServiceMetadata{
 					DisplayName:      "Cassandra",
 					LongDescription:  "A long description of Cassandra",
 					DocumentationUrl: "",
 					SupportUrl:       "",
-					Listing:          api.ServiceMetadataListing{},
-					Provider:         api.ServiceMetadataProvider{},
+					Listing:          brokerapi.ServiceMetadataListing{},
+					Provider:         brokerapi.ServiceMetadataProvider{},
 				}
 				json := `{"displayName":"Cassandra","longDescription":"A long description of Cassandra","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}}`
 
@@ -81,7 +81,7 @@ var _ = Describe("Catalog", func() {
 	Describe("ServiceMetadataListing", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				listing := api.ServiceMetadataListing{
+				listing := brokerapi.ServiceMetadataListing{
 					Blurb:    "Blurb",
 					ImageUrl: "foo",
 				}
@@ -95,7 +95,7 @@ var _ = Describe("Catalog", func() {
 	Describe("ServiceMetadataProvider", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
-				provider := api.ServiceMetadataProvider{
+				provider := brokerapi.ServiceMetadataProvider{
 					Name: "Pivotal",
 				}
 				json := `{"name":"Pivotal"}`
