@@ -14,9 +14,13 @@ type FakeServiceBroker struct {
 	ProvisionError   error
 	BindError        error
 	DeprovisionError error
+
+	BrokerCalled bool
 }
 
-func (fakeBroker FakeServiceBroker) Services() []Service {
+func (fakeBroker *FakeServiceBroker) Services() []Service {
+	fakeBroker.BrokerCalled = true
+
 	return []Service{
 		Service{
 			ID:          "0A789746-596F-4CEA-BFAC-A0795DA056E3",
@@ -56,6 +60,8 @@ func (fakeBroker FakeServiceBroker) Services() []Service {
 }
 
 func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails ServiceDetails) error {
+	fakeBroker.BrokerCalled = true
+
 	if fakeBroker.ProvisionError != nil {
 		return fakeBroker.ProvisionError
 	}
@@ -74,6 +80,8 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
+	fakeBroker.BrokerCalled = true
+
 	if fakeBroker.DeprovisionError != nil {
 		return fakeBroker.DeprovisionError
 	}
@@ -87,6 +95,8 @@ func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interface{}, error) {
+	fakeBroker.BrokerCalled = true
+
 	if fakeBroker.BindError != nil {
 		return nil, fakeBroker.BindError
 	}
@@ -103,6 +113,8 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interfa
 }
 
 func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error {
+	fakeBroker.BrokerCalled = true
+
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
 			return nil

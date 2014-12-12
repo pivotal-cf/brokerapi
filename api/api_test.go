@@ -115,6 +115,13 @@ var _ = Describe("Service Broker API", func() {
 			response := makeRequestWithUnrecognizedAuth()
 			Expect(response.StatusCode).To(Equal(401))
 		})
+
+		It("does not call through to the service broker when not authenticated", func() {
+			makeRequestWithAuth("username", "fake_password")
+			Ω(fakeServiceBroker.BrokerCalled).ShouldNot(BeTrue(),
+				"broker should not have been hit when authentication failed",
+			)
+		})
 	})
 
 	Describe("catalog endpoint", func() {

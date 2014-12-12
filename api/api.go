@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pivotal-cf/go-service-broker/api/handlers"
+	"github.com/pivotal-cf/go-service-broker/api/auth"
 	"github.com/pivotal-golang/lager"
 )
 
@@ -43,19 +43,11 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, router, logger))
 
-	return auth(router, brokerCredentials)
+	return wrapAuth(router, brokerCredentials)
 }
 
-func auth(router httpRouter, credentials BrokerCredentials) http.Handler {
-	checkAuth := handlers.CheckAuth(
-		credentials.Username,
-		credentials.Password,
-	)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		checkAuth(w, r)
-		router.ServeHTTP(w, r)
-	})
+func wrapAuth(router httpRouter, credentials BrokerCredentials) http.Handler {
+	return auth.NewWrapper(credentials.Username, credentials.Password).Wrap(router)
 }
 
 func catalog(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
