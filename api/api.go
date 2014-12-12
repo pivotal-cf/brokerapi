@@ -32,6 +32,20 @@ type BrokerCredentials struct {
 	Password string
 }
 
+func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
+	router := NewHttpRouter()
+
+	router.Get("/v2/catalog", catalog(serviceBroker, router, logger))
+
+	router.Put("/v2/service_instances/{instance_id}", provision(serviceBroker, router, logger))
+	router.Delete("/v2/service_instances/{instance_id}", deprovision(serviceBroker, router, logger))
+
+	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, router, logger))
+	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, router, logger))
+
+	return auth(router, brokerCredentials)
+}
+
 func auth(router HttpRouter, credentials BrokerCredentials) http.Handler {
 	checkAuth := handlers.CheckAuth(
 		credentials.Username,
@@ -44,20 +58,18 @@ func auth(router HttpRouter, credentials BrokerCredentials) http.Handler {
 	})
 }
 
-func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
-	router := NewHttpRouter()
-
-	// Catalog
-	router.Get("/v2/catalog", func(w http.ResponseWriter, req *http.Request) {
+func catalog(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		catalog := CatalogResponse{
 			Services: serviceBroker.Services(),
 		}
 
 		json.NewEncoder(w).Encode(catalog)
-	})
+	}
+}
 
-	// Provision
-	router.Put("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+func provision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		var serviceDetails ServiceDetails
 		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
 
@@ -67,7 +79,7 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		if err != nil {
 			w.WriteHeader(statusUnprocessableEntity)
 
-			logger := brokerLogger.Session(provisionLogKey, lager.Data{
+			logger := logger.Session(provisionLogKey, lager.Data{
 				instanceIDLogKey:      instanceID,
 				instanceDetailsLogKey: nil,
 			})
@@ -78,7 +90,7 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 		err = serviceBroker.Provision(instanceID, serviceDetails)
 
-		logger := brokerLogger.Session(provisionLogKey, lager.Data{
+		logger := logger.Session(provisionLogKey, lager.Data{
 			instanceIDLogKey:      instanceID,
 			instanceDetailsLogKey: serviceDetails,
 		})
@@ -112,13 +124,14 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 		w.WriteHeader(http.StatusCreated)
 		encoder.Encode(ProvisioningResponse{})
-	})
+	}
+}
 
-	// Deprovision
-	router.Delete("/v2/service_instances/{instance_id}", func(w http.ResponseWriter, req *http.Request) {
+func deprovision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
-		logger := brokerLogger.Session(deprovisionLogKey, lager.Data{
+		logger := logger.Session(deprovisionLogKey, lager.Data{
 			instanceIDLogKey: instanceID,
 		})
 		encoder := json.NewEncoder(w)
@@ -142,15 +155,16 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		}
 
 		encoder.Encode(EmptyResponse{})
-	})
+	}
+}
 
-	// Bind
-	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
+func bind(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 		bindingID := vars["binding_id"]
 
-		logger := brokerLogger.Session(bindLogKey, lager.Data{
+		logger := logger.Session(bindLogKey, lager.Data{
 			instanceIDLogKey: instanceID,
 			bindingIDLogKey:  bindingID,
 		})
@@ -190,15 +204,16 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 
 		w.WriteHeader(http.StatusCreated)
 		encoder.Encode(bindingResponse)
-	})
+	}
+}
 
-	// Unbind
-	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", func(w http.ResponseWriter, req *http.Request) {
+func unbind(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 		bindingID := vars["binding_id"]
 
-		logger := brokerLogger.Session(unbindLogKey, lager.Data{
+		logger := logger.Session(unbindLogKey, lager.Data{
 			instanceIDLogKey: instanceID,
 			bindingIDLogKey:  bindingID,
 		})
@@ -227,7 +242,5 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		}
 
 		encoder.Encode(EmptyResponse{})
-	})
-
-	return auth(router, brokerCredentials)
+	}
 }
