@@ -1,7 +1,7 @@
 package api
 
 type FakeServiceBroker struct {
-	Params map[string]string
+	ServiceDetails ServiceDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -11,11 +11,16 @@ type FakeServiceBroker struct {
 
 	InstanceLimit int
 
-	ProvisionError error
-	BindError      error
+	ProvisionError   error
+	BindError        error
+	DeprovisionError error
+
+	BrokerCalled bool
 }
 
-func (fakeBroker FakeServiceBroker) Services() []Service {
+func (fakeBroker *FakeServiceBroker) Services() []Service {
+	fakeBroker.BrokerCalled = true
+
 	return []Service{
 		Service{
 			ID:          "0A789746-596F-4CEA-BFAC-A0795DA056E3",
@@ -54,7 +59,9 @@ func (fakeBroker FakeServiceBroker) Services() []Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, params map[string]string) error {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails ServiceDetails) error {
+	fakeBroker.BrokerCalled = true
+
 	if fakeBroker.ProvisionError != nil {
 		return fakeBroker.ProvisionError
 	}
@@ -67,12 +74,18 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, params map[str
 		return ErrInstanceAlreadyExists
 	}
 
-	fakeBroker.Params = params
+	fakeBroker.ServiceDetails = serviceDetails
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.DeprovisionError != nil {
+		return fakeBroker.DeprovisionError
+	}
+
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
@@ -82,6 +95,8 @@ func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interface{}, error) {
+	fakeBroker.BrokerCalled = true
+
 	if fakeBroker.BindError != nil {
 		return nil, fakeBroker.BindError
 	}
@@ -98,6 +113,8 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interfa
 }
 
 func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error {
+	fakeBroker.BrokerCalled = true
+
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
 			return nil
