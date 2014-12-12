@@ -56,7 +56,7 @@ func catalog(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger
 			Services: serviceBroker.Services(),
 		}
 
-		json.NewEncoder(w).Encode(catalog)
+		respond(w, http.StatusOK, catalog)
 	}
 }
 
