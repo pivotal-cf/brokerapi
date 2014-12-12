@@ -33,7 +33,7 @@ type BrokerCredentials struct {
 }
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
-	router := NewHttpRouter()
+	router := newHttpRouter()
 
 	router.Get("/v2/catalog", catalog(serviceBroker, router, logger))
 
@@ -46,7 +46,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	return auth(router, brokerCredentials)
 }
 
-func auth(router HttpRouter, credentials BrokerCredentials) http.Handler {
+func auth(router httpRouter, credentials BrokerCredentials) http.Handler {
 	checkAuth := handlers.CheckAuth(
 		credentials.Username,
 		credentials.Password,
@@ -58,7 +58,7 @@ func auth(router HttpRouter, credentials BrokerCredentials) http.Handler {
 	})
 }
 
-func catalog(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+func catalog(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		catalog := CatalogResponse{
 			Services: serviceBroker.Services(),
@@ -68,7 +68,7 @@ func catalog(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger
 	}
 }
 
-func provision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var serviceDetails ServiceDetails
 		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
@@ -127,7 +127,7 @@ func provision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logg
 	}
 }
 
-func deprovision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
@@ -158,7 +158,7 @@ func deprovision(serviceBroker ServiceBroker, router HttpRouter, logger lager.Lo
 	}
 }
 
-func bind(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
@@ -207,7 +207,7 @@ func bind(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) h
 	}
 }
 
-func unbind(serviceBroker ServiceBroker, router HttpRouter, logger lager.Logger) http.HandlerFunc {
+func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
