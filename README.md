@@ -1,4 +1,4 @@
-go-service-broker
+brokerapi
 =====================
 
 A go package for building V2 CF Service Brokers in Go.

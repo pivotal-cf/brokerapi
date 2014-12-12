@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pivotal-cf/go-service-broker/auth"
+	"github.com/pivotal-cf/brokerapi/auth"
 	"github.com/pivotal-golang/lager"
 )
 
