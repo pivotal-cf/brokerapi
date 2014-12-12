@@ -3,9 +3,9 @@ package api_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/pivotal-cf/go-service-broker/api/matchers"
+	. "github.com/pivotal-cf/go-service-broker/matchers"
 
-	"github.com/pivotal-cf/go-service-broker/api"
+	"github.com/pivotal-cf/go-service-broker"
 )
 
 var _ = Describe("Catalog", func() {
