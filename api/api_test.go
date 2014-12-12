@@ -342,6 +342,41 @@ var _ = Describe("Service Broker API", func() {
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
+
+			Context("when instance deprovisioning fails", func() {
+				var instanceID string
+				var serviceDetails api.ServiceDetails
+
+				BeforeEach(func() {
+					instanceID = uniqueInstanceID()
+					serviceDetails = api.ServiceDetails{
+						PlanID:           "plan-id",
+						OrganizationGUID: "organization-guid",
+						SpaceGUID:        "space-guid",
+					}
+					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+				})
+
+				BeforeEach(func() {
+					fakeServiceBroker.DeprovisionError = errors.New("broker failed")
+				})
+
+				It("returns a 500", func() {
+					response := makeInstanceDeprovisioningRequest(instanceID)
+					Expect(response.StatusCode).To(Equal(500))
+				})
+
+				It("returns json with a description field and a useful error message", func() {
+					response := makeInstanceDeprovisioningRequest(instanceID)
+					Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
+				})
+
+				It("logs an appropriate error", func() {
+					makeInstanceDeprovisioningRequest(instanceID)
+					Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
+				})
+			})
 		})
 	})
 

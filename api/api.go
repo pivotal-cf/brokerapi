@@ -121,13 +121,27 @@ func New(serviceBroker ServiceBroker, brokerLogger lager.Logger, brokerCredentia
 		logger := brokerLogger.Session(deprovisionLogKey, lager.Data{
 			instanceIDLogKey: instanceID,
 		})
+		encoder := json.NewEncoder(w)
+
 		err := serviceBroker.Deprovision(instanceID)
 		if err != nil {
-			logger.Error(instanceMissingErrorKey, err)
-			w.WriteHeader(http.StatusGone)
+			switch err {
+			case ErrInstanceDoesNotExist:
+				logger.Error(instanceMissingErrorKey, err)
+				w.WriteHeader(http.StatusGone)
+				encoder.Encode(EmptyResponse{})
+			default:
+				logger.Error(unknownErrorKey, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				encoder.Encode(ErrorResponse{
+					Description: err.Error(),
+				})
+			}
+
+			return
 		}
 
-		json.NewEncoder(w).Encode(EmptyResponse{})
+		encoder.Encode(EmptyResponse{})
 	})
 
 	// Bind

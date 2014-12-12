@@ -11,8 +11,9 @@ type FakeServiceBroker struct {
 
 	InstanceLimit int
 
-	ProvisionError error
-	BindError      error
+	ProvisionError   error
+	BindError        error
+	DeprovisionError error
 }
 
 func (fakeBroker FakeServiceBroker) Services() []Service {
@@ -73,6 +74,10 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
+	if fakeBroker.DeprovisionError != nil {
+		return fakeBroker.DeprovisionError
+	}
+
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
