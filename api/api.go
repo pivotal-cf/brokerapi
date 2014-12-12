@@ -71,50 +71,42 @@ func catalog(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger
 func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var serviceDetails ServiceDetails
-		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
 
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 
+		logger := logger.Session(provisionLogKey, lager.Data{
+			instanceIDLogKey: instanceID,
+		})
+
+		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
 		if err != nil {
-			w.WriteHeader(statusUnprocessableEntity)
-
-			logger := logger.Session(provisionLogKey, lager.Data{
-				instanceIDLogKey:      instanceID,
-				instanceDetailsLogKey: nil,
-			})
-
 			logger.Error(invalidServiceDetailsErrorKey, err)
+
+			respond(w, statusUnprocessableEntity, ErrorResponse{
+				Description: err.Error(),
+			})
 			return
 		}
 
-		err = serviceBroker.Provision(instanceID, serviceDetails)
-
-		logger := logger.Session(provisionLogKey, lager.Data{
-			instanceIDLogKey:      instanceID,
+		logger = logger.WithData(lager.Data{
 			instanceDetailsLogKey: serviceDetails,
 		})
 
-		encoder := json.NewEncoder(w)
-
+		err = serviceBroker.Provision(instanceID, serviceDetails)
 		if err != nil {
 			switch err {
 			case ErrInstanceAlreadyExists:
 				logger.Error(instanceAlreadyExistsErrorKey, err)
-				w.WriteHeader(http.StatusConflict)
-				encoder.Encode(EmptyResponse{})
+				respond(w, http.StatusConflict, EmptyResponse{})
 			case ErrInstanceLimitMet:
 				logger.Error(instanceLimitReachedErrorKey, err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusInternalServerError, ErrorResponse{
 					Description: err.Error(),
 				})
 			default:
 				logger.Error(unknownErrorKey, err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusInternalServerError, ErrorResponse{
 					Description: err.Error(),
 				})
 			}
@@ -122,8 +114,7 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		encoder.Encode(ProvisioningResponse{})
+		respond(w, http.StatusCreated, ProvisioningResponse{})
 	}
 }
 
@@ -134,19 +125,16 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 		logger := logger.Session(deprovisionLogKey, lager.Data{
 			instanceIDLogKey: instanceID,
 		})
-		encoder := json.NewEncoder(w)
 
 		err := serviceBroker.Deprovision(instanceID)
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
-				w.WriteHeader(http.StatusGone)
-				encoder.Encode(EmptyResponse{})
+				respond(w, http.StatusGone, EmptyResponse{})
 			default:
 				logger.Error(unknownErrorKey, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusInternalServerError, ErrorResponse{
 					Description: err.Error(),
 				})
 			}
@@ -154,7 +142,7 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 			return
 		}
 
-		encoder.Encode(EmptyResponse{})
+		respond(w, http.StatusOK, EmptyResponse{})
 	}
 }
 
@@ -169,29 +157,22 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			bindingIDLogKey:  bindingID,
 		})
 		credentials, err := serviceBroker.Bind(instanceID, bindingID)
-		encoder := json.NewEncoder(w)
 
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
-				w.WriteHeader(http.StatusNotFound)
-
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusNotFound, ErrorResponse{
 					Description: err.Error(),
 				})
 			case ErrBindingAlreadyExists:
 				logger.Error(bindingAlreadyExistsErrorKey, err)
-				w.WriteHeader(http.StatusConflict)
-
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusConflict, ErrorResponse{
 					Description: err.Error(),
 				})
 			default:
 				logger.Error(unknownErrorKey, err)
-				w.WriteHeader(http.StatusInternalServerError)
-
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusInternalServerError, ErrorResponse{
 					Description: err.Error(),
 				})
 			}
@@ -202,8 +183,7 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			Credentials: credentials,
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		encoder.Encode(bindingResponse)
+		respond(w, http.StatusCreated, bindingResponse)
 	}
 }
 
@@ -219,28 +199,31 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 		})
 
 		err := serviceBroker.Unbind(instanceID, bindingID)
-		encoder := json.NewEncoder(w)
-
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
-				w.WriteHeader(http.StatusNotFound)
-				encoder.Encode(EmptyResponse{})
+				respond(w, http.StatusNotFound, EmptyResponse{})
 			case ErrBindingDoesNotExist:
 				logger.Error(bindingMissingErrorKey, err)
-				w.WriteHeader(http.StatusGone)
-				encoder.Encode(EmptyResponse{})
+				respond(w, http.StatusGone, EmptyResponse{})
 			default:
 				logger.Error(unknownErrorKey, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				encoder.Encode(ErrorResponse{
+				respond(w, http.StatusInternalServerError, ErrorResponse{
 					Description: err.Error(),
 				})
 			}
+
 			return
 		}
 
-		encoder.Encode(EmptyResponse{})
+		respond(w, http.StatusOK, EmptyResponse{})
 	}
+}
+
+func respond(w http.ResponseWriter, status int, response interface{}) {
+	w.WriteHeader(status)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(response)
 }

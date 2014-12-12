@@ -33,7 +33,7 @@
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/lager",
-			"Rev": "ada65d2c262ba5474d357bf57bc0f8b8deaa9196"
+			"Rev": "ce9effb2d1062e2d81333f942df0549706901b1b"
 		}
 	]
 }
