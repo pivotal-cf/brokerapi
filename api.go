@@ -214,6 +214,7 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 }
 
 func respond(w http.ResponseWriter, status int, response interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
 	encoder := json.NewEncoder(w)
