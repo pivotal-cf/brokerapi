@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestHandlers(t *testing.T) {
+func TestAuth(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Handlers Suite")
+	RunSpecs(t, "Auth Suite")
 }
