@@ -4,6 +4,8 @@ A go package for building V2 CF Service Brokers in Go. Depends on
 [lager](https://github.com/pivotal-golang/lager) and
 [gorilla/mux](https://github.com/gorilla/mux).
 
+Requires go 1.4 or greater.
+
 ## usage
 
 `brokerapi` defines a `ServiceBroker` interface with 5 methods. Simply create
