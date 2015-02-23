@@ -1,5 +1,7 @@
 # brokerapi
 
+[![Build Status](https://travis-ci.org/pivotal-cf/brokerapi.svg?branch=master)](https://travis-ci.org/pivotal-cf/brokerapi)
+
 A go package for building V2 CF Service Brokers in Go. Depends on
 [lager](https://github.com/pivotal-golang/lager) and
 [gorilla/mux](https://github.com/gorilla/mux).
