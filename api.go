@@ -62,8 +62,6 @@ func catalog(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger
 
 func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		var serviceDetails ServiceDetails
-
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
 
@@ -71,10 +69,9 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			instanceIDLogKey: instanceID,
 		})
 
-		err := json.NewDecoder(req.Body).Decode(&serviceDetails)
-		if err != nil {
+		var serviceDetails ServiceDetails
+		if err := json.NewDecoder(req.Body).Decode(&serviceDetails); err != nil {
 			logger.Error(invalidServiceDetailsErrorKey, err)
-
 			respond(w, statusUnprocessableEntity, ErrorResponse{
 				Description: err.Error(),
 			})
@@ -85,8 +82,7 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			instanceDetailsLogKey: serviceDetails,
 		})
 
-		err = serviceBroker.Provision(instanceID, serviceDetails)
-		if err != nil {
+		if err := serviceBroker.Provision(instanceID, serviceDetails); err != nil {
 			switch err {
 			case ErrInstanceAlreadyExists:
 				logger.Error(instanceAlreadyExistsErrorKey, err)
@@ -102,7 +98,6 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 					Description: err.Error(),
 				})
 			}
-
 			return
 		}
 
@@ -118,8 +113,7 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 			instanceIDLogKey: instanceID,
 		})
 
-		err := serviceBroker.Deprovision(instanceID)
-		if err != nil {
+		if err := serviceBroker.Deprovision(instanceID); err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
@@ -130,7 +124,6 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 					Description: err.Error(),
 				})
 			}
-
 			return
 		}
 
@@ -148,8 +141,8 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			instanceIDLogKey: instanceID,
 			bindingIDLogKey:  bindingID,
 		})
-		credentials, err := serviceBroker.Bind(instanceID, bindingID)
 
+		credentials, err := serviceBroker.Bind(instanceID, bindingID)
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
@@ -190,8 +183,7 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 			bindingIDLogKey:  bindingID,
 		})
 
-		err := serviceBroker.Unbind(instanceID, bindingID)
-		if err != nil {
+		if err := serviceBroker.Unbind(instanceID, bindingID); err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
@@ -205,7 +197,6 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 					Description: err.Error(),
 				})
 			}
-
 			return
 		}
 
