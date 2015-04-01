@@ -12,63 +12,91 @@ import (
 
 var _ = Describe("Auth Wrapper", func() {
 	var (
-		wrappedHandler http.Handler
-		username       string
-		password       string
+		username     string
+		password     string
+		httpRecorder *httptest.ResponseRecorder
 	)
+
+	newRequest := func(username, password string) *http.Request {
+		request, err := http.NewRequest("GET", "", nil)
+		Expect(err).NotTo(HaveOccurred())
+		request.SetBasicAuth(username, password)
+		return request
+	}
 
 	BeforeEach(func() {
 		username = "username"
 		password = "password"
+		httpRecorder = httptest.NewRecorder()
+	})
 
-		authWrapper := auth.NewWrapper(username, password)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusCreated)
+	Describe("wrapped handler", func() {
+		var wrappedHandler http.Handler
+
+		BeforeEach(func() {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+			})
+			wrappedHandler = auth.NewWrapper(username, password).Wrap(handler)
 		})
-		wrappedHandler = authWrapper.Wrap(handler)
+
+		It("works when the credentials are correct", func() {
+			request := newRequest(username, password)
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusCreated))
+		})
+
+		It("fails when the username is empty", func() {
+			request := newRequest("", password)
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("fails when the password is empty", func() {
+			request := newRequest(username, "")
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("fails when the credentials are wrong", func() {
+			request := newRequest("thats", "apar")
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 	})
 
-	It("works when the credentials are correct", func() {
-		request, err := http.NewRequest("GET", "", nil)
-		Expect(err).NotTo(HaveOccurred())
-		request.SetBasicAuth(username, password)
+	Describe("wrapped handlerFunc", func() {
+		var wrappedHandlerFunc http.HandlerFunc
 
-		recorder := httptest.NewRecorder()
-		wrappedHandler.ServeHTTP(recorder, request)
+		BeforeEach(func() {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+			})
+			wrappedHandlerFunc = auth.NewWrapper(username, password).WrapFunc(handler)
+		})
 
-		Expect(recorder.Code).To(Equal(http.StatusCreated))
-	})
+		It("works when the credentials are correct", func() {
+			request := newRequest(username, password)
+			wrappedHandlerFunc.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusCreated))
+		})
 
-	It("fails when the username is empty", func() {
-		request, err := http.NewRequest("GET", "", nil)
-		Expect(err).NotTo(HaveOccurred())
-		request.SetBasicAuth("", password)
+		It("fails when the username is empty", func() {
+			request := newRequest("", password)
+			wrappedHandlerFunc.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 
-		recorder := httptest.NewRecorder()
-		wrappedHandler.ServeHTTP(recorder, request)
+		It("fails when the password is empty", func() {
+			request := newRequest(username, "")
+			wrappedHandlerFunc.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 
-		Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
-	})
-
-	It("fails when the password is empty", func() {
-		request, err := http.NewRequest("GET", "", nil)
-		Expect(err).NotTo(HaveOccurred())
-		request.SetBasicAuth(username, "")
-
-		recorder := httptest.NewRecorder()
-		wrappedHandler.ServeHTTP(recorder, request)
-
-		Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
-	})
-
-	It("fails when the credentials are wrong", func() {
-		request, err := http.NewRequest("GET", "", nil)
-		Expect(err).NotTo(HaveOccurred())
-		request.SetBasicAuth("thats", "apar")
-
-		recorder := httptest.NewRecorder()
-		wrappedHandler.ServeHTTP(recorder, request)
-
-		Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		It("fails when the credentials are wrong", func() {
+			request := newRequest("thats", "apar")
+			wrappedHandlerFunc.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 	})
 })
