@@ -27,11 +27,11 @@ import (
 
 type myServiceBroker struct {}
 
-func (*myServiceBroker) Services() []Service {
+func (*myServiceBroker) Services() []brokerapi.Service {
     // Return a []brokerapi.Service here, describing your service(s) and plan(s)
 }
 
-func (*myServiceBroker) Provision(instanceID string, serviceDetails ServiceDetails) error {
+func (*myServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
     // Provision a new instance here
 }
 
