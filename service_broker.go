@@ -5,12 +5,14 @@ import "errors"
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string, serviceDetails ServiceDetails) error
+	Provision(instanceID string, serviceDetails ServiceDetails, acceptsIncomplete bool) (ProvisionAsync, error)
 	Deprovision(instanceID string) error
 
 	Bind(instanceID, bindingID string) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 }
+
+type ProvisionAsync bool
 
 type ServiceDetails struct {
 	ID               string `json:"service_id"`
@@ -25,4 +27,6 @@ var (
 	ErrInstanceLimitMet      = errors.New("instance limit for this service has been reached")
 	ErrBindingAlreadyExists  = errors.New("binding already exists")
 	ErrBindingDoesNotExist   = errors.New("binding does not exist")
+	ErrInvalidAsyncProvision = errors.New("broker attempted to provision asynchronously when not supported by the caller")
+	ErrAsyncRequired         = errors.New("This service plan requires client support for asynchronous service operations.")
 )

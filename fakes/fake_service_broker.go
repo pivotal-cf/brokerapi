@@ -3,7 +3,8 @@ package fakes
 import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ServiceDetails brokerapi.ServiceDetails
+	ServiceDetails    brokerapi.ServiceDetails
+	AcceptsIncomplete bool
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -18,6 +19,14 @@ type FakeServiceBroker struct {
 	DeprovisionError error
 
 	BrokerCalled bool
+}
+
+type FakeAsyncServiceBroker struct {
+	FakeServiceBroker
+}
+
+type FakeAsyncOnlyServiceBroker struct {
+	FakeServiceBroker
 }
 
 func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
@@ -61,24 +70,71 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
 	fakeBroker.BrokerCalled = true
+	fakeBroker.AcceptsIncomplete = acceptsIncomplete
 
 	if fakeBroker.ProvisionError != nil {
-		return fakeBroker.ProvisionError
+		return false, fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return brokerapi.ErrInstanceLimitMet
+		return false, brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ErrInstanceAlreadyExists
+		return false, brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ServiceDetails = serviceDetails
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return nil
+	return false, nil
+}
+
+func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
+	fakeBroker.BrokerCalled = true
+	fakeBroker.AcceptsIncomplete = acceptsIncomplete
+
+	if fakeBroker.ProvisionError != nil {
+		return false, fakeBroker.ProvisionError
+	}
+
+	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+		return false, brokerapi.ErrInstanceLimitMet
+	}
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return false, brokerapi.ErrInstanceAlreadyExists
+	}
+
+	fakeBroker.ServiceDetails = serviceDetails
+	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	return true, nil
+}
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
+	fakeBroker.BrokerCalled = true
+	fakeBroker.AcceptsIncomplete = acceptsIncomplete
+
+	if fakeBroker.ProvisionError != nil {
+		return false, fakeBroker.ProvisionError
+	}
+
+	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+		return false, brokerapi.ErrInstanceLimitMet
+	}
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return false, brokerapi.ErrInstanceAlreadyExists
+	}
+
+	if !acceptsIncomplete {
+		return false, brokerapi.ErrAsyncRequired
+	}
+
+	fakeBroker.ServiceDetails = serviceDetails
+	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	return true, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {

@@ -3,6 +3,7 @@ package brokerapi
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/pivotal-cf/brokerapi/auth"
 	"github.com/pivotal-golang/lager"
@@ -78,11 +79,18 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
+		acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
+
 		logger = logger.WithData(lager.Data{
 			instanceDetailsLogKey: serviceDetails,
 		})
 
-		if err := serviceBroker.Provision(instanceID, serviceDetails); err != nil {
+		provisionAsync, err := serviceBroker.Provision(instanceID, serviceDetails, acceptsIncompleteFlag)
+		if provisionAsync == true && acceptsIncompleteFlag == false {
+			err = ErrInvalidAsyncProvision
+		}
+
+		if err != nil {
 			switch err {
 			case ErrInstanceAlreadyExists:
 				logger.Error(instanceAlreadyExistsErrorKey, err)
@@ -90,6 +98,12 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			case ErrInstanceLimitMet:
 				logger.Error(instanceLimitReachedErrorKey, err)
 				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+			case ErrAsyncRequired:
+				logger.Error(instanceLimitReachedErrorKey, err)
+				respond(w, 422, ErrorResponse{
+					Error:       "AsyncRequired",
 					Description: err.Error(),
 				})
 			default:
@@ -101,7 +115,11 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
-		respond(w, http.StatusCreated, ProvisioningResponse{})
+		if provisionAsync {
+			respond(w, http.StatusAccepted, ProvisioningResponse{})
+		} else {
+			respond(w, http.StatusCreated, ProvisioningResponse{})
+		}
 	}
 }
 

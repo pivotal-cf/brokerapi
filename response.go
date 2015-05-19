@@ -3,6 +3,7 @@ package brokerapi
 type EmptyResponse struct{}
 
 type ErrorResponse struct {
+	Error       string `json:"error,omitempty"`
 	Description string `json:"description"`
 }
 
