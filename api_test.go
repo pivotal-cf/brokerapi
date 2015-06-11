@@ -60,13 +60,14 @@ var _ = Describe("Service Broker API", func() {
 	}
 
 	lastLogLine := func() lager.LogFormat {
-		if len(brokerLogger.Logs()) == 0 {
+		noOfLogLines := len(brokerLogger.Logs())
+		if noOfLogLines == 0 {
 			// better way to raise error?
 			err := errors.New("expected some log lines but there were none!")
 			Expect(err).NotTo(HaveOccurred())
 		}
 
-		return brokerLogger.Logs()[0]
+		return brokerLogger.Logs()[noOfLogLines-1]
 	}
 
 	BeforeEach(func() {
@@ -619,41 +620,6 @@ var _ = Describe("Service Broker API", func() {
 			})
 		})
 
-		Describe("last_operation", func() {
-			makeLastOperationRequest := func(instanceID string) *testflight.Response {
-				response := &testflight.Response{}
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
-					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
-					request.Header.Add("Content-Type", "application/json")
-					request.SetBasicAuth("username", "password")
-
-					response = r.Do(request)
-				})
-				return response
-			}
-
-			It("should return succeeded if the operation completed successfully", func() {
-				fakeServiceBroker.LastOperationState = "succeeded"
-				fakeServiceBroker.LastOperationDescription = "some description"
-
-				instanceID := "whatever"
-				response := makeLastOperationRequest(instanceID)
-
-				Expect(response.StatusCode).To(Equal(200))
-				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
-			})
-
-			It("should return a 404 in case the instance id is not found", func() {
-				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
-				instanceID := "non-existing"
-				response := makeLastOperationRequest(instanceID)
-
-				Expect(response.StatusCode).To(Equal(404))
-				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
-			})
-		})
-
 		Describe("unbinding", func() {
 			makeUnbindingRequest := func(instanceID string, bindingID string) *testflight.Response {
 				response := &testflight.Response{}
@@ -737,6 +703,64 @@ var _ = Describe("Service Broker API", func() {
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
+			})
+		})
+
+		Describe("last_operation", func() {
+			makeLastOperationRequest := func(instanceID string) *testflight.Response {
+				response := &testflight.Response{}
+				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
+					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
+					request.Header.Add("Content-Type", "application/json")
+					request.SetBasicAuth("username", "password")
+
+					response = r.Do(request)
+				})
+				return response
+			}
+
+			It("should return succeeded if the operation completed successfully", func() {
+				fakeServiceBroker.LastOperationState = "succeeded"
+				fakeServiceBroker.LastOperationDescription = "some description"
+
+				instanceID := "instanceID"
+				response := makeLastOperationRequest(instanceID)
+
+				logs := brokerLogger.Logs()
+
+				Expect(logs[0].Message).To(ContainSubstring("lastOperation.starting-check-for-operation"))
+				Expect(logs[0].Data["instance-id"]).To(ContainSubstring(instanceID))
+
+				Expect(logs[1].Message).To(ContainSubstring("lastOperation.done-check-for-operation"))
+				Expect(logs[1].Data["instance-id"]).To(ContainSubstring(instanceID))
+				Expect(logs[1].Data["state"]).To(ContainSubstring(fakeServiceBroker.LastOperationState))
+
+				Expect(response.StatusCode).To(Equal(200))
+				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+			})
+
+			It("should return a 404 and log in case the instance id is not found", func() {
+				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
+				instanceID := "non-existing"
+				response := makeLastOperationRequest(instanceID)
+
+				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.instance-missing"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
+
+				Expect(response.StatusCode).To(Equal(404))
+				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
+			})
+
+			It("should return an internal sever error for all other errors", func() {
+				fakeServiceBroker.LastOperationError = errors.New("Blah")
+				response := makeLastOperationRequest("instanceID")
+
+				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.unknown-error"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("Blah"))
+
+				Expect(response.StatusCode).To(Equal(500))
+				Expect(response.Body).To(MatchJSON(`{"description": "Blah"}`))
 			})
 		})
 	})

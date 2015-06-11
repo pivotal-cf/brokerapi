@@ -13,6 +13,7 @@ const provisionLogKey = "provision"
 const deprovisionLogKey = "deprovision"
 const bindLogKey = "bind"
 const unbindLogKey = "unbind"
+const lastOperationLogKey = "lastOperation"
 
 const instanceIDLogKey = "instance-id"
 const instanceDetailsLogKey = "instance-details"
@@ -235,14 +236,33 @@ func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
+
+		logger := logger.Session(lastOperationLogKey, lager.Data{
+			instanceIDLogKey: instanceID,
+		})
+
+		logger.Info("starting-check-for-operation")
+
 		lastOperation, err := serviceBroker.LastOperation(instanceID)
 
 		if err != nil {
-			respond(w, http.StatusNotFound, ErrorResponse{
-				Description: err.Error(),
-			})
+			switch err {
+			case ErrInstanceDoesNotExist:
+				logger.Error(instanceMissingErrorKey, err)
+				respond(w, http.StatusNotFound, ErrorResponse{
+					Description: err.Error(),
+				})
+			default:
+				logger.Error(unknownErrorKey, err)
+				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+			}
+
 			return
 		}
+
+		logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-operation")
 
 		lastOperationResponse := LastOperationResponse{
 			State:       lastOperation.State,
