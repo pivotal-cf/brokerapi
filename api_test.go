@@ -620,10 +620,7 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		Describe("last_operation", func() {
-			It("should return succeeded if the operation completed successfully", func() {
-				fakeServiceBroker.LastOperationState = "succeeded"
-				fakeServiceBroker.LastOperationDescription = "some description"
-				instanceID := "whatever"
+			makeLastOperationRequest := func(instanceID string) *testflight.Response {
 				response := &testflight.Response{}
 				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
@@ -633,9 +630,27 @@ var _ = Describe("Service Broker API", func() {
 
 					response = r.Do(request)
 				})
+				return response
+			}
+
+			It("should return succeeded if the operation completed successfully", func() {
+				fakeServiceBroker.LastOperationState = "succeeded"
+				fakeServiceBroker.LastOperationDescription = "some description"
+
+				instanceID := "whatever"
+				response := makeLastOperationRequest(instanceID)
 
 				Expect(response.StatusCode).To(Equal(200))
 				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+			})
+
+			It("should return a 404 in case the instance id is not found", func() {
+				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
+				instanceID := "non-existing"
+				response := makeLastOperationRequest(instanceID)
+
+				Expect(response.StatusCode).To(Equal(404))
+				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
 			})
 		})
 

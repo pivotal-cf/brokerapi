@@ -235,7 +235,14 @@ func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := router.Vars(req)
 		instanceID := vars["instance_id"]
-		lastOperation, _ := serviceBroker.LastOperation(instanceID)
+		lastOperation, err := serviceBroker.LastOperation(instanceID)
+
+		if err != nil {
+			respond(w, http.StatusNotFound, ErrorResponse{
+				Description: err.Error(),
+			})
+			return
+		}
 
 		lastOperationResponse := LastOperationResponse{
 			State:       lastOperation.State,

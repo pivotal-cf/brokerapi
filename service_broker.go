@@ -11,7 +11,7 @@ type ServiceBroker interface {
 	Bind(instanceID, bindingID string) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 
-	LastOperation(instanceID string) (LastOperation, error)
+	LastOperation(instanceID string) (*LastOperation, error)
 }
 
 type ProvisionAsync bool
