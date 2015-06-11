@@ -10,9 +10,16 @@ type ServiceBroker interface {
 
 	Bind(instanceID, bindingID string) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
+
+	LastOperation(instanceID string) (LastOperation, error)
 }
 
 type ProvisionAsync bool
+
+type LastOperation struct {
+	State       string
+	Description string
+}
 
 type ServiceDetails struct {
 	ID               string `json:"service_id"`

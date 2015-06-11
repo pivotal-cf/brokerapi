@@ -18,7 +18,9 @@ type FakeServiceBroker struct {
 	BindError        error
 	DeprovisionError error
 
-	BrokerCalled bool
+	BrokerCalled             bool
+	LastOperationState       string
+	LastOperationDescription string
 }
 
 type FakeAsyncServiceBroker struct {
@@ -181,6 +183,10 @@ func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error 
 	}
 
 	return brokerapi.ErrInstanceDoesNotExist
+}
+
+func (fakeBroker *FakeServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {
+	return brokerapi.LastOperation{State: fakeBroker.LastOperationState, Description: fakeBroker.LastOperationDescription}, nil
 }
 
 type FakeCredentials struct {

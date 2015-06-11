@@ -18,3 +18,8 @@ type ProvisioningResponse struct {
 type BindingResponse struct {
 	Credentials interface{} `json:"credentials"`
 }
+
+type LastOperationResponse struct {
+	State       string `json:"state"`
+	Description string `json:"description"`
+}

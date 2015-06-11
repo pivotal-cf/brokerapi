@@ -40,6 +40,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 
 	router.Put("/v2/service_instances/{instance_id}", provision(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}", deprovision(serviceBroker, router, logger))
+	router.Get("/v2/service_instances/{instance_id}/last_operation", lastOperation(serviceBroker, router, logger))
 
 	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, router, logger))
@@ -228,4 +229,19 @@ func respond(w http.ResponseWriter, status int, response interface{}) {
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(response)
+}
+
+func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
+		instanceID := vars["instance_id"]
+		lastOperation, _ := serviceBroker.LastOperation(instanceID)
+
+		lastOperationResponse := LastOperationResponse{
+			State:       lastOperation.State,
+			Description: lastOperation.Description,
+		}
+
+		respond(w, http.StatusOK, lastOperationResponse)
+	}
 }

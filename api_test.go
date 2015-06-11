@@ -619,6 +619,26 @@ var _ = Describe("Service Broker API", func() {
 			})
 		})
 
+		Describe("last_operation", func() {
+			It("should return succeeded if the operation completed successfully", func() {
+				fakeServiceBroker.LastOperationState = "succeeded"
+				fakeServiceBroker.LastOperationDescription = "some description"
+				instanceID := "whatever"
+				response := &testflight.Response{}
+				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
+					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
+					request.Header.Add("Content-Type", "application/json")
+					request.SetBasicAuth("username", "password")
+
+					response = r.Do(request)
+				})
+
+				Expect(response.StatusCode).To(Equal(200))
+				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+			})
+		})
+
 		Describe("unbinding", func() {
 			makeUnbindingRequest := func(instanceID string, bindingID string) *testflight.Response {
 				response := &testflight.Response{}
