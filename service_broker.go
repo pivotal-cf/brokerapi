@@ -5,7 +5,9 @@ import "errors"
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string, serviceDetails ServiceDetails, acceptsIncomplete bool) (ProvisionAsync, error)
+	ProvisionSync(instanceID string, serviceDetails ServiceDetails) (error)
+	ProvisionAsync(instanceID string, serviceDetails ServiceDetails) (error)
+
 	Deprovision(instanceID string) error
 
 	Bind(instanceID, bindingID string) (interface{}, error)

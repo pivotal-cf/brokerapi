@@ -8,6 +8,7 @@ type FakeServiceBroker struct {
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
+	AysncProvisionInstanceIds []string
 
 	BoundInstanceIDs []string
 	BoundBindingIDs  []string
@@ -73,71 +74,74 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
-	fakeBroker.BrokerCalled = true
-	fakeBroker.AcceptsIncomplete = acceptsIncomplete
-
-	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
-	}
-
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
-	}
-
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
-	}
-
+func (fakeBroker *FakeServiceBroker) ProvisionAsync(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	fakeBroker.ServiceDetails = serviceDetails
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return false, nil
+	fakeBroker.AysncProvisionInstanceIds = append(fakeBroker.AysncProvisionInstanceIds, instanceID)
+	return nil
 }
 
-func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
+func (fakeBroker *FakeServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
 	fakeBroker.BrokerCalled = true
-	fakeBroker.AcceptsIncomplete = acceptsIncomplete
 
 	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
+		return fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
+		return brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
+		return brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ServiceDetails = serviceDetails
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return true, nil
+	return nil
 }
 
-func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails, acceptsIncomplete bool) (brokerapi.ProvisionAsync, error) {
+func (fakeBroker *FakeAsyncServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
 	fakeBroker.BrokerCalled = true
-	fakeBroker.AcceptsIncomplete = acceptsIncomplete
 
 	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
+		return fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
+		return brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
-	}
-
-	if !acceptsIncomplete {
-		return false, brokerapi.ErrAsyncRequired
+		return brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ServiceDetails = serviceDetails
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return true, nil
+	return nil
+}
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+	return brokerapi.ErrAsyncRequired
+}
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionAsync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.ProvisionError != nil {
+		return fakeBroker.ProvisionError
+	}
+
+	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+		return brokerapi.ErrInstanceLimitMet
+	}
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return brokerapi.ErrInstanceAlreadyExists
+	}
+
+	fakeBroker.ServiceDetails = serviceDetails
+	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	return nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {

@@ -220,11 +220,12 @@ var _ = Describe("Service Broker API", func() {
 
 			Describe("accepts_incomplete", func() {
 				Context("when the accepts_incomplete flag is true", func() {
-					It("calls Provision on the service broker with acceptsIncomplete", func() {
+					It("calls ProvisionAsync on the service broker", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, serviceDetails, acceptsIncomplete)
 						Expect(fakeServiceBroker.ServiceDetails).To(Equal(serviceDetails))
-						Expect(fakeServiceBroker.AcceptsIncomplete).To(Equal(acceptsIncomplete))
+
+						Expect(fakeServiceBroker.AysncProvisionInstanceIds).To(ContainElement(instanceID))
 					})
 
 					Context("when the broker chooses to provision asyncronously", func() {
@@ -247,7 +248,7 @@ var _ = Describe("Service Broker API", func() {
 
 					Context("when the broker chooses to provision syncronously", func() {
 						It("returns a 201", func() {
-							acceptsIncomplete := true
+							acceptsIncomplete := false
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, serviceDetails, acceptsIncomplete)
 							Expect(response.StatusCode).To(Equal(http.StatusCreated))
 						})
@@ -278,25 +279,6 @@ var _ = Describe("Service Broker API", func() {
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, serviceDetails, acceptsIncomplete)
 							Expect(response.StatusCode).To(Equal(422))
 							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
-						})
-					})
-
-					Context("when the broker invalidly tries to respond asyncronously", func() {
-						BeforeEach(func() {
-							fakeServiceBroker = &fakes.FakeServiceBroker{
-								InstanceLimit: 3,
-							}
-							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
-								*fakeServiceBroker,
-							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
-						})
-
-						It("returns a 500", func() {
-							acceptsIncomplete := false
-							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, serviceDetails, acceptsIncomplete)
-							Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
-							Expect(response.Body).To(MatchJSON(fixture("invalid_async_provision_error.json")))
 						})
 					})
 				})
