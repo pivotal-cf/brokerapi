@@ -29,13 +29,13 @@ var _ = Describe("Service Broker API", func() {
 		Password: "password",
 	}
 
-	makeInstanceProvisioningRequest := func(instanceID string, serviceDetails brokerapi.ServiceDetails) *testflight.Response {
+	makeInstanceProvisioningRequest := func(instanceID string, details brokerapi.ProvisionDetails) *testflight.Response {
 		response := &testflight.Response{}
 		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 			path := "/v2/service_instances/" + instanceID
 
 			buffer := &bytes.Buffer{}
-			json.NewEncoder(buffer).Encode(serviceDetails)
+			json.NewEncoder(buffer).Encode(details)
 			request, err := http.NewRequest("PUT", path, buffer)
 			Expect(err).NotTo(HaveOccurred())
 			request.Header.Add("Content-Type", "application/json")
@@ -183,11 +183,11 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("provisioning", func() {
 			var instanceID string
-			var serviceDetails brokerapi.ServiceDetails
+			var details brokerapi.ProvisionDetails
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
-				serviceDetails = brokerapi.ServiceDetails{
+				details = brokerapi.ProvisionDetails{
 					ID:               "service-id",
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
@@ -196,18 +196,18 @@ var _ = Describe("Service Broker API", func() {
 			})
 
 			It("calls Provision on the service broker with all params", func() {
-				makeInstanceProvisioningRequest(instanceID, serviceDetails)
-				Expect(fakeServiceBroker.ServiceDetails).To(Equal(serviceDetails))
+				makeInstanceProvisioningRequest(instanceID, details)
+				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
 			})
 
 			It("calls Provision on the service broker with the instance id", func() {
-				makeInstanceProvisioningRequest(instanceID, serviceDetails)
+				makeInstanceProvisioningRequest(instanceID, details)
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 			})
 
 			Context("when there are arbitrary params", func() {
 				BeforeEach(func() {
-					serviceDetails.Parameters = map[string]interface{}{
+					details.Parameters = map[string]interface{}{
 						"string": "some-string",
 						"number": 1,
 						"object": struct{ Name string }{"some-name"},
@@ -216,45 +216,45 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("calls Provision on the service broker with all params", func() {
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
-					Expect(fakeServiceBroker.ServiceDetails.Parameters["string"]).To(Equal("some-string"))
-					Expect(fakeServiceBroker.ServiceDetails.Parameters["number"]).To(Equal(1.0))
-					Expect(fakeServiceBroker.ServiceDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
-					actual, _ := fakeServiceBroker.ServiceDetails.Parameters["object"].(map[string]interface{})
+					makeInstanceProvisioningRequest(instanceID, details)
+					Expect(fakeServiceBroker.ProvisionDetails.Parameters["string"]).To(Equal("some-string"))
+					Expect(fakeServiceBroker.ProvisionDetails.Parameters["number"]).To(Equal(1.0))
+					Expect(fakeServiceBroker.ProvisionDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
+					actual, _ := fakeServiceBroker.ProvisionDetails.Parameters["object"].(map[string]interface{})
 					Expect(actual["Name"]).To(Equal("some-name"))
 				})
 			})
 
 			Context("when the instance does not exist", func() {
 				It("returns a 201", func() {
-					response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					response := makeInstanceProvisioningRequest(instanceID, details)
 					Expect(response.StatusCode).To(Equal(201))
 				})
 
 				It("returns json with a dashboard_url field", func() {
-					response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					response := makeInstanceProvisioningRequest(instanceID, details)
 					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
 				})
 
 				Context("when the instance limit has been reached", func() {
 					BeforeEach(func() {
 						for i := 0; i < fakeServiceBroker.InstanceLimit; i++ {
-							makeInstanceProvisioningRequest(uniqueInstanceID(), serviceDetails)
+							makeInstanceProvisioningRequest(uniqueInstanceID(), details)
 						}
 					})
 
 					It("returns a 500", func() {
-						response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						response := makeInstanceProvisioningRequest(instanceID, details)
 						Expect(response.StatusCode).To(Equal(500))
 					})
 
 					It("returns json with a description field and a useful error message", func() {
-						response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						response := makeInstanceProvisioningRequest(instanceID, details)
 						Expect(response.Body).To(MatchJSON(fixture("instance_limit_error.json")))
 					})
 
 					It("logs an appropriate error", func() {
-						makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						makeInstanceProvisioningRequest(instanceID, details)
 
 						Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-limit-reached"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance limit for this service has been reached"))
@@ -267,17 +267,17 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("returns a 500", func() {
-						response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						response := makeInstanceProvisioningRequest(instanceID, details)
 						Expect(response.StatusCode).To(Equal(500))
 					})
 
 					It("returns json with a description field and a useful error message", func() {
-						response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						response := makeInstanceProvisioningRequest(instanceID, details)
 						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
 					})
 
 					It("logs an appropriate error", func() {
-						makeInstanceProvisioningRequest(instanceID, serviceDetails)
+						makeInstanceProvisioningRequest(instanceID, details)
 						Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
 					})
@@ -316,21 +316,21 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance already exists", func() {
 				BeforeEach(func() {
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					makeInstanceProvisioningRequest(instanceID, details)
 				})
 
 				It("returns a 409", func() {
-					response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					response := makeInstanceProvisioningRequest(instanceID, details)
 					Expect(response.StatusCode).To(Equal(409))
 				})
 
 				It("returns an empty JSON object", func() {
-					response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					response := makeInstanceProvisioningRequest(instanceID, details)
 					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					makeInstanceProvisioningRequest(instanceID, details)
 					Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance already exists"))
 				})
@@ -346,16 +346,16 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance exists", func() {
 				var instanceID string
-				var serviceDetails brokerapi.ServiceDetails
+				var details brokerapi.ProvisionDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = brokerapi.ServiceDetails{
+					details = brokerapi.ProvisionDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					makeInstanceProvisioningRequest(instanceID, details)
 				})
 
 				It("returns a 200", func() {
@@ -392,16 +392,16 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when instance deprovisioning fails", func() {
 				var instanceID string
-				var serviceDetails brokerapi.ServiceDetails
+				var details brokerapi.ProvisionDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = brokerapi.ServiceDetails{
+					details = brokerapi.ProvisionDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					makeInstanceProvisioningRequest(instanceID, details)
 				})
 
 				BeforeEach(func() {
@@ -604,16 +604,16 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				var instanceID string
-				var serviceDetails brokerapi.ServiceDetails
+				var details brokerapi.ProvisionDetails
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					serviceDetails = brokerapi.ServiceDetails{
+					details = brokerapi.ProvisionDetails{
 						PlanID:           "plan-id",
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					makeInstanceProvisioningRequest(instanceID, details)
 				})
 
 				Context("and the binding exists", func() {

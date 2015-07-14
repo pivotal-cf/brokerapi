@@ -70,8 +70,8 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			instanceIDLogKey: instanceID,
 		})
 
-		var serviceDetails ServiceDetails
-		if err := json.NewDecoder(req.Body).Decode(&serviceDetails); err != nil {
+		var details ProvisionDetails
+		if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 			logger.Error(invalidServiceDetailsErrorKey, err)
 			respond(w, statusUnprocessableEntity, ErrorResponse{
 				Description: err.Error(),
@@ -80,10 +80,10 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 		}
 
 		logger = logger.WithData(lager.Data{
-			instanceDetailsLogKey: serviceDetails,
+			instanceDetailsLogKey: details,
 		})
 
-		if err := serviceBroker.Provision(instanceID, serviceDetails); err != nil {
+		if err := serviceBroker.Provision(instanceID, details); err != nil {
 			switch err {
 			case ErrInstanceAlreadyExists:
 				logger.Error(instanceAlreadyExistsErrorKey, err)

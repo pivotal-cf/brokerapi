@@ -3,7 +3,7 @@ package fakes
 import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ServiceDetails brokerapi.ServiceDetails
+	ProvisionDetails brokerapi.ProvisionDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -62,7 +62,7 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
@@ -77,7 +77,7 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, serviceDetails
 		return brokerapi.ErrInstanceAlreadyExists
 	}
 
-	fakeBroker.ServiceDetails = serviceDetails
+	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return nil
 }

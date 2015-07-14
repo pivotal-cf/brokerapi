@@ -5,14 +5,14 @@ import "errors"
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string, serviceDetails ServiceDetails) error
+	Provision(instanceID string, details ProvisionDetails) error
 	Deprovision(instanceID string) error
 
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 }
 
-type ServiceDetails struct {
+type ProvisionDetails struct {
 	ID               string                 `json:"service_id"`
 	PlanID           string                 `json:"plan_id"`
 	OrganizationGUID string                 `json:"organization_guid"`
