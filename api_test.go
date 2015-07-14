@@ -453,9 +453,15 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		Describe("binding", func() {
-			var details *brokerapi.BindDetails
+			var (
+				instanceID string
+				bindingID  string
+				details    *brokerapi.BindDetails
+			)
 
 			BeforeEach(func() {
+				instanceID = uniqueInstanceID()
+				bindingID = uniqueBindingID()
 				details = &brokerapi.BindDetails{
 					AppGUID:   "app_guid",
 					PlanID:    "plan_id",
@@ -465,8 +471,6 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
-					instanceID := uniqueInstanceID()
-					bindingID := uniqueBindingID()
 					makeBindingRequest(instanceID, bindingID, details)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
 					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
@@ -487,6 +491,26 @@ var _ = Describe("Service Broker API", func() {
 					It("returns a 422", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
 						Expect(response.StatusCode).To(Equal(422))
+					})
+				})
+
+				Context("when there are arbitrary params", func() {
+					BeforeEach(func() {
+						details.Parameters = map[string]interface{}{
+							"string": "some-string",
+							"number": 1,
+							"object": struct{ Name string }{"some-name"},
+							"array":  []interface{}{"a", "b", "c"},
+						}
+					})
+
+					It("calls Bind on the service broker with all params", func() {
+						makeBindingRequest(instanceID, bindingID, details)
+						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["string"]).To(Equal("some-string"))
+						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["number"]).To(Equal(1.0))
+						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
+						actual, _ := fakeServiceBroker.BoundBindingDetails.Parameters["object"].(map[string]interface{})
+						Expect(actual["Name"]).To(Equal("some-name"))
 					})
 				})
 			})

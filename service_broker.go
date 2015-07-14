@@ -21,9 +21,10 @@ type ServiceDetails struct {
 }
 
 type BindDetails struct {
-	AppGUID   string `json:"app_guid"`
-	PlanID    string `json:"plan_id"`
-	ServiceID string `json:"service_id"`
+	AppGUID    string                 `json:"app_guid"`
+	PlanID     string                 `json:"plan_id"`
+	ServiceID  string                 `json:"service_id"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 var (

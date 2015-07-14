@@ -32,9 +32,9 @@ func (m *marshalToJSONMatcher) Match(actual interface{}) (success bool, err erro
 }
 
 func (m *marshalToJSONMatcher) FailureMessage(actual interface{}) (message string) {
-    return fmt.Sprintf("expected %s to equal %s", actual, m.expectedJSON)
+	return fmt.Sprintf("expected %s to equal %s", actual, m.expectedJSON)
 }
 
 func (m *marshalToJSONMatcher) NegatedFailureMessage(actual interface{}) (message string) {
-    return fmt.Sprintf("expected %s not to equal %s", actual, m.expectedJSON)
+	return fmt.Sprintf("expected %s not to equal %s", actual, m.expectedJSON)
 }
