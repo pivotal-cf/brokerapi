@@ -13,10 +13,11 @@ type ServiceBroker interface {
 }
 
 type ServiceDetails struct {
-	ID               string `json:"service_id"`
-	PlanID           string `json:"plan_id"`
-	OrganizationGUID string `json:"organization_guid"`
-	SpaceGUID        string `json:"space_guid"`
+	ID               string                 `json:"service_id"`
+	PlanID           string                 `json:"plan_id"`
+	OrganizationGUID string                 `json:"organization_guid"`
+	SpaceGUID        string                 `json:"space_guid"`
+	Parameters       map[string]interface{} `json:"parameters"`
 }
 
 var (

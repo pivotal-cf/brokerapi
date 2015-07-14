@@ -205,6 +205,26 @@ var _ = Describe("Service Broker API", func() {
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 			})
 
+			Context("when there are arbitrary params", func() {
+				BeforeEach(func() {
+					serviceDetails.Parameters = map[string]interface{}{
+						"string": "some-string",
+						"number": 1,
+						"object": struct{ Name string }{"some-name"},
+						"array":  []interface{}{"a", "b", "c"},
+					}
+				})
+
+				It("calls Provision on the service broker with all params", func() {
+					makeInstanceProvisioningRequest(instanceID, serviceDetails)
+					Expect(fakeServiceBroker.ServiceDetails.Parameters["string"]).To(Equal("some-string"))
+					Expect(fakeServiceBroker.ServiceDetails.Parameters["number"]).To(Equal(1.0))
+					Expect(fakeServiceBroker.ServiceDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
+					actual, _ := fakeServiceBroker.ServiceDetails.Parameters["object"].(map[string]interface{})
+					Expect(actual["Name"]).To(Equal("some-name"))
+				})
+			})
+
 			Context("when the instance does not exist", func() {
 				It("returns a 201", func() {
 					response := makeInstanceProvisioningRequest(instanceID, serviceDetails)
