@@ -188,6 +188,7 @@ var _ = Describe("Service Broker API", func() {
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				serviceDetails = brokerapi.ServiceDetails{
+					ID:               "service-id",
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
 					SpaceGUID:        "space-guid",
