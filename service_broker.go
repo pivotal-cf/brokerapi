@@ -8,7 +8,7 @@ type ServiceBroker interface {
 	Provision(instanceID string, serviceDetails ServiceDetails) error
 	Deprovision(instanceID string) error
 
-	Bind(instanceID, bindingID string) (interface{}, error)
+	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 }
 
@@ -18,6 +18,12 @@ type ServiceDetails struct {
 	OrganizationGUID string                 `json:"organization_guid"`
 	SpaceGUID        string                 `json:"space_guid"`
 	Parameters       map[string]interface{} `json:"parameters"`
+}
+
+type BindDetails struct {
+	AppGUID   string `json:"app_guid"`
+	PlanID    string `json:"plan_id"`
+	ServiceID string `json:"service_id"`
 }
 
 var (

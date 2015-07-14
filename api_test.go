@@ -428,12 +428,22 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("binding lifecycle endpoint", func() {
-		makeBindingRequest := func(instanceID string, bindingID string) *testflight.Response {
+		makeBindingRequest := func(instanceID, bindingID string, details *brokerapi.BindDetails) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
 					instanceID, bindingID)
-				request, _ := http.NewRequest("PUT", path, strings.NewReader(""))
+
+				buffer := &bytes.Buffer{}
+
+				if details != nil {
+					json.NewEncoder(buffer).Encode(details)
+				}
+
+				request, err := http.NewRequest("PUT", path, buffer)
+
+				Expect(err).NotTo(HaveOccurred())
+
 				request.Header.Add("Content-Type", "application/json")
 				request.SetBasicAuth("username", "password")
 
@@ -443,23 +453,41 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		Describe("binding", func() {
+			var details *brokerapi.BindDetails
+
+			BeforeEach(func() {
+				details = &brokerapi.BindDetails{
+					AppGUID:   "app_guid",
+					PlanID:    "plan_id",
+					ServiceID: "service_id",
+				}
+			})
+
 			Context("when the associated instance exists", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
 					instanceID := uniqueInstanceID()
 					bindingID := uniqueBindingID()
-					makeBindingRequest(instanceID, bindingID)
+					makeBindingRequest(instanceID, bindingID, details)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
 					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
+					Expect(fakeServiceBroker.BoundBindingDetails).To(Equal(*details))
 				})
 
 				It("returns the credentials returned by Bind", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.Body).To(MatchJSON(fixture("binding.json")))
 				})
 
 				It("returns a 201", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(201))
+				})
+
+				Context("when no bind details are being passed", func() {
+					It("returns a 422", func() {
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
+						Expect(response.StatusCode).To(Equal(422))
+					})
 				})
 			})
 
@@ -471,18 +499,18 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a 404", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(404))
 				})
 
 				It("returns an error JSON object", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.Body).To(MatchJSON(`{"description":"instance does not exist"}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
-					makeBindingRequest(instanceID, uniqueBindingID())
+					makeBindingRequest(instanceID, uniqueBindingID(), details)
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
@@ -496,19 +524,19 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a 409", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(409))
 				})
 
 				It("returns an error JSON object", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.Body).To(MatchJSON(`{"description":"binding already exists"}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
-					makeBindingRequest(instanceID, uniqueBindingID())
-					makeBindingRequest(instanceID, uniqueBindingID())
+					makeBindingRequest(instanceID, uniqueBindingID(), details)
+					makeBindingRequest(instanceID, uniqueBindingID(), details)
 
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding already exists"))
@@ -521,13 +549,13 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a generic 500 error response", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(500))
 					Expect(response.Body).To(MatchJSON(`{"description":"random error"}`))
 				})
 
 				It("logs a detailed error message", func() {
-					makeBindingRequest(uniqueInstanceID(), uniqueBindingID())
+					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.unknown-error"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("random error"))
@@ -569,7 +597,7 @@ var _ = Describe("Service Broker API", func() {
 
 					BeforeEach(func() {
 						bindingID = uniqueBindingID()
-						makeBindingRequest(instanceID, bindingID)
+						makeBindingRequest(instanceID, bindingID, &brokerapi.BindDetails{})
 					})
 
 					It("returns a 200", func() {

@@ -8,8 +8,9 @@ type FakeServiceBroker struct {
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
 
-	BoundInstanceIDs []string
-	BoundBindingIDs  []string
+	BoundInstanceIDs    []string
+	BoundBindingIDs     []string
+	BoundBindingDetails brokerapi.BindDetails
 
 	InstanceLimit int
 
@@ -96,12 +97,14 @@ func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
 	return brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string) (interface{}, error) {
+func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (interface{}, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.BindError != nil {
 		return nil, fakeBroker.BindError
 	}
+
+	fakeBroker.BoundBindingDetails = details
 
 	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
 	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)

@@ -18,6 +18,7 @@ const instanceDetailsLogKey = "instance-details"
 const bindingIDLogKey = "binding-id"
 
 const invalidServiceDetailsErrorKey = "invalid-service-details"
+const invalidBindDetailsErrorKey = "invalid-bind-details"
 const instanceLimitReachedErrorKey = "instance-limit-reached"
 const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
@@ -142,7 +143,16 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			bindingIDLogKey:  bindingID,
 		})
 
-		credentials, err := serviceBroker.Bind(instanceID, bindingID)
+		var details BindDetails
+		if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
+			logger.Error(invalidBindDetailsErrorKey, err)
+			respond(w, statusUnprocessableEntity, ErrorResponse{
+				Description: err.Error(),
+			})
+			return
+		}
+
+		credentials, err := serviceBroker.Bind(instanceID, bindingID, details)
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
