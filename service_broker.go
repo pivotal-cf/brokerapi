@@ -17,14 +17,14 @@ type ProvisionDetails struct {
 	PlanID           string                 `json:"plan_id"`
 	OrganizationGUID string                 `json:"organization_guid"`
 	SpaceGUID        string                 `json:"space_guid"`
-	Parameters       map[string]interface{} `json:"parameters"`
+	Parameters       map[string]interface{} `json:"parameters,omitempty"`
 }
 
 type BindDetails struct {
 	AppGUID    string                 `json:"app_guid"`
 	PlanID     string                 `json:"plan_id"`
 	ServiceID  string                 `json:"service_id"`
-	Parameters map[string]interface{} `json:"parameters"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
 }
 
 var (
