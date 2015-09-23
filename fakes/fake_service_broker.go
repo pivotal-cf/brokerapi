@@ -3,7 +3,8 @@ package fakes
 import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ProvisionDetails brokerapi.ProvisionDetails
+	ProvisionDetails   brokerapi.ProvisionDetails
+	DeprovisionDetails brokerapi.DeprovisionDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -11,6 +12,8 @@ type FakeServiceBroker struct {
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
 	BoundBindingDetails brokerapi.BindDetails
+
+	UnbindingDetails brokerapi.UnbindDetails
 
 	InstanceLimit int
 
@@ -82,13 +85,14 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details broker
 	return nil
 }
 
-func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
+func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.DeprovisionError != nil {
 		return fakeBroker.DeprovisionError
 	}
 
+	fakeBroker.DeprovisionDetails = details
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
@@ -117,8 +121,10 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details 
 	}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error {
+func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
 	fakeBroker.BrokerCalled = true
+
+	fakeBroker.UnbindingDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
