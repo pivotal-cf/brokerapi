@@ -88,13 +88,11 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 		})
 
 		var err error
-		if (acceptsIncompleteFlag == true) {
+		if acceptsIncompleteFlag == true {
 			err = serviceBroker.ProvisionAsync(instanceID, serviceDetails)
 		} else {
 			err = serviceBroker.ProvisionSync(instanceID, serviceDetails)
 		}
-
-
 
 		if err != nil {
 			switch err {

@@ -5,8 +5,8 @@ import "errors"
 type ServiceBroker interface {
 	Services() []Service
 
-	ProvisionSync(instanceID string, serviceDetails ServiceDetails) (error)
-	ProvisionAsync(instanceID string, serviceDetails ServiceDetails) (error)
+	ProvisionSync(instanceID string, serviceDetails ServiceDetails) error
+	ProvisionAsync(instanceID string, serviceDetails ServiceDetails) error
 
 	Deprovision(instanceID string) error
 

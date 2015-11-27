@@ -6,8 +6,8 @@ type FakeServiceBroker struct {
 	ServiceDetails    brokerapi.ServiceDetails
 	AcceptsIncomplete bool
 
-	ProvisionedInstanceIDs   []string
-	DeprovisionedInstanceIDs []string
+	ProvisionedInstanceIDs    []string
+	DeprovisionedInstanceIDs  []string
 	AysncProvisionInstanceIds []string
 
 	BoundInstanceIDs []string
@@ -80,7 +80,7 @@ func (fakeBroker *FakeServiceBroker) ProvisionAsync(instanceID string, serviceDe
 	return nil
 }
 
-func (fakeBroker *FakeServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+func (fakeBroker *FakeServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
@@ -100,7 +100,7 @@ func (fakeBroker *FakeServiceBroker) ProvisionSync(instanceID string, serviceDet
 	return nil
 }
 
-func (fakeBroker *FakeAsyncServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+func (fakeBroker *FakeAsyncServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
@@ -120,11 +120,11 @@ func (fakeBroker *FakeAsyncServiceBroker) ProvisionSync(instanceID string, servi
 	return nil
 }
 
-func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionSync(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	return brokerapi.ErrAsyncRequired
 }
 
-func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionAsync(instanceID string, serviceDetails brokerapi.ServiceDetails) (error) {
+func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionAsync(instanceID string, serviceDetails brokerapi.ServiceDetails) error {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
