@@ -29,10 +29,11 @@ var _ = Describe("Service Broker API", func() {
 		Password: "password",
 	}
 
-	makeInstanceProvisioningRequest := func(instanceID string, details brokerapi.ProvisionDetails) *testflight.Response {
+	makeInstanceProvisioningRequest := func(instanceID string, details brokerapi.ProvisionDetails, queryString string) *testflight.Response {
 		response := &testflight.Response{}
+
 		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-			path := "/v2/service_instances/" + instanceID
+			path := "/v2/service_instances/" + instanceID + queryString
 
 			buffer := &bytes.Buffer{}
 			json.NewEncoder(buffer).Encode(details)
@@ -46,14 +47,27 @@ var _ = Describe("Service Broker API", func() {
 		return response
 	}
 
+	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details brokerapi.ProvisionDetails, acceptsIncomplete bool) *testflight.Response {
+		var acceptsIncompleteFlag string
+
+		if acceptsIncomplete {
+			acceptsIncompleteFlag = "?accepts_incomplete=true"
+		} else {
+			acceptsIncompleteFlag = "?accepts_incomplete=false"
+		}
+
+		return makeInstanceProvisioningRequest(instanceID, details, acceptsIncompleteFlag)
+	}
+
 	lastLogLine := func() lager.LogFormat {
-		if len(brokerLogger.Logs()) == 0 {
+		noOfLogLines := len(brokerLogger.Logs())
+		if noOfLogLines == 0 {
 			// better way to raise error?
 			err := errors.New("expected some log lines but there were none!")
 			Expect(err).NotTo(HaveOccurred())
 		}
 
-		return brokerLogger.Logs()[0]
+		return brokerLogger.Logs()[noOfLogLines-1]
 	}
 
 	BeforeEach(func() {
@@ -196,12 +210,12 @@ var _ = Describe("Service Broker API", func() {
 			})
 
 			It("calls Provision on the service broker with all params", func() {
-				makeInstanceProvisioningRequest(instanceID, details)
+				makeInstanceProvisioningRequest(instanceID, details, "")
 				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
 			})
 
 			It("calls Provision on the service broker with the instance id", func() {
-				makeInstanceProvisioningRequest(instanceID, details)
+				makeInstanceProvisioningRequest(instanceID, details, "")
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 			})
 
@@ -216,7 +230,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("calls Provision on the service broker with all params", func() {
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["string"]).To(Equal("some-string"))
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["number"]).To(Equal(1.0))
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
@@ -227,34 +241,34 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance does not exist", func() {
 				It("returns a 201", func() {
-					response := makeInstanceProvisioningRequest(instanceID, details)
+					response := makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(response.StatusCode).To(Equal(201))
 				})
 
 				It("returns json with a dashboard_url field", func() {
-					response := makeInstanceProvisioningRequest(instanceID, details)
+					response := makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
 				})
 
 				Context("when the instance limit has been reached", func() {
 					BeforeEach(func() {
 						for i := 0; i < fakeServiceBroker.InstanceLimit; i++ {
-							makeInstanceProvisioningRequest(uniqueInstanceID(), details)
+							makeInstanceProvisioningRequest(uniqueInstanceID(), details, "")
 						}
 					})
 
 					It("returns a 500", func() {
-						response := makeInstanceProvisioningRequest(instanceID, details)
+						response := makeInstanceProvisioningRequest(instanceID, details, "")
 						Expect(response.StatusCode).To(Equal(500))
 					})
 
 					It("returns json with a description field and a useful error message", func() {
-						response := makeInstanceProvisioningRequest(instanceID, details)
+						response := makeInstanceProvisioningRequest(instanceID, details, "")
 						Expect(response.Body).To(MatchJSON(fixture("instance_limit_error.json")))
 					})
 
 					It("logs an appropriate error", func() {
-						makeInstanceProvisioningRequest(instanceID, details)
+						makeInstanceProvisioningRequest(instanceID, details, "")
 
 						Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-limit-reached"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance limit for this service has been reached"))
@@ -267,17 +281,17 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("returns a 500", func() {
-						response := makeInstanceProvisioningRequest(instanceID, details)
+						response := makeInstanceProvisioningRequest(instanceID, details, "")
 						Expect(response.StatusCode).To(Equal(500))
 					})
 
 					It("returns json with a description field and a useful error message", func() {
-						response := makeInstanceProvisioningRequest(instanceID, details)
+						response := makeInstanceProvisioningRequest(instanceID, details, "")
 						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
 					})
 
 					It("logs an appropriate error", func() {
-						makeInstanceProvisioningRequest(instanceID, details)
+						makeInstanceProvisioningRequest(instanceID, details, "")
 						Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
 					})
@@ -316,23 +330,97 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance already exists", func() {
 				BeforeEach(func() {
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 				})
 
 				It("returns a 409", func() {
-					response := makeInstanceProvisioningRequest(instanceID, details)
+					response := makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(response.StatusCode).To(Equal(409))
 				})
 
 				It("returns an empty JSON object", func() {
-					response := makeInstanceProvisioningRequest(instanceID, details)
+					response := makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 					Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance already exists"))
+				})
+			})
+
+			Describe("accepts_incomplete", func() {
+				Context("when the accepts_incomplete flag is true", func() {
+					It("calls ProvisionAsync on the service broker", func() {
+						acceptsIncomplete := true
+						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
+
+						Expect(fakeServiceBroker.AysncProvisionInstanceIds).To(ContainElement(instanceID))
+					})
+
+					Context("when the broker chooses to provision asyncronously", func() {
+						BeforeEach(func() {
+							fakeServiceBroker = &fakes.FakeServiceBroker{
+								InstanceLimit: 3,
+							}
+							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+								*fakeServiceBroker,
+							}
+							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						})
+
+						It("returns a 202", func() {
+							acceptsIncomplete := true
+							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+							Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+						})
+					})
+
+					Context("when the broker chooses to provision syncronously", func() {
+						It("returns a 201", func() {
+							acceptsIncomplete := false
+							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+							Expect(response.StatusCode).To(Equal(http.StatusCreated))
+						})
+					})
+				})
+
+				Context("when the accepts_incomplete flag is false", func() {
+					It("calls Provision on the service broker with acceptsIncomplete", func() {
+						acceptsIncomplete := false
+						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
+						Expect(fakeServiceBroker.AcceptsIncomplete).To(Equal(acceptsIncomplete))
+					})
+
+					Context("when broker can only respond asynchronously", func() {
+						BeforeEach(func() {
+							fakeServiceBroker = &fakes.FakeServiceBroker{
+								InstanceLimit: 3,
+							}
+							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
+								*fakeServiceBroker,
+							}
+							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						})
+
+						It("returns a 422", func() {
+							acceptsIncomplete := false
+							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+							Expect(response.StatusCode).To(Equal(422))
+							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+						})
+					})
+				})
+
+				Context("when the accepts_incomplete flag is missing", func() {
+					It("calls Provision on the service broker with acceptsIncomplete", func() {
+						makeInstanceProvisioningRequest(instanceID, details, "")
+						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
+						Expect(fakeServiceBroker.AcceptsIncomplete).To(Equal(false))
+					})
 				})
 			})
 		})
@@ -355,7 +443,7 @@ var _ = Describe("Service Broker API", func() {
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 				})
 
 				It("returns a 200", func() {
@@ -401,7 +489,7 @@ var _ = Describe("Service Broker API", func() {
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 				})
 
 				BeforeEach(func() {
@@ -613,7 +701,7 @@ var _ = Describe("Service Broker API", func() {
 						OrganizationGUID: "organization-guid",
 						SpaceGUID:        "space-guid",
 					}
-					makeInstanceProvisioningRequest(instanceID, details)
+					makeInstanceProvisioningRequest(instanceID, details, "")
 				})
 
 				Context("and the binding exists", func() {
@@ -670,6 +758,64 @@ var _ = Describe("Service Broker API", func() {
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
+			})
+		})
+
+		Describe("last_operation", func() {
+			makeLastOperationRequest := func(instanceID string) *testflight.Response {
+				response := &testflight.Response{}
+				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
+					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
+					request.Header.Add("Content-Type", "application/json")
+					request.SetBasicAuth("username", "password")
+
+					response = r.Do(request)
+				})
+				return response
+			}
+
+			It("should return succeeded if the operation completed successfully", func() {
+				fakeServiceBroker.LastOperationState = "succeeded"
+				fakeServiceBroker.LastOperationDescription = "some description"
+
+				instanceID := "instanceID"
+				response := makeLastOperationRequest(instanceID)
+
+				logs := brokerLogger.Logs()
+
+				Expect(logs[0].Message).To(ContainSubstring("lastOperation.starting-check-for-operation"))
+				Expect(logs[0].Data["instance-id"]).To(ContainSubstring(instanceID))
+
+				Expect(logs[1].Message).To(ContainSubstring("lastOperation.done-check-for-operation"))
+				Expect(logs[1].Data["instance-id"]).To(ContainSubstring(instanceID))
+				Expect(logs[1].Data["state"]).To(ContainSubstring(fakeServiceBroker.LastOperationState))
+
+				Expect(response.StatusCode).To(Equal(200))
+				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+			})
+
+			It("should return a 404 and log in case the instance id is not found", func() {
+				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
+				instanceID := "non-existing"
+				response := makeLastOperationRequest(instanceID)
+
+				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.instance-missing"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
+
+				Expect(response.StatusCode).To(Equal(404))
+				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
+			})
+
+			It("should return an internal sever error for all other errors", func() {
+				fakeServiceBroker.LastOperationError = errors.New("Blah")
+				response := makeLastOperationRequest("instanceID")
+
+				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.unknown-error"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("Blah"))
+
+				Expect(response.StatusCode).To(Equal(500))
+				Expect(response.Body).To(MatchJSON(`{"description": "Blah"}`))
 			})
 		})
 	})

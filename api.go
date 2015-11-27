@@ -3,6 +3,7 @@ package brokerapi
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/pivotal-cf/brokerapi/auth"
 	"github.com/pivotal-golang/lager"
@@ -12,6 +13,7 @@ const provisionLogKey = "provision"
 const deprovisionLogKey = "deprovision"
 const bindLogKey = "bind"
 const unbindLogKey = "unbind"
+const lastOperationLogKey = "lastOperation"
 
 const instanceIDLogKey = "instance-id"
 const instanceDetailsLogKey = "instance-details"
@@ -40,6 +42,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 
 	router.Put("/v2/service_instances/{instance_id}", provision(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}", deprovision(serviceBroker, router, logger))
+	router.Get("/v2/service_instances/{instance_id}/last_operation", lastOperation(serviceBroker, router, logger))
 
 	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, router, logger))
@@ -79,11 +82,20 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
+		acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
+
 		logger = logger.WithData(lager.Data{
 			instanceDetailsLogKey: details,
 		})
 
-		if err := serviceBroker.Provision(instanceID, details); err != nil {
+		var err error
+		if acceptsIncompleteFlag == true {
+			err = serviceBroker.ProvisionAsync(instanceID, details)
+		} else {
+			err = serviceBroker.ProvisionSync(instanceID, details)
+		}
+
+		if err != nil {
 			switch err {
 			case ErrInstanceAlreadyExists:
 				logger.Error(instanceAlreadyExistsErrorKey, err)
@@ -91,6 +103,12 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			case ErrInstanceLimitMet:
 				logger.Error(instanceLimitReachedErrorKey, err)
 				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+			case ErrAsyncRequired:
+				logger.Error(instanceLimitReachedErrorKey, err)
+				respond(w, 422, ErrorResponse{
+					Error:       "AsyncRequired",
 					Description: err.Error(),
 				})
 			default:
@@ -102,7 +120,11 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
-		respond(w, http.StatusCreated, ProvisioningResponse{})
+		if acceptsIncompleteFlag {
+			respond(w, http.StatusAccepted, ProvisioningResponse{})
+		} else {
+			respond(w, http.StatusCreated, ProvisioningResponse{})
+		}
 	}
 }
 
@@ -220,4 +242,45 @@ func respond(w http.ResponseWriter, status int, response interface{}) {
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(response)
+}
+
+func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
+		instanceID := vars["instance_id"]
+
+		logger := logger.Session(lastOperationLogKey, lager.Data{
+			instanceIDLogKey: instanceID,
+		})
+
+		logger.Info("starting-check-for-operation")
+
+		lastOperation, err := serviceBroker.LastOperation(instanceID)
+
+		if err != nil {
+			switch err {
+			case ErrInstanceDoesNotExist:
+				logger.Error(instanceMissingErrorKey, err)
+				respond(w, http.StatusNotFound, ErrorResponse{
+					Description: err.Error(),
+				})
+			default:
+				logger.Error(unknownErrorKey, err)
+				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+			}
+
+			return
+		}
+
+		logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-operation")
+
+		lastOperationResponse := LastOperationResponse{
+			State:       lastOperation.State,
+			Description: lastOperation.Description,
+		}
+
+		respond(w, http.StatusOK, lastOperationResponse)
+	}
 }
