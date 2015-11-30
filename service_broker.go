@@ -6,7 +6,7 @@ type ServiceBroker interface {
 	Services() []Service
 
 	ProvisionSync(instanceID string, details ProvisionDetails) error
-	ProvisionAsync(instanceID string, details ProvisionDetails) error
+	ProvisionAsync(instanceID string, details ProvisionDetails) (IsAsync, error)
 
 	Deprovision(instanceID string) error
 
@@ -16,7 +16,7 @@ type ServiceBroker interface {
 	LastOperation(instanceID string) (*LastOperation, error)
 }
 
-type ProvisionAsync bool
+type IsAsync bool
 
 type LastOperation struct {
 	State       string
@@ -44,6 +44,5 @@ var (
 	ErrInstanceLimitMet      = errors.New("instance limit for this service has been reached")
 	ErrBindingAlreadyExists  = errors.New("binding already exists")
 	ErrBindingDoesNotExist   = errors.New("binding does not exist")
-	ErrInvalidAsyncProvision = errors.New("broker attempted to provision asynchronously when not supported by the caller")
 	ErrAsyncRequired         = errors.New("This service plan requires client support for asynchronous service operations.")
 )
