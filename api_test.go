@@ -357,17 +357,17 @@ var _ = Describe("Service Broker API", func() {
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
 						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
 
-						Expect(fakeServiceBroker.AysncProvisionInstanceIds).To(ContainElement(instanceID))
+						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 					})
 
 					Context("when the broker chooses to provision asyncronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								SupportsAsync: true,
 								InstanceLimit: 3,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
-								*fakeServiceBroker,
+								FakeServiceBroker:    *fakeServiceBroker,
+								ShouldProvisionAsync: true,
 							}
 							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
 						})
@@ -381,11 +381,11 @@ var _ = Describe("Service Broker API", func() {
 					Context("when the broker chooses to provision syncronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								SupportsAsync: false,
 								InstanceLimit: 3,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
-								*fakeServiceBroker,
+								FakeServiceBroker:    *fakeServiceBroker,
+								ShouldProvisionAsync: false,
 							}
 							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
 						})
@@ -398,11 +398,9 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				Context("when the accepts_incomplete flag is false", func() {
-					It("calls Provision on the service broker with acceptsIncomplete", func() {
-						acceptsIncomplete := false
-						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
-						Expect(fakeServiceBroker.AcceptsIncomplete).To(Equal(acceptsIncomplete))
+					It("returns a 201", func() {
+						response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, false)
+						Expect(response.StatusCode).To(Equal(http.StatusCreated))
 					})
 
 					Context("when broker can only respond asynchronously", func() {
@@ -426,10 +424,28 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				Context("when the accepts_incomplete flag is missing", func() {
-					It("calls Provision on the service broker with acceptsIncomplete", func() {
-						makeInstanceProvisioningRequest(instanceID, details, "")
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(details))
-						Expect(fakeServiceBroker.AcceptsIncomplete).To(Equal(false))
+					It("returns a 201", func() {
+						response := makeInstanceProvisioningRequest(instanceID, details, "")
+						Expect(response.StatusCode).To(Equal(http.StatusCreated))
+					})
+
+					Context("when broker can only respond asynchronously", func() {
+						BeforeEach(func() {
+							fakeServiceBroker = &fakes.FakeServiceBroker{
+								InstanceLimit: 3,
+							}
+							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
+								*fakeServiceBroker,
+							}
+							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						})
+
+						It("returns a 422", func() {
+							acceptsIncomplete := false
+							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, details, acceptsIncomplete)
+							Expect(response.StatusCode).To(Equal(422))
+							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+						})
 					})
 				})
 			})

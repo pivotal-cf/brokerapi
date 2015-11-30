@@ -3,19 +3,16 @@ package fakes
 import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ProvisionDetails  brokerapi.ProvisionDetails
-	AcceptsIncomplete bool
+	ProvisionDetails brokerapi.ProvisionDetails
 
-	ProvisionedInstanceIDs    []string
-	DeprovisionedInstanceIDs  []string
-	AysncProvisionInstanceIds []string
+	ProvisionedInstanceIDs   []string
+	DeprovisionedInstanceIDs []string
 
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
 	BoundBindingDetails brokerapi.BindDetails
 
 	InstanceLimit int
-	SupportsAsync brokerapi.IsAsync
 
 	ProvisionError     error
 	BindError          error
@@ -29,6 +26,7 @@ type FakeServiceBroker struct {
 
 type FakeAsyncServiceBroker struct {
 	FakeServiceBroker
+	ShouldProvisionAsync bool
 }
 
 type FakeAsyncOnlyServiceBroker struct {
@@ -76,57 +74,7 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) ProvisionAsync(instanceID string, details brokerapi.ProvisionDetails) (brokerapi.IsAsync, error) {
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.AysncProvisionInstanceIds = append(fakeBroker.AysncProvisionInstanceIds, instanceID)
-	return fakeBroker.SupportsAsync, nil
-}
-
-func (fakeBroker *FakeServiceBroker) ProvisionSync(instanceID string, details brokerapi.ProvisionDetails) error {
-	fakeBroker.BrokerCalled = true
-
-	if fakeBroker.ProvisionError != nil {
-		return fakeBroker.ProvisionError
-	}
-
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return brokerapi.ErrInstanceLimitMet
-	}
-
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ErrInstanceAlreadyExists
-	}
-
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return nil
-}
-
-func (fakeBroker *FakeAsyncServiceBroker) ProvisionSync(instanceID string, details brokerapi.ProvisionDetails) error {
-	fakeBroker.BrokerCalled = true
-
-	if fakeBroker.ProvisionError != nil {
-		return fakeBroker.ProvisionError
-	}
-
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return brokerapi.ErrInstanceLimitMet
-	}
-
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ErrInstanceAlreadyExists
-	}
-
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return nil
-}
-
-func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionSync(instanceID string, details brokerapi.ProvisionDetails) error {
-	return brokerapi.ErrAsyncRequired
-}
-
-func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionAsync(instanceID string, details brokerapi.ProvisionDetails) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
@@ -143,7 +91,51 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) ProvisionAsync(instanceID string, 
 
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return fakeBroker.SupportsAsync, nil
+	return false, nil
+}
+
+func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.ProvisionError != nil {
+		return false, fakeBroker.ProvisionError
+	}
+
+	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+		return false, brokerapi.ErrInstanceLimitMet
+	}
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return false, brokerapi.ErrInstanceAlreadyExists
+	}
+
+	fakeBroker.ProvisionDetails = details
+	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	return brokerapi.IsAsync(fakeBroker.ShouldProvisionAsync), nil
+}
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.ProvisionError != nil {
+		return false, fakeBroker.ProvisionError
+	}
+
+	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+		return false, brokerapi.ErrInstanceLimitMet
+	}
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return false, brokerapi.ErrInstanceAlreadyExists
+	}
+
+	if !asyncAllowed {
+		return true, brokerapi.ErrAsyncRequired
+	}
+
+	fakeBroker.ProvisionDetails = details
+	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	return true, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
