@@ -20,7 +20,7 @@ type FakeServiceBroker struct {
 	LastOperationError error
 
 	BrokerCalled             bool
-	LastOperationState       string
+	LastOperationState       brokerapi.LastOperationState
 	LastOperationDescription string
 }
 
@@ -186,13 +186,13 @@ func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error 
 	return brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) LastOperation(instanceID string) (*brokerapi.LastOperation, error) {
+func (fakeBroker *FakeServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {
 
 	if fakeBroker.LastOperationError != nil {
-		return nil, fakeBroker.LastOperationError
+		return brokerapi.LastOperation{}, fakeBroker.LastOperationError
 	}
 
-	return &brokerapi.LastOperation{State: fakeBroker.LastOperationState, Description: fakeBroker.LastOperationDescription}, nil
+	return brokerapi.LastOperation{State: fakeBroker.LastOperationState, Description: fakeBroker.LastOperationDescription}, nil
 }
 
 type FakeCredentials struct {

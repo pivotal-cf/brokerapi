@@ -815,7 +815,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(logs[1].Message).To(ContainSubstring("lastOperation.done-check-for-operation"))
 				Expect(logs[1].Data["instance-id"]).To(ContainSubstring(instanceID))
-				Expect(logs[1].Data["state"]).To(ContainSubstring(fakeServiceBroker.LastOperationState))
+				Expect(logs[1].Data["state"]).To(ContainSubstring(string(fakeServiceBroker.LastOperationState)))
 
 				Expect(response.StatusCode).To(Equal(200))
 				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))

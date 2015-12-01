@@ -21,5 +21,5 @@ type BindingResponse struct {
 
 type LastOperationResponse struct {
 	State       string `json:"state"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 }

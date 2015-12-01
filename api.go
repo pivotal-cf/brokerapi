@@ -272,7 +272,7 @@ func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.
 		logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-operation")
 
 		lastOperationResponse := LastOperationResponse{
-			State:       lastOperation.State,
+			State:       string(lastOperation.State),
 			Description: lastOperation.Description,
 		}
 

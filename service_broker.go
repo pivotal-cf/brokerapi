@@ -12,15 +12,10 @@ type ServiceBroker interface {
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 
-	LastOperation(instanceID string) (*LastOperation, error)
+	LastOperation(instanceID string) (LastOperation, error)
 }
 
 type IsAsync bool
-
-type LastOperation struct {
-	State       string
-	Description string
-}
 
 type ProvisionDetails struct {
 	ID               string                 `json:"service_id"`
@@ -36,6 +31,19 @@ type BindDetails struct {
 	ServiceID  string                 `json:"service_id"`
 	Parameters map[string]interface{} `json:"parameters"`
 }
+
+type LastOperation struct {
+	State       LastOperationState
+	Description string
+}
+
+type LastOperationState string
+
+const (
+	InProgress LastOperationState = "in progress"
+	Succeeded  LastOperationState = "succeeded"
+	Failed     LastOperationState = "failed"
+)
 
 var (
 	ErrInstanceAlreadyExists = errors.New("instance already exists")
