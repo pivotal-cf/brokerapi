@@ -10,7 +10,7 @@ Requires go 1.4 or greater.
 
 ## Usage
 
-`brokerapi` defines a `ServiceBroker` interface with 5 methods. Simply create
+`brokerapi` defines a `ServiceBroker` interface with 6 methods. Simply create
 a concrete type that implements these methods, and pass an instance of it to
 `brokerapi.New`, along with a `lager.Logger` for logging and a
 `brokerapi.BrokerCredentials` containing some HTTP basic auth credentials.
@@ -31,12 +31,25 @@ func (*myServiceBroker) Services() []brokerapi.Service {
     // Return a []brokerapi.Service here, describing your service(s) and plan(s)
 }
 
-func (*myServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails) error {
-    // Provision a new instance here
+func (*myServiceBroker) Provision(
+    instanceID string,
+    details brokerapi.ProvisionDetails,
+    asyncAllowed bool,
+) (brokerapi.IsAsync, error) {
+    // Provision a new instance here. If async is allowed, the broker can still
+    // chose to provision the instance synchronously, hence the first return value.
+}
+
+func (*myServiceBroker) LastOperation(instanceID string) (*brokerapi.LastOperation, error) {
+    // If the broker provisions asynchronously, the Cloud Controller will poll this endpoint
+    // for the status of the provisioning operation.
+    // This also applies to deprovisioning (work in progress).
 }
 
 func (*myServiceBroker) Deprovision(instanceID string) error {
     // Deprovision instances here
+    // Does not support asynchronous deprovisioning yet, but this is planned for
+    // the very near future.
 }
 
 func (*myServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (interface{}, error) {
@@ -78,10 +91,14 @@ ErrInstanceDoesNotExist
 ErrInstanceLimitMet
 ErrBindingAlreadyExists
 ErrBindingDoesNotExist
+ErrAsyncRequired
 ```
 
 ## Change Notes
 
+* [724bdb1](https://github.com/pivotal-cf/brokerapi/commit/724bdb1cef1795fdda005e1277b364694047c5ce)
+adds a new parameter and return type to `Provision` method of `ServiceBroker` to support
+asynchronous provisioning. Also adds `LastOperation` method for the same purpose.
 * [d97ebdd](https://github.com/pivotal-cf/brokerapi/commit/d97ebddb70b3f099ec931e23a37bc70e82efb827) adds a new map property to the `brokerapi.BindDetails` struct in order to support arbitrary bind parameters. This allows API clients to send configuration parameters with their bind request.
 * Starting with [10997ba](https://github.com/pivotal-cf/brokerapi/commit/10997baae7e5a4f1bc8db90afe402d509744ec48) the `Bind` function now takes an additional input parameter of type `brokerapi.BindDetails`. The corresponding struct specifies bind-specific properties sent by the CF API client.
 * [8d9dd34](https://github.com/pivotal-cf/brokerapi/commit/8d9dd345ddd00d70c9aeaafb06ad3bed2213e0ea) adds support for arbitrary provision parameters. The broker can access the `Parameters` map in `brokerapi.ProvisionDetails` to lookup any configuration parameters sent by the client as part of their provision request.
