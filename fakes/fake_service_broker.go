@@ -94,6 +94,8 @@ func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details broker
 	return false, nil
 }
 
+func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {}
+
 func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
@@ -113,6 +115,8 @@ func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details b
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return brokerapi.IsAsync(fakeBroker.ShouldProvisionAsync), nil
 }
+
+func (fakeBroker *FakeAsyncServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {}
 
 func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
@@ -137,6 +141,8 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, detai
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return true, nil
 }
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {}
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
 	fakeBroker.BrokerCalled = true

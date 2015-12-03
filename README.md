@@ -10,7 +10,7 @@ Requires go 1.4 or greater.
 
 ## Usage
 
-`brokerapi` defines a `ServiceBroker` interface with 6 methods. Simply create
+`brokerapi` defines a `ServiceBroker` interface with 7 methods. Simply create
 a concrete type that implements these methods, and pass an instance of it to
 `brokerapi.New`, along with a `lager.Logger` for logging and a
 `brokerapi.BrokerCredentials` containing some HTTP basic auth credentials.
@@ -38,6 +38,17 @@ func (*myServiceBroker) Provision(
 ) (brokerapi.IsAsync, error) {
     // Provision a new instance here. If async is allowed, the broker can still
     // chose to provision the instance synchronously, hence the first return value.
+}
+
+func (*myServiceBroker) Update(
+    instanceID string,
+    details brokerapi.UpdateDetails,
+    asyncAllowed bool,
+) (brokerapi.IsAsync, error) {
+    // Update the provisioned instance. This may include
+    // changing the plan and specific instance
+    // parameters. The instance can be updated asynchronously -
+    // the logic is pretty much the same as for provisioning.
 }
 
 func (*myServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {
