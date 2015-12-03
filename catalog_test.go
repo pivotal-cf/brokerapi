@@ -21,7 +21,7 @@ var _ = Describe("Catalog", func() {
 					Metadata:    brokerapi.ServiceMetadata{},
 					Tags:        []string{},
 				}
-				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[]}`
+				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[],"plan_updateable":false}`
 
 				Expect(service).To(MarshalToJSON(json))
 			})

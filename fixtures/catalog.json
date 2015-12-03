@@ -32,7 +32,8 @@
             "tags": [
                 "pivotal",
                 "cassandra"
-            ]
+            ],
+            "plan_updateable": true
         }
     ]
 }

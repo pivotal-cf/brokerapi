@@ -72,6 +72,7 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 				"pivotal",
 				"cassandra",
 			},
+			PlanUpdatable: true,
 		},
 	}
 }
