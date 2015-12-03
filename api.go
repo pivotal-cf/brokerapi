@@ -10,6 +10,7 @@ import (
 )
 
 const provisionLogKey = "provision"
+const updateLogKey = "update"
 const deprovisionLogKey = "deprovision"
 const bindLogKey = "bind"
 const unbindLogKey = "unbind"
@@ -17,15 +18,18 @@ const lastOperationLogKey = "lastOperation"
 
 const instanceIDLogKey = "instance-id"
 const instanceDetailsLogKey = "instance-details"
+const instanceUpdateDetailsLogKey = "instance-update-details"
 const bindingIDLogKey = "binding-id"
 
 const invalidServiceDetailsErrorKey = "invalid-service-details"
+const invalidUpdateDetailsErrorKey = "invalid-update-details"
 const invalidBindDetailsErrorKey = "invalid-bind-details"
 const instanceLimitReachedErrorKey = "instance-limit-reached"
 const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
 const instanceMissingErrorKey = "instance-missing"
 const bindingMissingErrorKey = "binding-missing"
+const asyncRequiredErrorKey = "async-required"
 const unknownErrorKey = "unknown-error"
 
 const statusUnprocessableEntity = 422
@@ -41,6 +45,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	router.Get("/v2/catalog", catalog(serviceBroker, router, logger))
 
 	router.Put("/v2/service_instances/{instance_id}", provision(serviceBroker, router, logger))
+	router.Patch("/v2/service_instances/{instance_id}", update(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}", deprovision(serviceBroker, router, logger))
 	router.Get("/v2/service_instances/{instance_id}/last_operation", lastOperation(serviceBroker, router, logger))
 
@@ -119,6 +124,60 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			respond(w, http.StatusAccepted, ProvisioningResponse{})
 		} else {
 			respond(w, http.StatusCreated, ProvisioningResponse{})
+		}
+	}
+}
+
+func update(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
+		instanceID := vars["instance_id"]
+
+		logger := logger.Session(updateLogKey, lager.Data{
+			instanceIDLogKey: instanceID,
+		})
+
+		var details UpdateDetails
+		if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
+			logger.Error(invalidUpdateDetailsErrorKey, err)
+			respond(w, statusUnprocessableEntity, ErrorResponse{
+				Description: err.Error(),
+			})
+			return
+		}
+
+		acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
+
+		logger = logger.WithData(lager.Data{
+			instanceUpdateDetailsLogKey: details,
+		})
+
+		async, err := serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
+
+		if err != nil {
+			switch err {
+			case ErrInstanceDoesNotExist:
+				logger.Error(instanceMissingErrorKey, err)
+				respond(w, http.StatusNotFound, EmptyResponse{})
+			case ErrAsyncRequired:
+				logger.Error(asyncRequiredErrorKey, err)
+				respond(w, 422, ErrorResponse{
+					Error:       "AsyncRequired",
+					Description: err.Error(),
+				})
+			default:
+				logger.Error(unknownErrorKey, err)
+				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+			}
+			return
+		}
+
+		if async {
+			respond(w, http.StatusAccepted, UpdateResponse{})
+		} else {
+			respond(w, http.StatusOK, UpdateResponse{})
 		}
 	}
 }
