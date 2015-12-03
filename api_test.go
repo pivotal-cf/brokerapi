@@ -59,6 +59,36 @@ var _ = Describe("Service Broker API", func() {
 		return makeInstanceProvisioningRequest(instanceID, details, acceptsIncompleteFlag)
 	}
 
+	makeInstanceUpdateRequest := func(instanceID string, details interface{}, queryString string) *testflight.Response {
+		response := &testflight.Response{}
+
+		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+			path := "/v2/service_instances/" + instanceID + queryString
+
+			buffer := &bytes.Buffer{}
+			json.NewEncoder(buffer).Encode(details)
+			request, err := http.NewRequest("PATCH", path, buffer)
+			Expect(err).NotTo(HaveOccurred())
+			request.Header.Add("Content-Type", "application/json")
+			request.SetBasicAuth(credentials.Username, credentials.Password)
+
+			response = r.Do(request)
+		})
+		return response
+	}
+
+	makeInstanceUpdateRequestWithAcceptsIncomplete := func(instanceID string, details brokerapi.UpdateDetails, acceptsIncomplete bool) *testflight.Response {
+		var acceptsIncompleteFlag string
+
+		if acceptsIncomplete {
+			acceptsIncompleteFlag = "?accepts_incomplete=true"
+		} else {
+			acceptsIncompleteFlag = "?accepts_incomplete=false"
+		}
+
+		return makeInstanceUpdateRequest(instanceID, details, acceptsIncompleteFlag)
+	}
+
 	lastLogLine := func() lager.LogFormat {
 		noOfLogLines := len(brokerLogger.Logs())
 		if noOfLogLines == 0 {
@@ -447,6 +477,169 @@ var _ = Describe("Service Broker API", func() {
 							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
+				})
+			})
+		})
+
+		Describe("updating instances", func() {
+			var (
+				details                       brokerapi.UpdateDetails
+				serviceID, planID, instanceID string
+			)
+			BeforeEach(func() {
+				serviceID = "service-id"
+				planID = "plan-id"
+				instanceID = uniqueInstanceID()
+				details = brokerapi.UpdateDetails{
+					ID:     serviceID,
+					PlanID: planID,
+					Parameters: map[string]interface{}{
+						"memory": float64(1000),
+					},
+				}
+			})
+			Context("when the instance does not exist", func() {
+				It("returns a 404", func() {
+					response := makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(response.StatusCode).To(Equal(404))
+				})
+				It("returns an empty JSON object", func() {
+					response := makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(response.Body).To(MatchJSON(`{}`))
+				})
+				It("logs an appropriate error", func() {
+					makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(lastLogLine().Message).To(ContainSubstring("update.instance-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
+				})
+			})
+			Context("when the instance exists", func() {
+				BeforeEach(func() {
+					makeInstanceProvisioningRequest(instanceID, brokerapi.ProvisionDetails{
+						ID:               serviceID,
+						PlanID:           planID,
+						OrganizationGUID: "organization-guid",
+						SpaceGUID:        "space-guid",
+					}, "")
+				})
+				It("calls Update on the service broker properly passing the params", func() {
+					makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(fakeServiceBroker.UpdateDetails.ID).To(Equal(details.ID))
+					Expect(fakeServiceBroker.UpdateDetails.PlanID).To(Equal(details.PlanID))
+					Expect(fakeServiceBroker.UpdateDetails.Parameters["memory"]).To(Equal(details.Parameters["memory"]))
+				})
+			})
+			Context("when an unexpected error occurs", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UpdateError = errors.New("update failed")
+				})
+
+				It("returns a 500", func() {
+					response := makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(response.StatusCode).To(Equal(500))
+				})
+
+				It("returns json with a description field and a useful error message", func() {
+					response := makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(response.Body).To(MatchJSON(`{"description":"update failed"}`))
+				})
+
+				It("logs an appropriate error", func() {
+					makeInstanceUpdateRequest(instanceID, details, "")
+					Expect(lastLogLine().Message).To(ContainSubstring("update.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("update failed"))
+				})
+			})
+			Context("when invalid JSON is sent", func() {
+				It("returns a 422", func() {
+					response := makeInstanceUpdateRequest(instanceID, "{{{", "")
+					Expect(response.StatusCode).To(Equal(422))
+				})
+				It("logs a message", func() {
+					makeInstanceUpdateRequest(instanceID, "{{{", "")
+					Expect(lastLogLine().Message).To(ContainSubstring("update.invalid-update-details"))
+				})
+			})
+		})
+
+		Describe("updating instances asynchronously", func() {
+			var (
+				instanceID string
+			)
+			BeforeEach(func() {
+				instanceID = uniqueInstanceID()
+			})
+			Context("when the broker chooses to update asynchronously", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+						ShouldProvisionAsync: true,
+					}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+				It("returns a 202", func() {
+					response := makeInstanceUpdateRequestWithAcceptsIncomplete(instanceID, brokerapi.UpdateDetails{}, true)
+					Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+				})
+			})
+			Context("when the broker chooses to update synchronously", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+						ShouldProvisionAsync: false,
+					}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+
+				It("returns a 200", func() {
+					response := makeInstanceUpdateRequestWithAcceptsIncomplete(instanceID, brokerapi.UpdateDetails{}, true)
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+			})
+			Context("when the accepts_incomplete flag is false", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+				It("returns a 200", func() {
+					response := makeInstanceUpdateRequestWithAcceptsIncomplete(instanceID, brokerapi.UpdateDetails{}, false)
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+			})
+			Context("when broker can only respond asynchronously", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+
+				It("returns a 422", func() {
+					acceptsIncomplete := false
+					response := makeInstanceUpdateRequestWithAcceptsIncomplete(instanceID, brokerapi.UpdateDetails{}, acceptsIncomplete)
+					Expect(response.StatusCode).To(Equal(422))
+					Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+				})
+			})
+
+			Context("when the accepts_incomplete flag is missing", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+				It("returns a 200", func() {
+					response := makeInstanceUpdateRequest(instanceID, brokerapi.UpdateDetails{}, "")
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+			})
+
+			Context("when broker can only respond asynchronously", func() {
+				BeforeEach(func() {
+					fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+
+				It("returns a 422", func() {
+					acceptsIncomplete := false
+					response := makeInstanceUpdateRequestWithAcceptsIncomplete(instanceID, brokerapi.UpdateDetails{}, acceptsIncomplete)
+					Expect(response.StatusCode).To(Equal(422))
+					Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
 				})
 			})
 		})
