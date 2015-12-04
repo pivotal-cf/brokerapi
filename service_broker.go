@@ -7,6 +7,8 @@ type ServiceBroker interface {
 
 	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (IsAsync, error)
 
+	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (IsAsync, error)
+
 	Deprovision(instanceID string) error
 
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
@@ -23,6 +25,12 @@ type ProvisionDetails struct {
 	OrganizationGUID string                 `json:"organization_guid"`
 	SpaceGUID        string                 `json:"space_guid"`
 	Parameters       map[string]interface{} `json:"parameters"`
+}
+
+type UpdateDetails struct {
+	ID         string                 `json:"service_id"`
+	PlanID     string                 `json:"plan_id"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 type BindDetails struct {
