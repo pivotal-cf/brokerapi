@@ -7,7 +7,7 @@ type ServiceBroker interface {
 
 	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (IsAsync, error)
 
-	Deprovision(instanceID string) error
+	Deprovision(instanceID string, asyncAllowed bool) (IsAsync, error)
 
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error

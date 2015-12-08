@@ -138,19 +138,55 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, detai
 	return true, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string) error {
+func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.DeprovisionError != nil {
-		return fakeBroker.DeprovisionError
+		return brokerapi.IsAsync(false), fakeBroker.DeprovisionError
 	}
 
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return nil
+		return brokerapi.IsAsync(false), nil
 	}
-	return brokerapi.ErrInstanceDoesNotExist
+	return brokerapi.IsAsync(false), brokerapi.ErrInstanceDoesNotExist
+}
+
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.DeprovisionError != nil {
+		return brokerapi.IsAsync(true), fakeBroker.DeprovisionError
+	}
+
+	if !asyncAllowed {
+		return brokerapi.IsAsync(true), brokerapi.ErrAsyncRequired
+	}
+
+	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return brokerapi.IsAsync(true), nil
+	}
+
+	return brokerapi.IsAsync(true), brokerapi.ErrInstanceDoesNotExist
+}
+
+func (fakeBroker *FakeAsyncServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.DeprovisionError != nil {
+		return brokerapi.IsAsync(asyncAllowed), fakeBroker.DeprovisionError
+	}
+
+	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
+
+	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+		return brokerapi.IsAsync(asyncAllowed), nil
+	}
+
+	return brokerapi.IsAsync(asyncAllowed), brokerapi.ErrInstanceDoesNotExist
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (interface{}, error) {

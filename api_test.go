@@ -181,10 +181,10 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
-		makeInstanceDeprovisioningRequest := func(instanceID string) *testflight.Response {
+		makeInstanceDeprovisioningRequest := func(instanceID, queryString string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				path := "/v2/service_instances/" + instanceID
+				path := fmt.Sprintf("/v2/service_instances/%s?%s", instanceID, queryString)
 				request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
 				request.Header.Add("Content-Type", "application/json")
 				request.SetBasicAuth("username", "password")
@@ -454,7 +454,7 @@ var _ = Describe("Service Broker API", func() {
 		Describe("deprovisioning", func() {
 			It("calls Deprovision on the service broker with the instance id", func() {
 				instanceID := uniqueInstanceID()
-				makeInstanceDeprovisioningRequest(instanceID)
+				makeInstanceDeprovisioningRequest(instanceID, "")
 				Expect(fakeServiceBroker.DeprovisionedInstanceIDs).To(ContainElement(instanceID))
 			})
 
@@ -472,14 +472,60 @@ var _ = Describe("Service Broker API", func() {
 					makeInstanceProvisioningRequest(instanceID, details, "")
 				})
 
-				It("returns a 200", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID)
-					Expect(response.StatusCode).To(Equal(200))
+				itReturnsStatus := func(expectedStatus int, queryString string) {
+					It(fmt.Sprintf("returns HTTP %d", expectedStatus), func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, queryString)
+						Expect(response.StatusCode).To(Equal(expectedStatus))
+					})
+
+					It("returns an empty JSON object", func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, queryString)
+						Expect(response.Body).To(MatchJSON(`{}`))
+					})
+				}
+
+				Context("when the broker can only operate synchronously", func() {
+					Context("when the accepts_incomplete flag is not set", func() {
+						itReturnsStatus(200, "")
+					})
+
+					Context("when the accepts_incomplete flag is set to true", func() {
+						itReturnsStatus(200, "accepts_incomplete=true")
+					})
 				})
 
-				It("returns an empty JSON object", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID)
-					Expect(response.Body).To(MatchJSON(`{}`))
+				Context("when the broker can only operate asynchronously", func() {
+					BeforeEach(func() {
+						fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
+							FakeServiceBroker: *fakeServiceBroker,
+						}
+						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+					})
+
+					Context("when the accepts_incomplete flag is not set", func() {
+						itReturnsStatus(422, "")
+					})
+
+					Context("when the accepts_incomplete flag is set to true", func() {
+						itReturnsStatus(202, "accepts_incomplete=true")
+					})
+				})
+
+				Context("when the broker can operate both synchronously and asynchronously", func() {
+					BeforeEach(func() {
+						fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+							FakeServiceBroker: *fakeServiceBroker,
+						}
+						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+					})
+
+					Context("when the accepts_incomplete flag is not set", func() {
+						itReturnsStatus(200, "")
+					})
+
+					Context("when the accepts_incomplete flag is set to true", func() {
+						itReturnsStatus(202, "accepts_incomplete=true")
+					})
 				})
 			})
 
@@ -487,18 +533,18 @@ var _ = Describe("Service Broker API", func() {
 				var instanceID string
 
 				It("returns a 410", func() {
-					response := makeInstanceDeprovisioningRequest(uniqueInstanceID())
+					response := makeInstanceDeprovisioningRequest(uniqueInstanceID(), "")
 					Expect(response.StatusCode).To(Equal(410))
 				})
 
 				It("returns an empty JSON object", func() {
-					response := makeInstanceDeprovisioningRequest(uniqueInstanceID())
+					response := makeInstanceDeprovisioningRequest(uniqueInstanceID(), "")
 					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
-					makeInstanceDeprovisioningRequest(instanceID)
+					makeInstanceDeprovisioningRequest(instanceID, "")
 					Expect(lastLogLine().Message).To(ContainSubstring("deprovision.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
@@ -523,17 +569,17 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a 500", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID)
+					response := makeInstanceDeprovisioningRequest(instanceID, "")
 					Expect(response.StatusCode).To(Equal(500))
 				})
 
 				It("returns json with a description field and a useful error message", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID)
+					response := makeInstanceDeprovisioningRequest(instanceID, "")
 					Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
 				})
 
 				It("logs an appropriate error", func() {
-					makeInstanceDeprovisioningRequest(instanceID)
+					makeInstanceDeprovisioningRequest(instanceID, "")
 					Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
 				})

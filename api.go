@@ -26,6 +26,7 @@ const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
 const instanceMissingErrorKey = "instance-missing"
 const bindingMissingErrorKey = "binding-missing"
+const asyncRequiredKey = "async-required"
 const unknownErrorKey = "unknown-error"
 
 const statusUnprocessableEntity = 422
@@ -101,7 +102,7 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 					Description: err.Error(),
 				})
 			case ErrAsyncRequired:
-				logger.Error(instanceLimitReachedErrorKey, err)
+				logger.Error(asyncRequiredKey, err)
 				respond(w, 422, ErrorResponse{
 					Error:       "AsyncRequired",
 					Description: err.Error(),
@@ -131,11 +132,17 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 			instanceIDLogKey: instanceID,
 		})
 
-		if err := serviceBroker.Deprovision(instanceID); err != nil {
+		asyncAllowed := req.FormValue("accepts_incomplete") == "true"
+
+		isAsync, err := serviceBroker.Deprovision(instanceID, asyncAllowed)
+		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
 				respond(w, http.StatusGone, EmptyResponse{})
+			case ErrAsyncRequired:
+				logger.Error(asyncRequiredKey, err)
+				respond(w, 422, EmptyResponse{})
 			default:
 				logger.Error(unknownErrorKey, err)
 				respond(w, http.StatusInternalServerError, ErrorResponse{
@@ -145,7 +152,11 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 			return
 		}
 
-		respond(w, http.StatusOK, EmptyResponse{})
+		if isAsync {
+			respond(w, http.StatusAccepted, EmptyResponse{})
+		} else {
+			respond(w, http.StatusOK, EmptyResponse{})
+		}
 	}
 }
 
