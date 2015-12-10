@@ -13,15 +13,16 @@ var _ = Describe("Catalog", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
 				service := brokerapi.Service{
-					ID:          "ID-1",
-					Name:        "Cassandra",
-					Description: "A Cassandra Plan",
-					Bindable:    true,
-					Plans:       []brokerapi.ServicePlan{},
-					Metadata:    brokerapi.ServiceMetadata{},
-					Tags:        []string{},
+					ID:            "ID-1",
+					Name:          "Cassandra",
+					Description:   "A Cassandra Plan",
+					Bindable:      true,
+					Plans:         []brokerapi.ServicePlan{},
+					Metadata:      brokerapi.ServiceMetadata{},
+					Tags:          []string{},
+					PlanUpdatable: true,
 				}
-				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[]}`
+				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plan_updateable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[]}`
 
 				Expect(service).To(MarshalToJSON(json))
 			})

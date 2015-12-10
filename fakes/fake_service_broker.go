@@ -38,10 +38,11 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 
 	return []brokerapi.Service{
 		brokerapi.Service{
-			ID:          "0A789746-596F-4CEA-BFAC-A0795DA056E3",
-			Name:        "p-cassandra",
-			Description: "Cassandra service for application development and testing",
-			Bindable:    true,
+			ID:            "0A789746-596F-4CEA-BFAC-A0795DA056E3",
+			Name:          "p-cassandra",
+			Description:   "Cassandra service for application development and testing",
+			Bindable:      true,
+			PlanUpdatable: true,
 			Plans: []brokerapi.ServicePlan{
 				brokerapi.ServicePlan{
 					ID:          "ABE176EE-F69F-4A96-80CE-142595CC24E3",
