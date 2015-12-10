@@ -27,6 +27,7 @@ const bindingAlreadyExistsErrorKey = "binding-already-exists"
 const instanceMissingErrorKey = "instance-missing"
 const bindingMissingErrorKey = "binding-missing"
 const asyncRequiredKey = "async-required"
+const planChangeNotSupportedKey = "plan-change-not-supported"
 const unknownErrorKey = "unknown-error"
 
 const statusUnprocessableEntity = 422
@@ -44,6 +45,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	router.Put("/v2/service_instances/{instance_id}", provision(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}", deprovision(serviceBroker, router, logger))
 	router.Get("/v2/service_instances/{instance_id}/last_operation", lastOperation(serviceBroker, router, logger))
+	router.Patch("/v2/service_instances/{instance_id}", update(serviceBroker, router, logger))
 
 	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, router, logger))
 	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, router, logger))
@@ -121,6 +123,56 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 		} else {
 			respond(w, http.StatusCreated, ProvisioningResponse{})
 		}
+	}
+}
+
+func update(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := router.Vars(req)
+		instanceID := vars["instance_id"]
+
+		var details UpdateDetails
+		if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
+			logger.Error(invalidServiceDetailsErrorKey, err)
+			respond(w, statusUnprocessableEntity, ErrorResponse{
+				Description: err.Error(),
+			})
+			return
+		}
+
+		isAsync, err := serviceBroker.Update(instanceID, details)
+		if err != nil {
+			switch err {
+			case ErrAsyncRequired:
+				logger.Error(asyncRequiredKey, err)
+				respond(w, 422, ErrorResponse{
+					Error:       "AsyncRequired",
+					Description: err.Error(),
+				})
+				return
+
+			case ErrPlanChangeNotSupported:
+				logger.Error(planChangeNotSupportedKey, err)
+				respond(w, 422, ErrorResponse{
+					Error:       "PlanChangeNotSupported",
+					Description: err.Error(),
+				})
+				return
+
+			default:
+				logger.Error(unknownErrorKey, err)
+				respond(w, http.StatusInternalServerError, ErrorResponse{
+					Description: err.Error(),
+				})
+				return
+			}
+		}
+
+		statusCode := http.StatusOK
+		if isAsync {
+			statusCode = http.StatusAccepted
+		}
+		respond(w, statusCode, struct{}{})
 	}
 }
 

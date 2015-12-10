@@ -10,7 +10,7 @@ Requires go 1.4 or greater.
 
 ## Usage
 
-`brokerapi` defines a `ServiceBroker` interface with 6 methods. Simply create
+`brokerapi` defines a `ServiceBroker` interface with 7 methods. Simply create
 a concrete type that implements these methods, and pass an instance of it to
 `brokerapi.New`, along with a `lager.Logger` for logging and a
 `brokerapi.BrokerCredentials` containing some HTTP basic auth credentials.
@@ -58,6 +58,13 @@ func (*myServiceBroker) Bind(instanceID, bindingID string, details brokerapi.Bin
 
 func (*myServiceBroker) Unbind(instanceID, bindingID string) error {
     // Unbind from instances here
+}
+
+func (*myServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails) (brokerapi.IsAsync, error) {
+  // Update instance here
+  // Note that "accepts_incomplete" is in the UpdateDetails object rather than a
+  // separate parameter. This is inconsistent with Provision, and Provision will
+  // likely change in the near future.
 }
 
 func main() {

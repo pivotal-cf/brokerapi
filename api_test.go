@@ -9,15 +9,14 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/drewolson/testflight"
-	"github.com/pivotal-golang/lager"
-	"github.com/pivotal-golang/lager/lagertest"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/pivotal-cf/brokerapi"
 	"github.com/pivotal-cf/brokerapi/fakes"
+
+	"github.com/drewolson/testflight"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/pivotal-golang/lager"
+	"github.com/pivotal-golang/lager/lagertest"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -447,6 +446,137 @@ var _ = Describe("Service Broker API", func() {
 							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
+				})
+			})
+		})
+
+		Describe("updating", func() {
+			var (
+				instanceID string
+				details    brokerapi.UpdateDetails
+
+				response *testflight.Response
+			)
+
+			makeInstanceUpdateRequest := func(instanceID string, details brokerapi.UpdateDetails) *testflight.Response {
+				response := &testflight.Response{}
+
+				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+					path := "/v2/service_instances/" + instanceID
+
+					buffer := &bytes.Buffer{}
+					json.NewEncoder(buffer).Encode(details)
+					request, err := http.NewRequest("PATCH", path, buffer)
+					Expect(err).NotTo(HaveOccurred())
+					request.Header.Add("Content-Type", "application/json")
+					request.SetBasicAuth(credentials.Username, credentials.Password)
+
+					response = r.Do(request)
+				})
+				return response
+			}
+
+			BeforeEach(func() {
+				instanceID = uniqueInstanceID()
+				details = brokerapi.UpdateDetails{
+					ServiceID:  "some-service-id",
+					PlanID:     "new-plan",
+					Parameters: map[string]interface{}{"new-param": "new-param-value"},
+					PreviousValues: brokerapi.PreviousValues{
+						PlanID:    "old-plan",
+						ServiceID: "service-id",
+						OrgID:     "org-id",
+						SpaceID:   "space-id",
+					},
+					AsyncAllowed: true,
+				}
+			})
+
+			JustBeforeEach(func() {
+				response = makeInstanceUpdateRequest(instanceID, details)
+			})
+
+			Context("when the broker returns no error", func() {
+				Context("when the broker responds synchronously", func() {
+					It("returns HTTP 200", func() {
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+					})
+
+					It("returns JSON content type", func() {
+						Expect(response.RawResponse.Header.Get("Content-Type")).To(Equal("application/json"))
+					})
+
+					It("returns empty JSON body", func() {
+						Expect(response.Body).To(Equal("{}\n"))
+					})
+
+					It("calls broker with instanceID and update details", func() {
+						Expect(fakeServiceBroker.UpdatedInstanceIDs).To(ConsistOf(instanceID))
+						Expect(fakeServiceBroker.UpdateDetails).To(Equal(details))
+					})
+				})
+
+				Context("when the broker responds asynchronously", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.ShouldReturnAsync = true
+					})
+
+					It("returns HTTP 202", func() {
+						Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+					})
+				})
+			})
+
+			Context("when the broker indicates that it needs async support", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UpdateError = brokerapi.ErrAsyncRequired
+				})
+
+				It("returns HTTP 422", func() {
+					Expect(response.StatusCode).To(Equal(422))
+				})
+
+				It("returns a descriptive message", func() {
+					var body map[string]string
+					err := json.Unmarshal([]byte(response.Body), &body)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(body["error"]).To(Equal("AsyncRequired"))
+					Expect(body["description"]).To(Equal("This service plan requires client support for asynchronous service operations"))
+				})
+			})
+
+			Context("when the broker indicates that the plan cannot be upgraded", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UpdateError = brokerapi.ErrPlanChangeNotSupported
+				})
+
+				It("returns HTTP 422", func() {
+					Expect(response.StatusCode).To(Equal(422))
+				})
+
+				It("returns a descriptive message", func() {
+					var body map[string]string
+					err := json.Unmarshal([]byte(response.Body), &body)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(body["error"]).To(Equal("PlanChangeNotSupported"))
+					Expect(body["description"]).To(Equal("The requested plan migration cannot be performed"))
+				})
+			})
+
+			Context("when the broker errors in an unknown way", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UpdateError = errors.New("some horrible internal error")
+				})
+
+				It("returns HTTP 500", func() {
+					Expect(response.StatusCode).To(Equal(500))
+				})
+
+				It("returns a descriptive message", func() {
+					var body map[string]string
+					err := json.Unmarshal([]byte(response.Body), &body)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(body["description"]).To(Equal("some horrible internal error"))
 				})
 			})
 		})

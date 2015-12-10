@@ -6,11 +6,12 @@ type ServiceBroker interface {
 	Services() []Service
 
 	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (IsAsync, error)
-
 	Deprovision(instanceID string, asyncAllowed bool) (IsAsync, error)
 
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
+
+	Update(instanceID string, details UpdateDetails) (IsAsync, error)
 
 	LastOperation(instanceID string) (LastOperation, error)
 }
@@ -32,6 +33,21 @@ type BindDetails struct {
 	Parameters map[string]interface{} `json:"parameters"`
 }
 
+type UpdateDetails struct {
+	ServiceID      string                 `json:"service_id"`
+	PlanID         string                 `json:"plan_id"`
+	Parameters     map[string]interface{} `json:"parameters"`
+	PreviousValues PreviousValues         `json:"previous_values"`
+	AsyncAllowed   bool                   `json:"accepts_incomplete"`
+}
+
+type PreviousValues struct {
+	PlanID    string `json:"plan_id"`
+	ServiceID string `json:"service_id"`
+	OrgID     string `json:"organization_id"`
+	SpaceID   string `json:"space_id"`
+}
+
 type LastOperation struct {
 	State       LastOperationState
 	Description string
@@ -46,10 +62,11 @@ const (
 )
 
 var (
-	ErrInstanceAlreadyExists = errors.New("instance already exists")
-	ErrInstanceDoesNotExist  = errors.New("instance does not exist")
-	ErrInstanceLimitMet      = errors.New("instance limit for this service has been reached")
-	ErrBindingAlreadyExists  = errors.New("binding already exists")
-	ErrBindingDoesNotExist   = errors.New("binding does not exist")
-	ErrAsyncRequired         = errors.New("This service plan requires client support for asynchronous service operations.")
+	ErrInstanceAlreadyExists  = errors.New("instance already exists")
+	ErrInstanceDoesNotExist   = errors.New("instance does not exist")
+	ErrInstanceLimitMet       = errors.New("instance limit for this service has been reached")
+	ErrBindingAlreadyExists   = errors.New("binding already exists")
+	ErrBindingDoesNotExist    = errors.New("binding does not exist")
+	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations")
+	ErrPlanChangeNotSupported = errors.New("The requested plan migration cannot be performed")
 )

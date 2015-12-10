@@ -4,9 +4,11 @@ import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
 	ProvisionDetails brokerapi.ProvisionDetails
+	UpdateDetails    brokerapi.UpdateDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
+	UpdatedInstanceIDs       []string
 
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
@@ -18,10 +20,13 @@ type FakeServiceBroker struct {
 	BindError          error
 	DeprovisionError   error
 	LastOperationError error
+	UpdateError        error
 
 	BrokerCalled             bool
 	LastOperationState       brokerapi.LastOperationState
 	LastOperationDescription string
+
+	ShouldReturnAsync brokerapi.IsAsync
 }
 
 type FakeAsyncServiceBroker struct {
@@ -137,6 +142,18 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, detai
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
 	return true, nil
+}
+
+func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails) (brokerapi.IsAsync, error) {
+	fakeBroker.BrokerCalled = true
+
+	if fakeBroker.UpdateError != nil {
+		return false, fakeBroker.UpdateError
+	}
+
+	fakeBroker.UpdateDetails = details
+	fakeBroker.UpdatedInstanceIDs = append(fakeBroker.UpdatedInstanceIDs, instanceID)
+	return fakeBroker.ShouldReturnAsync, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
