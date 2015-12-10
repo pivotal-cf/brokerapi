@@ -11,7 +11,7 @@ type ServiceBroker interface {
 	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
 	Unbind(instanceID, bindingID string) error
 
-	Update(instanceID string, details UpdateDetails) (IsAsync, error)
+	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (IsAsync, error)
 
 	LastOperation(instanceID string) (LastOperation, error)
 }
@@ -38,7 +38,6 @@ type UpdateDetails struct {
 	PlanID         string                 `json:"plan_id"`
 	Parameters     map[string]interface{} `json:"parameters"`
 	PreviousValues PreviousValues         `json:"previous_values"`
-	AsyncAllowed   bool                   `json:"accepts_incomplete"`
 }
 
 type PreviousValues struct {

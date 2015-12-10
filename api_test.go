@@ -452,17 +452,18 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("updating", func() {
 			var (
-				instanceID string
-				details    brokerapi.UpdateDetails
+				instanceID  string
+				details     brokerapi.UpdateDetails
+				queryString string
 
 				response *testflight.Response
 			)
 
-			makeInstanceUpdateRequest := func(instanceID string, details brokerapi.UpdateDetails) *testflight.Response {
+			makeInstanceUpdateRequest := func(instanceID string, details brokerapi.UpdateDetails, queryString string) *testflight.Response {
 				response := &testflight.Response{}
 
 				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-					path := "/v2/service_instances/" + instanceID
+					path := "/v2/service_instances/" + instanceID + queryString
 
 					buffer := &bytes.Buffer{}
 					json.NewEncoder(buffer).Encode(details)
@@ -488,12 +489,11 @@ var _ = Describe("Service Broker API", func() {
 						OrgID:     "org-id",
 						SpaceID:   "space-id",
 					},
-					AsyncAllowed: true,
 				}
 			})
 
 			JustBeforeEach(func() {
-				response = makeInstanceUpdateRequest(instanceID, details)
+				response = makeInstanceUpdateRequest(instanceID, details, queryString)
 			})
 
 			Context("when the broker returns no error", func() {
@@ -513,6 +513,26 @@ var _ = Describe("Service Broker API", func() {
 					It("calls broker with instanceID and update details", func() {
 						Expect(fakeServiceBroker.UpdatedInstanceIDs).To(ConsistOf(instanceID))
 						Expect(fakeServiceBroker.UpdateDetails).To(Equal(details))
+					})
+
+					Context("when accepts_incomplete=true", func() {
+						BeforeEach(func() {
+							queryString = "?accepts_incomplete=true"
+						})
+
+						It("tells broker async is allowed", func() {
+							Expect(fakeServiceBroker.AsyncAllowed).To(BeTrue())
+						})
+					})
+
+					Context("when accepts_incomplete is not supplied", func() {
+						BeforeEach(func() {
+							queryString = ""
+						})
+
+						It("tells broker async not allowed", func() {
+							Expect(fakeServiceBroker.AsyncAllowed).To(BeFalse())
+						})
 					})
 				})
 

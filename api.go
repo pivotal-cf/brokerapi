@@ -140,7 +140,9 @@ func update(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 			return
 		}
 
-		isAsync, err := serviceBroker.Update(instanceID, details)
+		acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
+
+		isAsync, err := serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
 		if err != nil {
 			switch err {
 			case ErrAsyncRequired:

@@ -26,6 +26,8 @@ type FakeServiceBroker struct {
 	LastOperationState       brokerapi.LastOperationState
 	LastOperationDescription string
 
+	AsyncAllowed bool
+
 	ShouldReturnAsync brokerapi.IsAsync
 }
 
@@ -144,7 +146,7 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, detai
 	return true, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.UpdateError != nil {
@@ -153,6 +155,7 @@ func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi
 
 	fakeBroker.UpdateDetails = details
 	fakeBroker.UpdatedInstanceIDs = append(fakeBroker.UpdatedInstanceIDs, instanceID)
+	fakeBroker.AsyncAllowed = asyncAllowed
 	return fakeBroker.ShouldReturnAsync, nil
 }
 

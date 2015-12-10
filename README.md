@@ -60,11 +60,8 @@ func (*myServiceBroker) Unbind(instanceID, bindingID string) error {
     // Unbind from instances here
 }
 
-func (*myServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails) (brokerapi.IsAsync, error) {
+func (*myServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
   // Update instance here
-  // Note that "accepts_incomplete" is in the UpdateDetails object rather than a
-  // separate parameter. This is inconsistent with Provision, and Provision will
-  // likely change in the near future.
 }
 
 func main() {
