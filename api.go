@@ -2,6 +2,7 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -247,7 +248,11 @@ func respond(w http.ResponseWriter, status int, response interface{}) {
 	w.WriteHeader(status)
 
 	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+	err := encoder.Encode(response)
+	if err != nil {
+		fmt.Printf("failed response (%d) encoding of %#v\n", status, response)
+		fmt.Println(err)
+	}
 }
 
 func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
