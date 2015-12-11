@@ -363,7 +363,7 @@ var _ = Describe("Service Broker API", func() {
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 					})
 
-					Context("when the broker chooses to provision asyncronously", func() {
+					Context("when the broker chooses to provision asynchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
 								InstanceLimit: 3,
@@ -381,7 +381,7 @@ var _ = Describe("Service Broker API", func() {
 						})
 					})
 
-					Context("when the broker chooses to provision syncronously", func() {
+					Context("when the broker chooses to provision synchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
 								InstanceLimit: 3,
@@ -809,6 +809,17 @@ var _ = Describe("Service Broker API", func() {
 				It("returns a 201", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(201))
+				})
+
+				Context("when syslog_drain_url is being passed", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.SyslogDrainURL = "some-drain-url"
+					})
+
+					It("responds with the syslog drain url", func() {
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						Expect(response.Body).To(MatchJSON(fixture("binding_with_syslog.json")))
+					})
 				})
 
 				Context("when no bind details are being passed", func() {

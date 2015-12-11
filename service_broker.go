@@ -8,7 +8,7 @@ type ServiceBroker interface {
 	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (IsAsync, error)
 	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool) (IsAsync, error)
 
-	Bind(instanceID, bindingID string, details BindDetails) (interface{}, error)
+	Bind(instanceID, bindingID string, details BindDetails) (Binding, error)
 	Unbind(instanceID, bindingID string, details UnbindDetails) error
 
 	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (IsAsync, error)
@@ -69,6 +69,11 @@ const (
 	Succeeded  LastOperationState = "succeeded"
 	Failed     LastOperationState = "failed"
 )
+
+type Binding struct {
+	Credentials    interface{} `json:"credentials"`
+	SyslogDrainURL string      `json:"syslog_drain_url,omitempty"`
+}
 
 var (
 	ErrInstanceAlreadyExists  = errors.New("instance already exists")

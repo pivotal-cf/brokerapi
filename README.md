@@ -46,17 +46,18 @@ func (*myServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperatio
     // This also applies to deprovisioning (work in progress).
 }
 
-func (*myServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (*myServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
     // Deprovision a new instance here. If async is allowed, the broker can still
     // chose to deprovision the instance synchronously, hence the first return value.
 }
 
-func (*myServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (interface{}, error) {
+func (*myServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
     // Bind to instances here
-    // Return credentials which will be marshalled to JSON
+    // Return a binding which contains a credentials object that can be marshalled to JSON,
+    // and (optionally) a syslog drain URL.
 }
 
-func (*myServiceBroker) Unbind(instanceID, bindingID string) error {
+func (*myServiceBroker) Unbind(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
     // Unbind from instances here
 }
 

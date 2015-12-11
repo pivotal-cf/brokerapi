@@ -15,10 +15,6 @@ type ProvisioningResponse struct {
 	DashboardURL string `json:"dashboard_url,omitempty"`
 }
 
-type BindingResponse struct {
-	Credentials interface{} `json:"credentials"`
-}
-
 type LastOperationResponse struct {
 	State       string `json:"state"`
 	Description string `json:"description,omitempty"`

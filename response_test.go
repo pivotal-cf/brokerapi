@@ -48,10 +48,10 @@ var _ = Describe("Provisioning Response", func() {
 var _ = Describe("Binding Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a credentials object", func() {
-			bindingResponse := brokerapi.BindingResponse{}
+			binding := brokerapi.Binding{}
 			json := `{"credentials":null}`
 
-			Expect(bindingResponse).To(MarshalToJSON(json))
+			Expect(binding).To(MarshalToJSON(json))
 		})
 	})
 })

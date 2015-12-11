@@ -14,6 +14,7 @@ type FakeServiceBroker struct {
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
 	BoundBindingDetails brokerapi.BindDetails
+	SyslogDrainURL      string
 
 	UnbindingDetails brokerapi.UnbindDetails
 
@@ -216,11 +217,11 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(instanceID string, details
 	return brokerapi.IsAsync(asyncAllowed), brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (interface{}, error) {
+func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.BindError != nil {
-		return nil, fakeBroker.BindError
+		return brokerapi.Binding{}, fakeBroker.BindError
 	}
 
 	fakeBroker.BoundBindingDetails = details
@@ -228,11 +229,14 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details 
 	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
 	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)
 
-	return FakeCredentials{
-		Host:     "127.0.0.1",
-		Port:     3000,
-		Username: "batman",
-		Password: "robin",
+	return brokerapi.Binding{
+		Credentials: FakeCredentials{
+			Host:     "127.0.0.1",
+			Port:     3000,
+			Username: "batman",
+			Password: "robin",
+		},
+		SyslogDrainURL: fakeBroker.SyslogDrainURL,
 	}, nil
 }
 

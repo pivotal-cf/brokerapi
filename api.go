@@ -241,7 +241,7 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			return
 		}
 
-		credentials, err := serviceBroker.Bind(instanceID, bindingID, details)
+		binding, err := serviceBroker.Bind(instanceID, bindingID, details)
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
@@ -263,11 +263,7 @@ func bind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) h
 			return
 		}
 
-		bindingResponse := BindingResponse{
-			Credentials: credentials,
-		}
-
-		respond(w, http.StatusCreated, bindingResponse)
+		respond(w, http.StatusCreated, binding)
 	}
 }
 
