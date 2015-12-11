@@ -3,8 +3,9 @@ package fakes
 import "github.com/pivotal-cf/brokerapi"
 
 type FakeServiceBroker struct {
-	ProvisionDetails brokerapi.ProvisionDetails
-	UpdateDetails    brokerapi.UpdateDetails
+	ProvisionDetails   brokerapi.ProvisionDetails
+	UpdateDetails      brokerapi.UpdateDetails
+	DeprovisionDetails brokerapi.DeprovisionDetails
 
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
@@ -13,6 +14,8 @@ type FakeServiceBroker struct {
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
 	BoundBindingDetails brokerapi.BindDetails
+
+	UnbindingDetails brokerapi.UnbindDetails
 
 	InstanceLimit int
 
@@ -159,13 +162,14 @@ func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi
 	return fakeBroker.ShouldReturnAsync, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.DeprovisionError != nil {
 		return brokerapi.IsAsync(false), fakeBroker.DeprovisionError
 	}
 
+	fakeBroker.DeprovisionDetails = details
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
@@ -174,7 +178,7 @@ func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, asyncAllowed
 	return brokerapi.IsAsync(false), brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.DeprovisionError != nil {
@@ -186,6 +190,7 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(instanceID string, asy
 	}
 
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
+	fakeBroker.DeprovisionDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		return brokerapi.IsAsync(true), nil
@@ -194,7 +199,7 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(instanceID string, asy
 	return brokerapi.IsAsync(true), brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeAsyncServiceBroker) Deprovision(instanceID string, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeAsyncServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.DeprovisionError != nil {
@@ -202,6 +207,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(instanceID string, asyncAl
 	}
 
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
+	fakeBroker.DeprovisionDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		return brokerapi.IsAsync(asyncAllowed), nil
@@ -230,8 +236,10 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details 
 	}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string) error {
+func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
 	fakeBroker.BrokerCalled = true
+
+	fakeBroker.UnbindingDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {

@@ -2,6 +2,7 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -21,6 +22,8 @@ const bindingIDLogKey = "binding-id"
 
 const invalidServiceDetailsErrorKey = "invalid-service-details"
 const invalidBindDetailsErrorKey = "invalid-bind-details"
+const invalidUnbindDetailsErrorKey = "invalid-unbind-details"
+const invalidDeprovisionDetailsErrorKey = "invalid-deprovision-details"
 const instanceLimitReachedErrorKey = "instance-limit-reached"
 const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
@@ -186,9 +189,13 @@ func deprovision(serviceBroker ServiceBroker, router httpRouter, logger lager.Lo
 			instanceIDLogKey: instanceID,
 		})
 
+		details := DeprovisionDetails{
+			PlanID:    req.FormValue("plan_id"),
+			ServiceID: req.FormValue("service_id"),
+		}
 		asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
-		isAsync, err := serviceBroker.Deprovision(instanceID, asyncAllowed)
+		isAsync, err := serviceBroker.Deprovision(instanceID, details, asyncAllowed)
 		if err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
@@ -275,7 +282,12 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 			bindingIDLogKey:  bindingID,
 		})
 
-		if err := serviceBroker.Unbind(instanceID, bindingID); err != nil {
+		details := UnbindDetails{
+			PlanID:    req.FormValue("plan_id"),
+			ServiceID: req.FormValue("service_id"),
+		}
+
+		if err := serviceBroker.Unbind(instanceID, bindingID, details); err != nil {
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
@@ -301,7 +313,11 @@ func respond(w http.ResponseWriter, status int, response interface{}) {
 	w.WriteHeader(status)
 
 	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+	err := encoder.Encode(response)
+	if err != nil {
+		fmt.Printf("response being attempted %d %#v\n", status, response)
+		fmt.Println(err)
+	}
 }
 
 func lastOperation(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger) http.HandlerFunc {
