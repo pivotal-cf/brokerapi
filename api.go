@@ -94,7 +94,7 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			instanceDetailsLogKey: details,
 		})
 
-		async, err := serviceBroker.Provision(instanceID, details, acceptsIncompleteFlag)
+		provisionResponse, err := serviceBroker.Provision(instanceID, details, acceptsIncompleteFlag)
 
 		if err != nil {
 			switch err {
@@ -121,10 +121,14 @@ func provision(serviceBroker ServiceBroker, router httpRouter, logger lager.Logg
 			return
 		}
 
-		if async {
-			respond(w, http.StatusAccepted, ProvisioningResponse{})
+		if provisionResponse.IsAsync {
+			respond(w, http.StatusAccepted, ProvisioningResponse{
+				DashboardURL: provisionResponse.DashboardURL,
+			})
 		} else {
-			respond(w, http.StatusCreated, ProvisioningResponse{})
+			respond(w, http.StatusCreated, ProvisioningResponse{
+				DashboardURL: provisionResponse.DashboardURL,
+			})
 		}
 	}
 }

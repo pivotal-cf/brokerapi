@@ -33,6 +33,7 @@ type FakeServiceBroker struct {
 	AsyncAllowed bool
 
 	ShouldReturnAsync brokerapi.IsAsync
+	DashboardURL      string
 }
 
 type FakeAsyncServiceBroker struct {
@@ -86,68 +87,68 @@ func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
 	}
 }
 
-func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
+		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return false, nil
+	return brokerapi.ProvisionedServiceSpec{DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
-func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
+		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
 	}
 
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return brokerapi.IsAsync(fakeBroker.ShouldProvisionAsync), nil
+	return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
-func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.ProvisionError != nil {
-		return false, fakeBroker.ProvisionError
+		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
 	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
-		return false, brokerapi.ErrInstanceLimitMet
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return false, brokerapi.ErrInstanceAlreadyExists
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
 	}
 
 	if !asyncAllowed {
-		return true, brokerapi.ErrAsyncRequired
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrAsyncRequired
 	}
 
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return true, nil
+	return brokerapi.ProvisionedServiceSpec{IsAsync: true, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {

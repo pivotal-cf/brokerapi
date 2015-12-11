@@ -35,9 +35,9 @@ func (*myServiceBroker) Provision(
     instanceID string,
     details brokerapi.ProvisionDetails,
     asyncAllowed bool,
-) (brokerapi.IsAsync, error) {
+) (brokerapi.ProvisionedServiceSpec, error) {
     // Provision a new instance here. If async is allowed, the broker can still
-    // chose to provision the instance synchronously, hence the first return value.
+    // chose to provision the instance synchronously.
 }
 
 func (*myServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {

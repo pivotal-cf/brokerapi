@@ -248,9 +248,20 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(201))
 				})
 
-				It("returns json with a dashboard_url field", func() {
+				It("returns empty json", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
+				})
+
+				Context("when the broker returns a dashboard URL", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.DashboardURL = "some-dashboard-url"
+					})
+
+					It("returns json with dasboard URL", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.Body).To(MatchJSON(fixture("provisioning_with_dashboard.json")))
+					})
 				})
 
 				Context("when the instance limit has been reached", func() {

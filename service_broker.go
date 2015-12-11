@@ -5,7 +5,7 @@ import "errors"
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (IsAsync, error)
+	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool) (IsAsync, error)
 
 	Bind(instanceID, bindingID string, details BindDetails) (Binding, error)
@@ -24,6 +24,11 @@ type ProvisionDetails struct {
 	OrganizationGUID string                 `json:"organization_guid"`
 	SpaceGUID        string                 `json:"space_guid"`
 	Parameters       map[string]interface{} `json:"parameters,omitempty"`
+}
+
+type ProvisionedServiceSpec struct {
+	IsAsync      bool
+	DashboardURL string
 }
 
 type BindDetails struct {
