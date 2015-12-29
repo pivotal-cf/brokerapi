@@ -6,11 +6,6 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/go-uuid/uuid",
-			"Comment": "null-10",
-			"Rev": "5fac954758f5aa282478dc07fbb8709fe9575184"
-		},
-		{
 			"ImportPath": "github.com/drewolson/testflight",
 			"Rev": "922f722f568944e2107c78b4bcb5f15e9c811253"
 		},
@@ -30,6 +25,10 @@
 		{
 			"ImportPath": "github.com/onsi/gomega",
 			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
+		},
+		{
+			"ImportPath": "github.com/pborman/uuid",
+			"Rev": "dee7705ef7b324f27ceb85a121c61f2c2e8ce988"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/lager",
