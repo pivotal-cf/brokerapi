@@ -10,7 +10,6 @@
       "id": "ABE176EE-F69F-4A96-80CE-142595CC24E3",
       "name": "default",
       "metadata": {
-        "bullets": [],
         "displayName": "Cassandra"
       }
     }],
@@ -18,14 +17,7 @@
       "displayName": "Cassandra",
       "longDescription": "Long description",
       "documentationUrl": "http://thedocs.com",
-      "supportUrl": "http://helpme.no",
-      "listing": {
-        "blurb": "blah blah",
-        "imageUrl": "http://foo.com/thing.png"
-      },
-      "provider": {
-        "name": "Pivotal"
-      }
+      "supportUrl": "http://helpme.no"
     },
     "tags": [
       "pivotal",
