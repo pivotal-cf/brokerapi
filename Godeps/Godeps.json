@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/pivotal-cf/brokerapi",
-	"GoVersion": "go1.3.1",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.5",
 	"Deps": [
 		{
 			"ImportPath": "github.com/drewolson/testflight",
@@ -19,12 +16,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.0.0-28-g6481765",
-			"Rev": "6481765dda39cbaae281109e6945449642329197"
+			"Comment": "v1.2.0-34-ge43390e",
+			"Rev": "e43390e35a4a88f3f95d5ddf9055efb7a1170469"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
+			"Comment": "v1.0-75-g0fe2044",
+			"Rev": "0fe204460da2c8fa1babcaac196e694de8f1aaa1"
 		},
 		{
 			"ImportPath": "github.com/pborman/uuid",
