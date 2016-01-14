@@ -18,12 +18,32 @@ var _ = Describe("Catalog", func() {
 					Description:   "A Cassandra Plan",
 					Bindable:      true,
 					Plans:         []brokerapi.ServicePlan{},
-					Metadata:      brokerapi.ServiceMetadata{},
-					Tags:          []string{},
+					Metadata:      &brokerapi.ServiceMetadata{},
+					Tags:          []string{"test"},
 					PlanUpdatable: true,
+					DashboardClient: &brokerapi.ServiceDashboardClient{
+						ID:          "Dashboard ID",
+						Secret:      "dashboardsecret",
+						RedirectURI: "the.dashboa.rd",
+					},
 				}
-				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","bindable":true,"plan_updateable":true,"plans":[],"metadata":{"displayName":"","longDescription":"","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}},"tags":[]}`
+				json := `{
+					"id":"ID-1",
+				  	"name":"Cassandra",
+					"description":"A Cassandra Plan",
+					"bindable":true,
+					"plan_updateable":true,
+					"tags":["test"],
+					"plans":[],
+					"dashboard_client":{
+						"id":"Dashboard ID",
+						"secret":"dashboardsecret",
+						"redirect_uri":"the.dashboa.rd"
+					},
+					"metadata":{
 
+					}
+				}`
 				Expect(service).To(MarshalToJSON(json))
 			})
 		})
@@ -36,11 +56,22 @@ var _ = Describe("Catalog", func() {
 					ID:          "ID-1",
 					Name:        "Cassandra",
 					Description: "A Cassandra Plan",
-					Metadata: brokerapi.ServicePlanMetadata{
-						Bullets: []string{},
+					Free:        brokerapi.FreeValue(true),
+					Metadata: &brokerapi.ServicePlanMetadata{
+						Bullets:     []string{"hello", "its me"},
+						DisplayName: "name",
 					},
 				}
-				json := `{"id":"ID-1","name":"Cassandra","description":"A Cassandra Plan","metadata":{"bullets":[],"displayName":""}}`
+				json := `{
+					"id":"ID-1",
+					"name":"Cassandra",
+					"description":"A Cassandra Plan",
+					"free": true,
+					"metadata":{
+						"bullets":["hello", "its me"],
+						"displayName":"name"
+					}
+				}`
 
 				Expect(plan).To(MarshalToJSON(json))
 			})
@@ -51,10 +82,10 @@ var _ = Describe("Catalog", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
 				metadata := brokerapi.ServicePlanMetadata{
-					Bullets:     []string{},
+					Bullets:     []string{"test"},
 					DisplayName: "Some display name",
 				}
-				json := `{"bullets":[],"displayName":"Some display name"}`
+				json := `{"bullets":["test"],"displayName":"Some display name"}`
 
 				Expect(metadata).To(MarshalToJSON(json))
 			})
@@ -65,43 +96,23 @@ var _ = Describe("Catalog", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
 				metadata := brokerapi.ServiceMetadata{
-					DisplayName:      "Cassandra",
-					LongDescription:  "A long description of Cassandra",
-					DocumentationUrl: "",
-					SupportUrl:       "",
-					Listing:          brokerapi.ServiceMetadataListing{},
-					Provider:         brokerapi.ServiceMetadataProvider{},
+					DisplayName:         "Cassandra",
+					LongDescription:     "A long description of Cassandra",
+					DocumentationUrl:    "doc",
+					SupportUrl:          "support",
+					ImageUrl:            "image",
+					ProviderDisplayName: "display",
 				}
-				json := `{"displayName":"Cassandra","longDescription":"A long description of Cassandra","documentationUrl":"","supportUrl":"","listing":{"blurb":"","imageUrl":""},"provider":{"name":""}}`
+				json := `{
+					"displayName":"Cassandra",
+					"longDescription":"A long description of Cassandra",
+					"documentationUrl":"doc",
+					"supportUrl":"support",
+					"imageUrl":"image",
+					"providerDisplayName":"display"
+				}`
 
 				Expect(metadata).To(MarshalToJSON(json))
-			})
-		})
-	})
-
-	Describe("ServiceMetadataListing", func() {
-		Describe("JSON encoding", func() {
-			It("uses the correct keys", func() {
-				listing := brokerapi.ServiceMetadataListing{
-					Blurb:    "Blurb",
-					ImageUrl: "foo",
-				}
-				json := `{"blurb":"Blurb","imageUrl":"foo"}`
-
-				Expect(listing).To(MarshalToJSON(json))
-			})
-		})
-	})
-
-	Describe("ServiceMetadataProvider", func() {
-		Describe("JSON encoding", func() {
-			It("uses the correct keys", func() {
-				provider := brokerapi.ServiceMetadataProvider{
-					Name: "Pivotal",
-				}
-				json := `{"name":"Pivotal"}`
-
-				Expect(provider).To(MarshalToJSON(json))
 			})
 		})
 	})

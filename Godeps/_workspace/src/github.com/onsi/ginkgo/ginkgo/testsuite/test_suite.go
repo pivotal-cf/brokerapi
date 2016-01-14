@@ -1,20 +1,62 @@
 package testsuite
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 type TestSuite struct {
 	Path        string
 	PackageName string
 	IsGinkgo    bool
+	Precompiled bool
+}
+
+func PrecompiledTestSuite(path string) (TestSuite, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return TestSuite{}, err
+	}
+
+	if info.IsDir() {
+		return TestSuite{}, errors.New("this is a directory, not a file")
+	}
+
+	if filepath.Ext(path) != ".test" {
+		return TestSuite{}, errors.New("this is not a .test binary")
+	}
+
+	if info.Mode()&0111 == 0 {
+		return TestSuite{}, errors.New("this is not executable")
+	}
+
+	dir := relPath(filepath.Dir(path))
+	packageName := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+
+	return TestSuite{
+		Path:        dir,
+		PackageName: packageName,
+		IsGinkgo:    true,
+		Precompiled: true,
+	}, nil
 }
 
 func SuitesInDir(dir string, recurse bool) []TestSuite {
 	suites := []TestSuite{}
+
+	// "This change will only be enabled if the go command is run with
+	// GO15VENDOREXPERIMENT=1 in its environment."
+	// c.f. the vendor-experiment proposal https://goo.gl/2ucMeC
+	vendorExperiment := os.Getenv("GO15VENDOREXPERIMENT")
+	if (vendorExperiment == "1") && path.Base(dir) == "vendor" {
+		return suites
+	}
+
 	files, _ := ioutil.ReadDir(dir)
 	re := regexp.MustCompile(`_test\.go$`)
 	for _, file := range files {
@@ -36,14 +78,17 @@ func SuitesInDir(dir string, recurse bool) []TestSuite {
 	return suites
 }
 
-func New(dir string, files []os.FileInfo) TestSuite {
+func relPath(dir string) string {
 	dir, _ = filepath.Abs(dir)
 	cwd, _ := os.Getwd()
 	dir, _ = filepath.Rel(cwd, filepath.Clean(dir))
 	dir = "." + string(filepath.Separator) + dir
+	return dir
+}
 
+func New(dir string, files []os.FileInfo) TestSuite {
 	return TestSuite{
-		Path:        dir,
+		Path:        relPath(dir),
 		PackageName: packageNameForSuite(dir),
 		IsGinkgo:    filesHaveGinkgoSuite(dir, files),
 	}
