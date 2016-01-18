@@ -1,8 +1,9 @@
 package ws
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 type Connection struct {
@@ -38,10 +39,8 @@ func (connection *Connection) ReceiveMessage() (string, *TimeoutError) {
 
 	go connection.receiveMessage(messageChan)
 
-	timeout := time.After(connection.Timeout)
-
 	select {
-	case <-timeout:
+	case <-time.After(connection.Timeout):
 		return "", &TimeoutError{}
 	case message := <-messageChan:
 		connection.ReceivedMessages = append(connection.ReceivedMessages, message)
