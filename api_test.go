@@ -205,7 +205,7 @@ var _ = Describe("Service Broker API", func() {
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				provisionDetails = brokerapi.ProvisionDetails{
-					ID:               "service-id",
+					ServiceID:        "service-id",
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
 					SpaceGUID:        "space-guid",
