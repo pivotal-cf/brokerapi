@@ -19,7 +19,7 @@ type ServiceBroker interface {
 type IsAsync bool
 
 type ProvisionDetails struct {
-	ID               string                 `json:"service_id"`
+	ServiceID        string                 `json:"service_id"`
 	PlanID           string                 `json:"plan_id"`
 	OrganizationGUID string                 `json:"organization_guid"`
 	SpaceGUID        string                 `json:"space_guid"`
