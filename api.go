@@ -291,7 +291,7 @@ func unbind(serviceBroker ServiceBroker, router httpRouter, logger lager.Logger)
 			switch err {
 			case ErrInstanceDoesNotExist:
 				logger.Error(instanceMissingErrorKey, err)
-				respond(w, http.StatusNotFound, EmptyResponse{})
+				respond(w, http.StatusGone, EmptyResponse{})
 			case ErrBindingDoesNotExist:
 				logger.Error(bindingMissingErrorKey, err)
 				respond(w, http.StatusGone, EmptyResponse{})

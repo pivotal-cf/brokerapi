@@ -1009,9 +1009,9 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the associated instance does not exist", func() {
 				var instanceID string
 
-				It("returns a 404", func() {
+				It("returns a 410", func() {
 					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(response.StatusCode).To(Equal(404))
+					Expect(response.StatusCode).To(Equal(http.StatusGone))
 				})
 
 				It("returns an empty JSON object", func() {
