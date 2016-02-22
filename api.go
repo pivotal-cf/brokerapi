@@ -43,7 +43,11 @@ type BrokerCredentials struct {
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
+	AttachRoutes(router, serviceBroker, logger)
+	return auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap(router)
+}
 
+func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
 	router.HandleFunc("/v2/catalog", catalog(serviceBroker, logger)).Methods("GET")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}", provision(serviceBroker, logger)).Methods("PUT")
@@ -53,12 +57,6 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", bind(serviceBroker, logger)).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", unbind(serviceBroker, logger)).Methods("DELETE")
-
-	return wrapAuth(router, brokerCredentials)
-}
-
-func wrapAuth(router http.Handler, credentials BrokerCredentials) http.Handler {
-	return auth.NewWrapper(credentials.Username, credentials.Password).Wrap(router)
 }
 
 func catalog(serviceBroker ServiceBroker, logger lager.Logger) http.HandlerFunc {
