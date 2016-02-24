@@ -576,7 +576,7 @@ var _ = Describe("Service Broker API", func() {
 					err := json.Unmarshal([]byte(response.Body), &body)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(body["error"]).To(Equal("AsyncRequired"))
-					Expect(body["description"]).To(Equal("This service plan requires client support for asynchronous service operations"))
+					Expect(body["description"]).To(Equal("This service plan requires client support for asynchronous service operations."))
 				})
 			})
 
@@ -642,7 +642,9 @@ var _ = Describe("Service Broker API", func() {
 						response := makeInstanceDeprovisioningRequest(instanceID, queryString)
 						Expect(response.StatusCode).To(Equal(expectedStatus))
 					})
+				}
 
+				itReturnsEmptyJsonObject := func(queryString string) {
 					It("returns an empty JSON object", func() {
 						response := makeInstanceDeprovisioningRequest(instanceID, queryString)
 						Expect(response.Body).To(MatchJSON(`{}`))
@@ -652,10 +654,12 @@ var _ = Describe("Service Broker API", func() {
 				Context("when the broker can only operate synchronously", func() {
 					Context("when the accepts_incomplete flag is not set", func() {
 						itReturnsStatus(200, "")
+						itReturnsEmptyJsonObject("")
 					})
 
 					Context("when the accepts_incomplete flag is set to true", func() {
 						itReturnsStatus(200, "accepts_incomplete=true")
+						itReturnsEmptyJsonObject("accepts_incomplete=true")
 					})
 				})
 
@@ -669,10 +673,16 @@ var _ = Describe("Service Broker API", func() {
 
 					Context("when the accepts_incomplete flag is not set", func() {
 						itReturnsStatus(422, "")
+
+						It("returns a descriptive error", func() {
+							response := makeInstanceDeprovisioningRequest(instanceID, "")
+							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+						})
 					})
 
 					Context("when the accepts_incomplete flag is set to true", func() {
 						itReturnsStatus(202, "accepts_incomplete=true")
+						itReturnsEmptyJsonObject("accepts_incomplete=true")
 					})
 				})
 
@@ -686,10 +696,12 @@ var _ = Describe("Service Broker API", func() {
 
 					Context("when the accepts_incomplete flag is not set", func() {
 						itReturnsStatus(200, "")
+						itReturnsEmptyJsonObject("")
 					})
 
 					Context("when the accepts_incomplete flag is set to true", func() {
 						itReturnsStatus(202, "accepts_incomplete=true")
+						itReturnsEmptyJsonObject("accepts_incomplete=true")
 					})
 				})
 

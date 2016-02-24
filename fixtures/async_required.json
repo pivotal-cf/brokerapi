@@ -1,4 +1,4 @@
 {
   "error": "AsyncRequired",
-  "description": "This service plan requires client support for asynchronous service operations"
+  "description": "This service plan requires client support for asynchronous service operations."
 }

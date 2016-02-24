@@ -206,7 +206,10 @@ func deprovision(serviceBroker ServiceBroker, logger lager.Logger) http.HandlerF
 				respond(w, http.StatusGone, EmptyResponse{})
 			case ErrAsyncRequired:
 				logger.Error(asyncRequiredKey, err)
-				respond(w, 422, EmptyResponse{})
+				respond(w, 422, ErrorResponse{
+					Error:       "AsyncRequired",
+					Description: err.Error(),
+				})
 			default:
 				logger.Error(unknownErrorKey, err)
 				respond(w, http.StatusInternalServerError, ErrorResponse{

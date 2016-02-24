@@ -86,6 +86,6 @@ var (
 	ErrInstanceLimitMet       = errors.New("instance limit for this service has been reached")
 	ErrBindingAlreadyExists   = errors.New("binding already exists")
 	ErrBindingDoesNotExist    = errors.New("binding does not exist")
-	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations")
+	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations.")
 	ErrPlanChangeNotSupported = errors.New("The requested plan migration cannot be performed")
 )
