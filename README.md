@@ -17,7 +17,7 @@ a concrete type that implements these methods, and pass an instance of it to
 
 e.g.
 
-```
+```go
 package main
 
 import (
@@ -89,7 +89,7 @@ Service Broker API specification.
 
 The error types are:
 
-```
+```go
 ErrInstanceAlreadyExists
 ErrInstanceDoesNotExist
 ErrInstanceLimitMet
