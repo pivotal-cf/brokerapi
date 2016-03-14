@@ -871,6 +871,32 @@ var _ = Describe("Service Broker API", func() {
 						Expect(actual["Name"]).To(Equal("some-name"))
 					})
 				})
+
+				Context("when there is a app_guid in the bind_resource", func() {
+					BeforeEach(func() {
+						details.BindResource = &brokerapi.BindResource{AppGuid: "a-guid"}
+					})
+
+					It("calls Bind on the service broker with the bind_resource", func() {
+						makeBindingRequest(instanceID, bindingID, details)
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(Equal("a-guid"))
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(BeEmpty())
+					})
+				})
+
+				Context("when there is a route in the bind_resource", func() {
+					BeforeEach(func() {
+						details.BindResource = &brokerapi.BindResource{Route: "route.cf-apps.com"}
+					})
+
+					It("calls Bind on the service broker with the bind_resource", func() {
+						makeBindingRequest(instanceID, bindingID, details)
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(Equal("route.cf-apps.com"))
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(BeEmpty())
+					})
+				})
 			})
 
 			Context("when the associated instance does not exist", func() {
