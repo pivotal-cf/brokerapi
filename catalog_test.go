@@ -48,6 +48,44 @@ var _ = Describe("Catalog", func() {
 				Expect(json.Marshal(service)).To(MatchJSON(jsonString))
 			})
 		})
+
+		It("encodes the optional 'requires' fields", func() {
+			service := brokerapi.Service{
+				ID:            "ID-1",
+				Name:          "Cassandra",
+				Description:   "A Cassandra Plan",
+				Bindable:      true,
+				Plans:         []brokerapi.ServicePlan{},
+				Metadata:      &brokerapi.ServiceMetadata{},
+				Tags:          []string{"test"},
+				PlanUpdatable: true,
+				Requires:      []brokerapi.RequiredPermission{brokerapi.PermissionRouteForwarding, brokerapi.PermissionSyslogDrain},
+				DashboardClient: &brokerapi.ServiceDashboardClient{
+					ID:          "Dashboard ID",
+					Secret:      "dashboardsecret",
+					RedirectURI: "the.dashboa.rd",
+				},
+			}
+			jsonString := `{
+				"id":"ID-1",
+					"name":"Cassandra",
+				"description":"A Cassandra Plan",
+				"bindable":true,
+				"plan_updateable":true,
+				"tags":["test"],
+				"plans":[],
+				"requires": ["route_forwarding", "syslog_drain"],
+				"dashboard_client":{
+					"id":"Dashboard ID",
+					"secret":"dashboardsecret",
+					"redirect_uri":"the.dashboa.rd"
+				},
+				"metadata":{
+
+				}
+			}`
+			Expect(json.Marshal(service)).To(MatchJSON(jsonString))
+		})
 	})
 
 	Describe("ServicePlan", func() {

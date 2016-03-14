@@ -8,6 +8,7 @@ type Service struct {
 	Tags            []string                `json:"tags,omitempty"`
 	PlanUpdatable   bool                    `json:"plan_updateable"`
 	Plans           []ServicePlan           `json:"plans"`
+	Requires        []RequiredPermission    `json:"requires,omitempty"`
 	Metadata        *ServiceMetadata        `json:"metadata,omitempty"`
 	DashboardClient *ServiceDashboardClient `json:"dashboard_client,omitempty"`
 }
@@ -49,3 +50,10 @@ type ServiceMetadata struct {
 func FreeValue(v bool) *bool {
 	return &v
 }
+
+type RequiredPermission string
+
+const (
+	PermissionRouteForwarding = RequiredPermission("route_forwarding")
+	PermissionSyslogDrain     = RequiredPermission("syslog_drain")
+)

@@ -77,7 +77,7 @@ var _ = Describe("Service Broker API", func() {
 		brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 	})
 
-	Describe("respose headers", func() {
+	Describe("response headers", func() {
 		makeRequest := func() *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
 			request, _ := http.NewRequest("GET", "/v2/catalog", nil)
