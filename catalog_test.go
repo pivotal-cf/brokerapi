@@ -1,11 +1,12 @@
 package brokerapi_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/pivotal-cf/brokerapi/matchers"
+	"encoding/json"
 
 	"github.com/pivotal-cf/brokerapi"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Catalog", func() {
@@ -27,7 +28,7 @@ var _ = Describe("Catalog", func() {
 						RedirectURI: "the.dashboa.rd",
 					},
 				}
-				json := `{
+				jsonString := `{
 					"id":"ID-1",
 				  	"name":"Cassandra",
 					"description":"A Cassandra Plan",
@@ -44,7 +45,7 @@ var _ = Describe("Catalog", func() {
 
 					}
 				}`
-				Expect(service).To(MarshalToJSON(json))
+				Expect(json.Marshal(service)).To(MatchJSON(jsonString))
 			})
 		})
 	})
@@ -62,7 +63,7 @@ var _ = Describe("Catalog", func() {
 						DisplayName: "name",
 					},
 				}
-				json := `{
+				jsonString := `{
 					"id":"ID-1",
 					"name":"Cassandra",
 					"description":"A Cassandra Plan",
@@ -73,7 +74,7 @@ var _ = Describe("Catalog", func() {
 					}
 				}`
 
-				Expect(plan).To(MarshalToJSON(json))
+				Expect(json.Marshal(plan)).To(MatchJSON(jsonString))
 			})
 		})
 	})
@@ -85,9 +86,9 @@ var _ = Describe("Catalog", func() {
 					Bullets:     []string{"test"},
 					DisplayName: "Some display name",
 				}
-				json := `{"bullets":["test"],"displayName":"Some display name"}`
+				jsonString := `{"bullets":["test"],"displayName":"Some display name"}`
 
-				Expect(metadata).To(MarshalToJSON(json))
+				Expect(json.Marshal(metadata)).To(MatchJSON(jsonString))
 			})
 		})
 	})
@@ -103,7 +104,7 @@ var _ = Describe("Catalog", func() {
 					ImageUrl:            "image",
 					ProviderDisplayName: "display",
 				}
-				json := `{
+				jsonString := `{
 					"displayName":"Cassandra",
 					"longDescription":"A long description of Cassandra",
 					"documentationUrl":"doc",
@@ -112,7 +113,7 @@ var _ = Describe("Catalog", func() {
 					"providerDisplayName":"display"
 				}`
 
-				Expect(metadata).To(MarshalToJSON(json))
+				Expect(json.Marshal(metadata)).To(MatchJSON(jsonString))
 			})
 		})
 	})
