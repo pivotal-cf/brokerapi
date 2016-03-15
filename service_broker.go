@@ -87,11 +87,12 @@ type Binding struct {
 }
 
 var (
-	ErrInstanceAlreadyExists  = errors.New("instance already exists")
-	ErrInstanceDoesNotExist   = errors.New("instance does not exist")
-	ErrInstanceLimitMet       = errors.New("instance limit for this service has been reached")
-	ErrBindingAlreadyExists   = errors.New("binding already exists")
-	ErrBindingDoesNotExist    = errors.New("binding does not exist")
-	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations.")
-	ErrPlanChangeNotSupported = errors.New("The requested plan migration cannot be performed")
+	ErrInstanceAlreadyExists      = errors.New("instance already exists")
+	ErrInstanceDoesNotExist       = errors.New("instance does not exist")
+	ErrInstanceLimitMet           = errors.New("instance limit for this service has been reached")
+	ErrBindingAlreadyExists       = errors.New("binding already exists")
+	ErrBindingDoesNotExist        = errors.New("binding does not exist")
+	ErrAsyncRequired              = errors.New("This service plan requires client support for asynchronous service operations.")
+	ErrPlanChangeNotSupported     = errors.New("The requested plan migration cannot be performed")
+	ErrProvisionParametersInvalid = errors.New("provisioning parameters are invalid")
 )

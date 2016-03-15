@@ -311,6 +311,23 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				Context("when provisioning parameters are not valid", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.ProvisionError = brokerapi.ErrProvisionParametersInvalid
+					})
+
+					It("returns a bad request", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.StatusCode).To(Equal(http.StatusBadRequest))
+					})
+
+					It("logs an appropriate error", func() {
+						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(lastLogLine().Message).To(ContainSubstring("provision.invalid-provision-parameters"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("provisioning parameters are invalid"))
+					})
+				})
+
 				Context("when we send invalid json", func() {
 					makeBadInstanceProvisioningRequest := func(instanceID string) *testflight.Response {
 						response := &testflight.Response{}
