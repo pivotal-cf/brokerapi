@@ -24,6 +24,7 @@ const invalidServiceDetailsErrorKey = "invalid-service-details"
 const invalidBindDetailsErrorKey = "invalid-bind-details"
 const invalidUnbindDetailsErrorKey = "invalid-unbind-details"
 const invalidDeprovisionDetailsErrorKey = "invalid-deprovision-details"
+const invalidProvisioningParameters = "invalid-provision-parameters"
 const instanceLimitReachedErrorKey = "instance-limit-reached"
 const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
@@ -105,6 +106,11 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		case ErrInstanceLimitMet:
 			logger.Error(instanceLimitReachedErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+				Description: err.Error(),
+			})
+		case ErrProvisionParametersInvalid:
+			logger.Error(invalidProvisioningParameters, err)
+			h.respond(w, http.StatusBadRequest, ErrorResponse{
 				Description: err.Error(),
 			})
 		case ErrAsyncRequired:
