@@ -1,6 +1,9 @@
 package brokerapi
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type ServiceBroker interface {
 	Services() []Service
@@ -19,11 +22,12 @@ type ServiceBroker interface {
 type IsAsync bool
 
 type ProvisionDetails struct {
-	ServiceID        string                 `json:"service_id"`
-	PlanID           string                 `json:"plan_id"`
-	OrganizationGUID string                 `json:"organization_guid"`
-	SpaceGUID        string                 `json:"space_guid"`
-	Parameters       map[string]interface{} `json:"parameters,omitempty"`
+	ServiceID        string          `json:"service_id"`
+	PlanID           string          `json:"plan_id"`
+	OrganizationGUID string          `json:"organization_guid"`
+	SpaceGUID        string          `json:"space_guid"`
+	RawParameters    json.RawMessage `json:"parameters,omitempty"`
+	Parameters       map[string]interface{}
 }
 
 type ProvisionedServiceSpec struct {
