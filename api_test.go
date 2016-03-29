@@ -28,7 +28,7 @@ var _ = Describe("Service Broker API", func() {
 		Password: "password",
 	}
 
-	makeInstanceProvisioningRequest := func(instanceID string, details brokerapi.ProvisionDetails, queryString string) *testflight.Response {
+	makeInstanceProvisioningRequest := func(instanceID string, details map[string]interface{}, queryString string) *testflight.Response {
 		response := &testflight.Response{}
 
 		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
@@ -46,7 +46,7 @@ var _ = Describe("Service Broker API", func() {
 		return response
 	}
 
-	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details brokerapi.ProvisionDetails, acceptsIncomplete bool) *testflight.Response {
+	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details map[string]interface{}, acceptsIncomplete bool) *testflight.Response {
 		var acceptsIncompleteFlag string
 
 		if acceptsIncomplete {
@@ -200,21 +200,26 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("provisioning", func() {
 			var instanceID string
-			var provisionDetails brokerapi.ProvisionDetails
+			var provisionDetails map[string]interface{}
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
-				provisionDetails = brokerapi.ProvisionDetails{
-					ServiceID:        "service-id",
-					PlanID:           "plan-id",
-					OrganizationGUID: "organization-guid",
-					SpaceGUID:        "space-guid",
+				provisionDetails = map[string]interface{}{
+					"service_id":        "service-id",
+					"plan_id":           "plan-id",
+					"organization_guid": "organization-guid",
+					"space_guid":        "space-guid",
 				}
 			})
 
 			It("calls Provision on the service broker with all params", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(provisionDetails))
+				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
+					ServiceID: "service-id",
+					PlanID: "plan-id",
+					OrganizationGUID: "organization-guid",
+					SpaceGUID: "space-guid",
+				}))
 			})
 
 			It("calls Provision on the service broker with the instance id", func() {
@@ -224,7 +229,7 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when there are arbitrary params", func() {
 				BeforeEach(func() {
-					provisionDetails.Parameters = map[string]interface{}{
+					provisionDetails["parameters"] = map[string]interface{}{
 						"string": "some-string",
 						"number": 1,
 						"object": struct{ Name string }{"some-name"},
@@ -233,7 +238,15 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("calls Provision on the service broker with all params", func() {
+					rawParams := `{
+						"string":"some-string",
+						"number":1,
+						"object": { "Name": "some-name" },
+						"array": [ "a", "b", "c" ]
+					}`
+
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(string(fakeServiceBroker.ProvisionDetails.RawParameters)).To(MatchJSON(rawParams))
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["string"]).To(Equal("some-string"))
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["number"]).To(Equal(1.0))
 					Expect(fakeServiceBroker.ProvisionDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
@@ -369,7 +382,12 @@ var _ = Describe("Service Broker API", func() {
 					It("calls ProvisionAsync on the service broker", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(provisionDetails))
+						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
+							ServiceID: "service-id",
+							PlanID: "plan-id",
+							OrganizationGUID: "organization-guid",
+							SpaceGUID: "space-guid",
+						}))
 
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 					})
@@ -625,14 +643,15 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance exists", func() {
 				var instanceID string
-				var provisionDetails brokerapi.ProvisionDetails
+				var provisionDetails map[string]interface{}
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					provisionDetails = brokerapi.ProvisionDetails{
-						PlanID:           "plan-id",
-						OrganizationGUID: "organization-guid",
-						SpaceGUID:        "space-guid",
+
+					provisionDetails = map[string]interface{}{
+						"plan_id":           "plan-id",
+						"organization_guid": "organization-guid",
+						"space_guid":        "space-guid",
 					}
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
@@ -739,14 +758,14 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when instance deprovisioning fails", func() {
 				var instanceID string
-				var provisionDetails brokerapi.ProvisionDetails
+				var provisionDetails map[string]interface{}
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					provisionDetails = brokerapi.ProvisionDetails{
-						PlanID:           "plan-id",
-						OrganizationGUID: "organization-guid",
-						SpaceGUID:        "space-guid",
+					provisionDetails = map[string]interface{}{
+						"plan_id":           "plan-id",
+						"organization_guid": "organization-guid",
+						"space_guid":        "space-guid",
 					}
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
@@ -988,14 +1007,14 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				var instanceID string
-				var provisionDetails brokerapi.ProvisionDetails
+				var provisionDetails map[string]interface{}
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					provisionDetails = brokerapi.ProvisionDetails{
-						PlanID:           "plan-id",
-						OrganizationGUID: "organization-guid",
-						SpaceGUID:        "space-guid",
+					provisionDetails = map[string]interface{}{
+						"plan_id":           "plan-id",
+						"organization_guid": "organization-guid",
+						"space_guid":        "space-guid",
 					}
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
