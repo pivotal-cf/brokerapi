@@ -27,7 +27,6 @@ type ProvisionDetails struct {
 	OrganizationGUID string          `json:"organization_guid"`
 	SpaceGUID        string          `json:"space_guid"`
 	RawParameters    json.RawMessage `json:"parameters,omitempty"`
-	Parameters       map[string]interface{}
 }
 
 type ProvisionedServiceSpec struct {

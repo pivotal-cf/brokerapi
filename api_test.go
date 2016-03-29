@@ -215,10 +215,10 @@ var _ = Describe("Service Broker API", func() {
 			It("calls Provision on the service broker with all params", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-					ServiceID: "service-id",
-					PlanID: "plan-id",
+					ServiceID:        "service-id",
+					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
-					SpaceGUID: "space-guid",
+					SpaceGUID:        "space-guid",
 				}))
 			})
 
@@ -247,11 +247,6 @@ var _ = Describe("Service Broker API", func() {
 
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(string(fakeServiceBroker.ProvisionDetails.RawParameters)).To(MatchJSON(rawParams))
-					Expect(fakeServiceBroker.ProvisionDetails.Parameters["string"]).To(Equal("some-string"))
-					Expect(fakeServiceBroker.ProvisionDetails.Parameters["number"]).To(Equal(1.0))
-					Expect(fakeServiceBroker.ProvisionDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
-					actual, _ := fakeServiceBroker.ProvisionDetails.Parameters["object"].(map[string]interface{})
-					Expect(actual["Name"]).To(Equal("some-name"))
 				})
 			})
 
@@ -383,10 +378,10 @@ var _ = Describe("Service Broker API", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
 						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-							ServiceID: "service-id",
-							PlanID: "plan-id",
+							ServiceID:        "service-id",
+							PlanID:           "plan-id",
 							OrganizationGUID: "organization-guid",
-							SpaceGUID: "space-guid",
+							SpaceGUID:        "space-guid",
 						}))
 
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))

@@ -89,16 +89,6 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if details.RawParameters != nil {
-		if err := json.Unmarshal(details.RawParameters, &details.Parameters); err != nil {
-			logger.Error(invalidServiceDetailsErrorKey, err)
-			h.respond(w, statusUnprocessableEntity, ErrorResponse{
-				Description: err.Error(),
-			})
-			return
-		}
-	}
-
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
 	logger = logger.WithData(lager.Data{
