@@ -319,6 +319,28 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				Context("RawParameters are not valid JSON", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.ProvisionError = brokerapi.ErrRawParamsInvalid
+					})
+
+					It("returns a 422", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.StatusCode).To(Equal(422))
+					})
+
+					It("returns json with a description field and a useful error message", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.Body).To(MatchJSON(`{"description":"The format of the parameters is not valid JSON"}`))
+					})
+
+					It("logs an appropriate error", func() {
+						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(lastLogLine().Message).To(ContainSubstring("provision.invalid-raw-params"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("The format of the parameters is not valid JSON"))
+					})
+				})
+
 				Context("when we send invalid json", func() {
 					makeBadInstanceProvisioningRequest := func(instanceID string) *testflight.Response {
 						response := &testflight.Response{}

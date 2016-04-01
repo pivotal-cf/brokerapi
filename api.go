@@ -32,6 +32,7 @@ const bindingMissingErrorKey = "binding-missing"
 const asyncRequiredKey = "async-required"
 const planChangeNotSupportedKey = "plan-change-not-supported"
 const unknownErrorKey = "unknown-error"
+const invalidRawParamsKey = "invalid-raw-params"
 
 const statusUnprocessableEntity = 422
 
@@ -99,6 +100,11 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 
 	if err != nil {
 		switch err {
+		case ErrRawParamsInvalid:
+			logger.Error(invalidRawParamsKey, err)
+			h.respond(w, 422, ErrorResponse{
+				Description: err.Error(),
+			})
 		case ErrInstanceAlreadyExists:
 			logger.Error(instanceAlreadyExistsErrorKey, err)
 			h.respond(w, http.StatusConflict, EmptyResponse{})
