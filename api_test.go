@@ -881,6 +881,17 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				Context("when route_service_url is being passed", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.RouteServiceURL = "some-route-url"
+					})
+
+					It("responds with the route service url", func() {
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						Expect(response.Body).To(MatchJSON(fixture("binding_with_route_service.json")))
+					})
+				})
+
 				Context("when no bind details are being passed", func() {
 					It("returns a 422", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
