@@ -15,6 +15,7 @@ type FakeServiceBroker struct {
 	BoundBindingIDs     []string
 	BoundBindingDetails brokerapi.BindDetails
 	SyslogDrainURL      string
+	RouteServiceURL     string
 
 	UnbindingDetails brokerapi.UnbindDetails
 
@@ -230,7 +231,8 @@ func (fakeBroker *FakeServiceBroker) Bind(instanceID, bindingID string, details 
 			Username: "batman",
 			Password: "robin",
 		},
-		SyslogDrainURL: fakeBroker.SyslogDrainURL,
+		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
+		RouteServiceURL: fakeBroker.RouteServiceURL,
 	}, nil
 }
 
