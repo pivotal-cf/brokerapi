@@ -94,6 +94,7 @@ var (
 	ErrInstanceAlreadyExists  = errors.New("instance already exists")
 	ErrInstanceDoesNotExist   = errors.New("instance does not exist")
 	ErrInstanceLimitMet       = errors.New("instance limit for this service has been reached")
+	ErrPlanQuotaExceeded      = errors.New("The quota for this service plan has been exceeded. Please contact your Operator for help.")
 	ErrBindingAlreadyExists   = errors.New("binding already exists")
 	ErrBindingDoesNotExist    = errors.New("binding does not exist")
 	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations.")
