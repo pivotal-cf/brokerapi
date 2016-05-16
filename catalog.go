@@ -28,12 +28,12 @@ type ServicePlan struct {
 }
 
 type ServicePlanMetadata struct {
-	DisplayName string        `json:"displayName,omitempty"`
-	Bullets     []string      `json:"bullets,omitempty"`
-	Costs       []ServiceCost `json:"costs,omitempty"`
+	DisplayName string            `json:"displayName,omitempty"`
+	Bullets     []string          `json:"bullets,omitempty"`
+	Costs       []ServicePlanCost `json:"costs,omitempty"`
 }
 
-type ServiceCost struct {
+type ServicePlanCost struct {
 	Amount map[string]float64 `json:"amount"`
 	Unit   string             `json:"unit"`
 }
