@@ -33,6 +33,7 @@ const asyncRequiredKey = "async-required"
 const planChangeNotSupportedKey = "plan-change-not-supported"
 const unknownErrorKey = "unknown-error"
 const invalidRawParamsKey = "invalid-raw-params"
+const appGuidNotProvidedErrorKey = "app-guid-not-provided"
 
 const statusUnprocessableEntity = 422
 
@@ -260,6 +261,11 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		case ErrBindingAlreadyExists:
 			logger.Error(bindingAlreadyExistsErrorKey, err)
 			h.respond(w, http.StatusConflict, ErrorResponse{
+				Description: err.Error(),
+			})
+		case ErrAppGuidNotProvided:
+			logger.Error(appGuidNotProvidedErrorKey, err)
+			h.respond(w, statusUnprocessableEntity, ErrorResponse{
 				Description: err.Error(),
 			})
 		default:
