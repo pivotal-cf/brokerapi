@@ -227,6 +227,25 @@ var _ = Describe("Service Broker API", func() {
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 			})
 
+			Context("when the broker returns some operation data", func() {
+				BeforeEach(func() {
+					fakeServiceBroker = &fakes.FakeServiceBroker{
+						InstanceLimit:         3,
+						OperationDataToReturn: "some-operation-data",
+					}
+					fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+						FakeServiceBroker:    *fakeServiceBroker,
+						ShouldProvisionAsync: true,
+					}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+
+				It("returns the operation data to the cloud controller", func() {
+					resp := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(resp.Body).To(MatchJSON(fixture("provision_with_operation_data.json")))
+				})
+			})
+
 			Context("when there are arbitrary params", func() {
 				BeforeEach(func() {
 					provisionDetails["parameters"] = map[string]interface{}{

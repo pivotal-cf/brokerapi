@@ -33,8 +33,9 @@ type FakeServiceBroker struct {
 
 	AsyncAllowed bool
 
-	ShouldReturnAsync brokerapi.IsAsync
-	DashboardURL      string
+	ShouldReturnAsync     brokerapi.IsAsync
+	DashboardURL          string
+	OperationDataToReturn string
 }
 
 type FakeAsyncServiceBroker struct {
@@ -118,7 +119,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Provision(instanceID string, details b
 
 	fakeBroker.ProvisionDetails = details
 	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, DashboardURL: fakeBroker.DashboardURL}, nil
+	return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, DashboardURL: fakeBroker.DashboardURL, OperationData: fakeBroker.OperationDataToReturn}, nil
 }
 
 func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {

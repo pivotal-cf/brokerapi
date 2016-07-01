@@ -12,7 +12,8 @@ type CatalogResponse struct {
 }
 
 type ProvisioningResponse struct {
-	DashboardURL string `json:"dashboard_url,omitempty"`
+	DashboardURL  string `json:"dashboard_url,omitempty"`
+	OperationData string `json:"operation,omitempty"`
 }
 
 type LastOperationResponse struct {

@@ -30,8 +30,9 @@ type ProvisionDetails struct {
 }
 
 type ProvisionedServiceSpec struct {
-	IsAsync      bool
-	DashboardURL string
+	IsAsync       bool
+	DashboardURL  string
+	OperationData string
 }
 
 type BindDetails struct {

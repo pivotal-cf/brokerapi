@@ -131,7 +131,8 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 
 	if provisionResponse.IsAsync {
 		h.respond(w, http.StatusAccepted, ProvisioningResponse{
-			DashboardURL: provisionResponse.DashboardURL,
+			DashboardURL:  provisionResponse.DashboardURL,
+			OperationData: provisionResponse.OperationData,
 		})
 	} else {
 		h.respond(w, http.StatusCreated, ProvisioningResponse{
