@@ -19,8 +19,6 @@ type ServiceBroker interface {
 	LastOperation(instanceID, operationData string) (LastOperation, error)
 }
 
-type IsAsync bool
-
 type ProvisionDetails struct {
 	ServiceID        string          `json:"service_id"`
 	PlanID           string          `json:"plan_id"`
