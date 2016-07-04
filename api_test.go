@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 
 	"github.com/pivotal-cf/brokerapi"
@@ -1161,10 +1162,14 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		Describe("last_operation", func() {
-			makeLastOperationRequest := func(instanceID string) *testflight.Response {
+			makeLastOperationRequest := func(instanceID, operationData string) *testflight.Response {
 				response := &testflight.Response{}
 				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
+					if operationData != "" {
+						path = fmt.Sprintf("%s?operation=%s", path, url.QueryEscape(operationData))
+					}
+
 					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
 					request.Header.Add("Content-Type", "application/json")
 					request.SetBasicAuth("username", "password")
@@ -1174,12 +1179,25 @@ var _ = Describe("Service Broker API", func() {
 				return response
 			}
 
+			It("calls the broker with the relevant instance ID", func() {
+				instanceID := "instanceID"
+				makeLastOperationRequest(instanceID, "")
+				Expect(fakeServiceBroker.LastOperationInstanceID).To(Equal(instanceID))
+			})
+
+			It("calls the broker with the URL decoded operation data", func() {
+				instanceID := "an-instance"
+				operationData := `{"foo":"bar"}`
+				makeLastOperationRequest(instanceID, operationData)
+				Expect(fakeServiceBroker.LastOperationData).To(Equal(operationData))
+			})
+
 			It("should return succeeded if the operation completed successfully", func() {
 				fakeServiceBroker.LastOperationState = "succeeded"
 				fakeServiceBroker.LastOperationDescription = "some description"
 
 				instanceID := "instanceID"
-				response := makeLastOperationRequest(instanceID)
+				response := makeLastOperationRequest(instanceID, "")
 
 				logs := brokerLogger.Logs()
 
@@ -1197,7 +1215,7 @@ var _ = Describe("Service Broker API", func() {
 			It("should return a 404 and log in case the instance id is not found", func() {
 				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
 				instanceID := "non-existing"
-				response := makeLastOperationRequest(instanceID)
+				response := makeLastOperationRequest(instanceID, "")
 
 				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.instance-missing"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
@@ -1208,7 +1226,7 @@ var _ = Describe("Service Broker API", func() {
 
 			It("should return an internal sever error for all other errors", func() {
 				fakeServiceBroker.LastOperationError = errors.New("Blah")
-				response := makeLastOperationRequest("instanceID")
+				response := makeLastOperationRequest("instanceID", "")
 
 				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.unknown-error"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("Blah"))

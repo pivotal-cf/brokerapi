@@ -16,7 +16,7 @@ type ServiceBroker interface {
 
 	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
-	LastOperation(instanceID string) (LastOperation, error)
+	LastOperation(instanceID, operationData string) (LastOperation, error)
 }
 
 type IsAsync bool

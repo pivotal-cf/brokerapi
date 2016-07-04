@@ -319,6 +319,7 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
+	operationData := req.FormValue("operation")
 
 	logger := h.logger.Session(lastOperationLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
@@ -326,7 +327,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 
 	logger.Info("starting-check-for-operation")
 
-	lastOperation, err := h.serviceBroker.LastOperation(instanceID)
+	lastOperation, err := h.serviceBroker.LastOperation(instanceID, operationData)
 
 	if err != nil {
 		switch err {

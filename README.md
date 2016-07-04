@@ -40,7 +40,7 @@ func (*myServiceBroker) Provision(
     // chose to provision the instance synchronously.
 }
 
-func (*myServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {
+func (*myServiceBroker) LastOperation(instanceID, operationData string) (brokerapi.LastOperation, error) {
     // If the broker provisions asynchronously, the Cloud Controller will poll this endpoint
     // for the status of the provisioning operation.
     // This also applies to deprovisioning (work in progress).

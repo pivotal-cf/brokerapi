@@ -36,6 +36,9 @@ type FakeServiceBroker struct {
 	ShouldReturnAsync     bool
 	DashboardURL          string
 	OperationDataToReturn string
+
+	LastOperationInstanceID string
+	LastOperationData       string
 }
 
 type FakeAsyncServiceBroker struct {
@@ -252,7 +255,9 @@ func (fakeBroker *FakeServiceBroker) Unbind(instanceID, bindingID string, detail
 	return brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperation, error) {
+func (fakeBroker *FakeServiceBroker) LastOperation(instanceID, operationData string) (brokerapi.LastOperation, error) {
+	fakeBroker.LastOperationInstanceID = instanceID
+	fakeBroker.LastOperationData = operationData
 
 	if fakeBroker.LastOperationError != nil {
 		return brokerapi.LastOperation{}, fakeBroker.LastOperationError
