@@ -204,7 +204,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
-	isAsync, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed)
+	deprovisionSpec, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed)
 	if err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
@@ -225,8 +225,8 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	if isAsync {
-		h.respond(w, http.StatusAccepted, EmptyResponse{})
+	if deprovisionSpec.IsAsync {
+		h.respond(w, http.StatusAccepted, DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
 	} else {
 		h.respond(w, http.StatusOK, EmptyResponse{})
 	}

@@ -9,7 +9,7 @@ type ServiceBroker interface {
 	Services() []Service
 
 	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
-	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool) (IsAsync, error)
+	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
 
 	Bind(instanceID, bindingID string, details BindDetails) (Binding, error)
 	Unbind(instanceID, bindingID string, details UnbindDetails) error
@@ -54,6 +54,11 @@ type UnbindDetails struct {
 }
 
 type UpdateServiceSpec struct {
+	IsAsync       bool
+	OperationData string
+}
+
+type DeprovisionServiceSpec struct {
 	IsAsync       bool
 	OperationData string
 }

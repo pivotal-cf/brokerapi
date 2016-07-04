@@ -20,6 +20,10 @@ type UpdateResponse struct {
 	OperationData string `json:"operation,omitempty"`
 }
 
+type DeprovisionResponse struct {
+	OperationData string `json:"operation,omitempty"`
+}
+
 type LastOperationResponse struct {
 	State       string `json:"state"`
 	Description string `json:"description,omitempty"`

@@ -46,7 +46,7 @@ func (*myServiceBroker) LastOperation(instanceID string) (brokerapi.LastOperatio
     // This also applies to deprovisioning (work in progress).
 }
 
-func (*myServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (*myServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
     // Deprovision a new instance here. If async is allowed, the broker can still
     // chose to deprovision the instance synchronously, hence the first return value.
 }

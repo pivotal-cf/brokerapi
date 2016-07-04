@@ -242,7 +242,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns the operation data to the cloud controller", func() {
 					resp := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(resp.Body).To(MatchJSON(fixture("provision_with_operation_data.json")))
+					Expect(resp.Body).To(MatchJSON(fixture("operation_data_response.json")))
 				})
 			})
 
@@ -620,7 +620,7 @@ var _ = Describe("Service Broker API", func() {
 						})
 
 						It("returns the operation data to the cloud controller", func() {
-							Expect(response.Body).To(MatchJSON(fixture("provision_with_operation_data.json")))
+							Expect(response.Body).To(MatchJSON(fixture("operation_data_response.json")))
 						})
 					})
 				})
@@ -748,6 +748,23 @@ var _ = Describe("Service Broker API", func() {
 					Context("when the accepts_incomplete flag is set to true", func() {
 						itReturnsStatus(202, "accepts_incomplete=true")
 						itReturnsEmptyJsonObject("accepts_incomplete=true")
+					})
+
+					Context("when the broker returns operation data", func() {
+						BeforeEach(func() {
+							fakeServiceBroker.OperationDataToReturn = "some-operation-data"
+							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
+								FakeServiceBroker: *fakeServiceBroker,
+							}
+							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						})
+
+						itReturnsStatus(202, "accepts_incomplete=true")
+
+						It("returns the operation data to the cloud controller", func() {
+							response := makeInstanceDeprovisioningRequest(instanceID, "accepts_incomplete=true")
+							Expect(response.Body).To(MatchJSON(fixture("operation_data_response.json")))
+						})
 					})
 				})
 
