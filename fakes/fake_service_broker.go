@@ -33,7 +33,7 @@ type FakeServiceBroker struct {
 
 	AsyncAllowed bool
 
-	ShouldReturnAsync     brokerapi.IsAsync
+	ShouldReturnAsync     bool
 	DashboardURL          string
 	OperationDataToReturn string
 }
@@ -146,17 +146,17 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(instanceID string, detai
 	return brokerapi.ProvisionedServiceSpec{IsAsync: true, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (fakeBroker *FakeServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if fakeBroker.UpdateError != nil {
-		return false, fakeBroker.UpdateError
+		return brokerapi.UpdateServiceSpec{}, fakeBroker.UpdateError
 	}
 
 	fakeBroker.UpdateDetails = details
 	fakeBroker.UpdatedInstanceIDs = append(fakeBroker.UpdatedInstanceIDs, instanceID)
 	fakeBroker.AsyncAllowed = asyncAllowed
-	return fakeBroker.ShouldReturnAsync, nil
+	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn}, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {

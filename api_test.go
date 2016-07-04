@@ -613,6 +613,16 @@ var _ = Describe("Service Broker API", func() {
 					It("returns HTTP 202", func() {
 						Expect(response.StatusCode).To(Equal(http.StatusAccepted))
 					})
+
+					Context("when the broker responds with operation data", func() {
+						BeforeEach(func() {
+							fakeServiceBroker.OperationDataToReturn = "some-operation-data"
+						})
+
+						It("returns the operation data to the cloud controller", func() {
+							Expect(response.Body).To(MatchJSON(fixture("provision_with_operation_data.json")))
+						})
+					})
 				})
 			})
 

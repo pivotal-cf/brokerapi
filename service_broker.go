@@ -14,7 +14,7 @@ type ServiceBroker interface {
 	Bind(instanceID, bindingID string, details BindDetails) (Binding, error)
 	Unbind(instanceID, bindingID string, details UnbindDetails) error
 
-	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (IsAsync, error)
+	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
 	LastOperation(instanceID string) (LastOperation, error)
 }
@@ -51,6 +51,11 @@ type BindResource struct {
 type UnbindDetails struct {
 	PlanID    string `json:"plan_id"`
 	ServiceID string `json:"service_id"`
+}
+
+type UpdateServiceSpec struct {
+	IsAsync       bool
+	OperationData string
 }
 
 type DeprovisionDetails struct {

@@ -156,7 +156,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
-	isAsync, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
+	updateServiceSpec, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
 	if err != nil {
 		switch err {
 		case ErrAsyncRequired:
@@ -185,10 +185,10 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	}
 
 	statusCode := http.StatusOK
-	if isAsync {
+	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, struct{}{})
+	h.respond(w, statusCode, UpdateResponse{OperationData: updateServiceSpec.OperationData})
 }
 
 func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Request) {

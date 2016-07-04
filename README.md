@@ -61,7 +61,7 @@ func (*myServiceBroker) Unbind(instanceID, bindingID string, details brokerapi.U
     // Unbind from instances here
 }
 
-func (*myServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.IsAsync, error) {
+func (*myServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
   // Update instance here
 }
 
