@@ -22,7 +22,7 @@ package main
 
 import (
     "github.com/pivotal-cf/brokerapi"
-    "github.com/pivotal-golang/lager"
+    "code.cloudfoundry.org/lager"
 )
 
 type myServiceBroker struct {}

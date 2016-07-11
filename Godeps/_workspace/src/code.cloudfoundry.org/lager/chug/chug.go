@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/lager"
 )
 
 type Entry struct {

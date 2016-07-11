@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/auth"
-	"github.com/pivotal-golang/lager"
 )
 
 const provisionLogKey = "provision"

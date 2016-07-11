@@ -1,10 +1,11 @@
 {
 	"ImportPath": "github.com/pivotal-cf/brokerapi",
-	"GoVersion": "go1.5",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.6.2",
 	"Deps": [
+		{
+			"ImportPath": "code.cloudfoundry.org/lager",
+			"Rev": "62951a8009ab331bb21dc418074fa54e66eb9b6a"
+		},
 		{
 			"ImportPath": "github.com/drewolson/testflight",
 			"Rev": "c70ab777b4191b823e6d8f64d81f0c64ac80388f"
@@ -30,10 +31,6 @@
 		{
 			"ImportPath": "github.com/pborman/uuid",
 			"Rev": "dee7705ef7b324f27ceb85a121c61f2c2e8ce988"
-		},
-		{
-			"ImportPath": "github.com/pivotal-golang/lager",
-			"Rev": "95b2ada4cdf781bdcf07e5207879e034ac8c5314"
 		}
 	]
 }
