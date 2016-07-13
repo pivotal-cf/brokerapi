@@ -1,6 +1,8 @@
 lager
 =====
 
+**Note**: This repository should be imported as `code.cloudfoundry.org/lager`.
+
 Lager is a logging library for go.
 
 ## Usage
@@ -9,7 +11,7 @@ Instantiate a logger with the name of your component.
 
 ```go
 import (
-  "github.com/pivotal-golang/lager"
+  "code.cloudfoundry.org/lager"
 )
 
 logger := lager.NewLogger("my-app")
@@ -73,4 +75,4 @@ output:
 
 ## License
 
-Lager is [Apache 2.0](https://github.com/pivotal-golang/lager/blob/master/LICENSE) licensed.
+Lager is [Apache 2.0](https://github.com/cloudfoundry/lager/blob/master/LICENSE) licensed.
