@@ -94,9 +94,22 @@ const (
 )
 
 type Binding struct {
-	Credentials     interface{} `json:"credentials"`
-	SyslogDrainURL  string      `json:"syslog_drain_url,omitempty"`
-	RouteServiceURL string      `json:"route_service_url,omitempty"`
+	Credentials     interface{}   `json:"credentials"`
+	SyslogDrainURL  string        `json:"syslog_drain_url,omitempty"`
+	RouteServiceURL string        `json:"route_service_url,omitempty"`
+	VolumeMounts    []VolumeMount `json:"volume_mounts,omitempty"`
+}
+
+type VolumeMount struct {
+	ContainerPath string             `json:"container_path"`
+	Mode          string             `json:"mode"`
+	Private       VolumeMountPrivate `json:"private"`
+}
+
+type VolumeMountPrivate struct {
+	Driver  string `json:"driver"`
+	GroupId string `json:"group_id"`
+	Config  string `json:"config"`
 }
 
 var (

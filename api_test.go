@@ -939,6 +939,25 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				Context("when a volume mount is being passed", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.VolumeMounts = []brokerapi.VolumeMount{{
+							ContainerPath: "/dev/null",
+							Mode:          "rw",
+							Private: brokerapi.VolumeMountPrivate{
+								Driver:  "driver",
+								GroupId: "some-guid",
+								Config:  "config",
+							},
+						}}
+					})
+
+					It("responds with a volume mount", func() {
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						Expect(response.Body).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
+					})
+				})
+
 				Context("when no bind details are being passed", func() {
 					It("returns a 422", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
