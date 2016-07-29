@@ -1,36 +1,185 @@
 {
 	"ImportPath": "github.com/pivotal-cf/brokerapi",
-	"GoVersion": "go1.6.2",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "code.cloudfoundry.org/lager",
 			"Rev": "62951a8009ab331bb21dc418074fa54e66eb9b6a"
 		},
 		{
+			"ImportPath": "code.cloudfoundry.org/lager/lagertest",
+			"Rev": "62951a8009ab331bb21dc418074fa54e66eb9b6a"
+		},
+		{
 			"ImportPath": "github.com/drewolson/testflight",
-			"Rev": "c70ab777b4191b823e6d8f64d81f0c64ac80388f"
+			"Rev": "d504a0f0d14b0220237a2c56450e76071d954750"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
-			"Rev": "1c83b3eabd45b6d76072b66b746c20815fb2872d"
+			"Comment": "v1.1-4-gaed02d1",
+			"Rev": "aed02d124ae4a0e94fea4541c8effd05bf0c8296"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "26a6070f849969ba72b72256e9f14cf519751690"
+			"Comment": "v1.1-17-ga49d62f",
+			"Rev": "a49d62f618e6dc4a7a7d1f0ad69744a158c21f23"
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.2.0-36-g3341026",
-			"Rev": "33410268c3881642c746ada23c04eeb331212596"
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/config",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/codelocation",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/containernode",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/failer",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/leafnodes",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/remote",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/spec",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/specrunner",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/suite",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/testingtproxy",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/internal/writer",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/reporters",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/reporters/stenographer",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo/types",
+			"Comment": "v1.2.0-66-g74c678d",
+			"Rev": "74c678d97c305753605c338c6c78c49ec104b5e7"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-77-g28f13bc",
-			"Rev": "28f13bc54cf0f72e3fa395ba9d3added0b3b849c"
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/format",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/gbytes",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/internal/assertion",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/internal/asyncassertion",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/internal/oraclematcher",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/internal/testingtsupport",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/matchers",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/matchers/support/goraph/bipartitegraph",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/matchers/support/goraph/edge",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/matchers/support/goraph/node",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/matchers/support/goraph/util",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega/types",
+			"Comment": "v1.0-115-g9ed8da1",
+			"Rev": "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
 		},
 		{
 			"ImportPath": "github.com/pborman/uuid",
-			"Rev": "dee7705ef7b324f27ceb85a121c61f2c2e8ce988"
+			"Comment": "v1.0-11-gc55201b",
+			"Rev": "c55201b036063326c5b1b89ccfe45a184973d073"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "a408501be4d17ee978c04a618e7a1b22af058c0e"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 		}
 	]
 }
