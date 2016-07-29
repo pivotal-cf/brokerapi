@@ -1,13 +1,9 @@
 language: go
 
 go:
-- 1.6.3
-
-before_install:
-- export PATH=$HOME/gopath/bin
+  - 1.6.3
 
 install:
-- go install github.com/onsi/ginkgo/ginkgo
+  - go get github.com/onsi/ginkgo/ginkgo
 
-script:
-- ginkgo -r
+script: ginkgo -r
