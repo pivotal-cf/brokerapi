@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/pivotal-cf/brokerapi",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
@@ -17,11 +17,6 @@
 		{
 			"ImportPath": "github.com/drewolson/testflight",
 			"Rev": "d504a0f0d14b0220237a2c56450e76071d954750"
-		},
-		{
-			"ImportPath": "github.com/gorilla/context",
-			"Comment": "v1.1-4-gaed02d1",
-			"Rev": "aed02d124ae4a0e94fea4541c8effd05bf0c8296"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
