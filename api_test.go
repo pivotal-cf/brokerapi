@@ -948,7 +948,7 @@ var _ = Describe("Service Broker API", func() {
 							DeviceType:   "shared",
 							Device: brokerapi.SharedDevice{
 								VolumeId:    "some-guid",
-								MountConfig: map[string]interface{}{"key": "value"},
+								MountConfig: "{\"key\": \"value\"}",
 							},
 						}}
 					})

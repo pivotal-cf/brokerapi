@@ -12,9 +12,7 @@
 	    "device_type": "shared",
 	    "device": {
 	      "volume_id": "some-guid",
-	      "mount_config": {
-		"key": "value"
-	      }
+	      "mount_config": "{\"key\": \"value\"}"
 	    }
 	}]
 }
