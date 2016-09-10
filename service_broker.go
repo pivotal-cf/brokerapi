@@ -109,8 +109,8 @@ type VolumeMount struct {
 }
 
 type SharedDevice struct {
-	VolumeId    string `json:"volume_id"`
-	MountConfig string `json:"mount_config"`
+	VolumeId    string                 `json:"volume_id"`
+	MountConfig map[string]interface{} `json:"mount_config"`
 }
 
 var (
