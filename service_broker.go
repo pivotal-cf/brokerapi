@@ -113,6 +113,25 @@ type SharedDevice struct {
 	MountConfig map[string]interface{} `json:"mount_config"`
 }
 
+type V2_9Binding struct {
+	Credentials     interface{}   `json:"credentials"`
+	SyslogDrainURL  string        `json:"syslog_drain_url,omitempty"`
+	RouteServiceURL string        `json:"route_service_url,omitempty"`
+	VolumeMounts    []V2_9VolumeMount `json:"volume_mounts,omitempty"`
+}
+
+type V2_9VolumeMount struct {
+	ContainerPath string             `json:"container_path"`
+	Mode          string             `json:"mode"`
+	Private       V2_9VolumeMountPrivate `json:"private"`
+}
+
+type V2_9VolumeMountPrivate struct {
+	Driver  string `json:"driver"`
+	GroupId string `json:"group_id"`
+	Config  string `json:"config"`
+}
+
 var (
 	ErrInstanceAlreadyExists  = errors.New("instance already exists")
 	ErrInstanceDoesNotExist   = errors.New("instance does not exist")
