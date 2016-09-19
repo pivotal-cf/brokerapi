@@ -5,13 +5,16 @@
     "username": "batman",
     "password": "robin"
   },
-  "volume_mounts": [{
-    "container_path": "/dev/null",
-    "mode": "rw",
-    "private": {
-      "driver": "driver",
-      "group_id": "some-guid",
-      "config": "config"
-    }
-  }]
+	"volume_mounts": [{
+	    "driver": "driver",
+	    "container_dir": "/dev/null",
+	    "mode": "rw",
+	    "device_type": "shared",
+	    "device": {
+	      "volume_id": "some-guid",
+	      "mount_config": {
+		"key": "value"
+	      }
+	    }
+	}]
 }

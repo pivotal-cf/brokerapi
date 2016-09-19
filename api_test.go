@@ -942,12 +942,13 @@ var _ = Describe("Service Broker API", func() {
 				Context("when a volume mount is being passed", func() {
 					BeforeEach(func() {
 						fakeServiceBroker.VolumeMounts = []brokerapi.VolumeMount{{
-							ContainerPath: "/dev/null",
-							Mode:          "rw",
-							Private: brokerapi.VolumeMountPrivate{
-								Driver:  "driver",
-								GroupId: "some-guid",
-								Config:  "config",
+							Driver:       "driver",
+							ContainerDir: "/dev/null",
+							Mode:         "rw",
+							DeviceType:   "shared",
+							Device: brokerapi.SharedDevice{
+								VolumeId:    "some-guid",
+								MountConfig: map[string]interface{}{"key": "value"},
 							},
 						}}
 					})
