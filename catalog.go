@@ -56,4 +56,5 @@ type RequiredPermission string
 const (
 	PermissionRouteForwarding = RequiredPermission("route_forwarding")
 	PermissionSyslogDrain     = RequiredPermission("syslog_drain")
+	PermissionVolumeMount     = RequiredPermission("volume_mount")
 )

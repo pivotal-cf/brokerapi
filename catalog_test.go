@@ -59,7 +59,11 @@ var _ = Describe("Catalog", func() {
 				Metadata:      &brokerapi.ServiceMetadata{},
 				Tags:          []string{"test"},
 				PlanUpdatable: true,
-				Requires:      []brokerapi.RequiredPermission{brokerapi.PermissionRouteForwarding, brokerapi.PermissionSyslogDrain},
+				Requires: []brokerapi.RequiredPermission{
+					brokerapi.PermissionRouteForwarding,
+					brokerapi.PermissionSyslogDrain,
+					brokerapi.PermissionVolumeMount,
+				},
 				DashboardClient: &brokerapi.ServiceDashboardClient{
 					ID:          "Dashboard ID",
 					Secret:      "dashboardsecret",
@@ -74,7 +78,7 @@ var _ = Describe("Catalog", func() {
 				"plan_updateable":true,
 				"tags":["test"],
 				"plans":[],
-				"requires": ["route_forwarding", "syslog_drain"],
+				"requires": ["route_forwarding", "syslog_drain", "volume_mount"],
 				"dashboard_client":{
 					"id":"Dashboard ID",
 					"secret":"dashboardsecret",
