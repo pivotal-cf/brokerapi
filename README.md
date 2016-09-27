@@ -93,9 +93,13 @@ The error types are:
 ErrInstanceAlreadyExists
 ErrInstanceDoesNotExist
 ErrInstanceLimitMet
+ErrPlanQuotaExceeded
 ErrBindingAlreadyExists
 ErrBindingDoesNotExist
 ErrAsyncRequired
+ErrPlanChangeNotSupported
+ErrRawParamsInvalid
+ErrAppGuidNotProvided
 ```
 
 ## Change Notes
