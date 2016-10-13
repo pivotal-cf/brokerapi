@@ -1,6 +1,7 @@
 package brokerapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 )
@@ -19,12 +20,17 @@ type ServiceBroker interface {
 	LastOperation(instanceID, operationData string) (LastOperation, error)
 }
 
+type Contextualized struct {
+	Context context.Context
+}
+
 type ProvisionDetails struct {
 	ServiceID        string          `json:"service_id"`
 	PlanID           string          `json:"plan_id"`
 	OrganizationGUID string          `json:"organization_guid"`
 	SpaceGUID        string          `json:"space_guid"`
 	RawParameters    json.RawMessage `json:"parameters,omitempty"`
+	Contextualized
 }
 
 type ProvisionedServiceSpec struct {
@@ -39,6 +45,7 @@ type BindDetails struct {
 	ServiceID    string                 `json:"service_id"`
 	BindResource *BindResource          `json:"bind_resource,omitempty"`
 	Parameters   map[string]interface{} `json:"parameters,omitempty"`
+	Contextualized
 }
 
 type BindResource struct {
@@ -49,6 +56,7 @@ type BindResource struct {
 type UnbindDetails struct {
 	PlanID    string `json:"plan_id"`
 	ServiceID string `json:"service_id"`
+	Contextualized
 }
 
 type UpdateServiceSpec struct {
@@ -64,6 +72,7 @@ type DeprovisionServiceSpec struct {
 type DeprovisionDetails struct {
 	PlanID    string `json:"plan_id"`
 	ServiceID string `json:"service_id"`
+	Contextualized
 }
 
 type UpdateDetails struct {
@@ -71,6 +80,7 @@ type UpdateDetails struct {
 	PlanID         string                 `json:"plan_id"`
 	Parameters     map[string]interface{} `json:"parameters"`
 	PreviousValues PreviousValues         `json:"previous_values"`
+	Contextualized
 }
 
 type PreviousValues struct {
