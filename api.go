@@ -2,12 +2,14 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/auth"
+	"strings"
 )
 
 const provisionLogKey = "provision"
@@ -91,6 +93,8 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+	details.Context = req.Context()
+
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
 	logger = logger.WithData(lager.Data{
@@ -154,6 +158,8 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	details.Context = req.Context()
+
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
 	updateServiceSpec, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
@@ -202,6 +208,9 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
 	}
+
+	details.Context = req.Context()
+
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
 	deprovisionSpec, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed)
@@ -232,6 +241,35 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 }
 
+func VersionCompare(lhs, rhs string) int {
+	lhsParts := strings.Split(lhs, ".")
+	rhsParts := strings.Split(rhs, ".")
+
+	cmpLen := len(lhsParts)
+	if len(rhsParts) < cmpLen {
+		cmpLen = len(rhsParts)
+	}
+	for i := 0; i < cmpLen; i++ {
+		lpart, _ := strconv.Atoi(lhsParts[i])
+		rpart, _ := strconv.Atoi(rhsParts[i])
+		if lpart > rpart {
+			return 1
+		} else if lpart < rpart {
+			return -1
+		}
+	}
+
+	// if we get here then the slots where both sides have a version part are both the same, so whichever side still has
+	// stuff is the greater version
+	if len(lhsParts) > len(rhsParts) {
+		return 1
+	}
+	if len(lhsParts) < len(rhsParts) {
+		return -1
+	}
+	return 0
+}
+
 func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
@@ -246,6 +284,23 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
 		h.respond(w, statusUnprocessableEntity, ErrorResponse{
+			Description: err.Error(),
+		})
+		return
+	}
+
+	details.Context = req.Context()
+
+	values, ok := req.Header["X-Broker-Api-Version"]
+	if !ok && len(values) == 0 {
+		// TODO--decide how we should handle this case
+		values = []string{"2.10"}
+	}
+
+	if VersionCompare(values[0], "2.8") < 0 {
+		err := errors.New("API version " + values[0] + " is not supported")
+		logger.Error("unsupported-version", err)
+		h.respond(w, http.StatusNotImplemented, ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -278,7 +333,32 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h.respond(w, http.StatusCreated, binding)
+	if VersionCompare(values[0], "2.8") == 0 || VersionCompare(values[0], "2.9") == 0 {
+		// convert 2.10 binding into something that a 2.9 client can understand
+		newBinding := V2_9Binding{
+			Credentials:     binding.Credentials,
+			SyslogDrainURL:  binding.SyslogDrainURL,
+			RouteServiceURL: binding.RouteServiceURL,
+			VolumeMounts:    []V2_9VolumeMount{},
+		}
+
+		for _, mount := range binding.VolumeMounts {
+			config, _ := json.Marshal(mount.Device.MountConfig)
+			newBinding.VolumeMounts = append(newBinding.VolumeMounts, V2_9VolumeMount{
+				ContainerPath: mount.ContainerDir,
+				Mode:          mount.Mode,
+				Private: V2_9VolumeMountPrivate{
+					Driver:  mount.Driver,
+					GroupId: mount.Device.VolumeId,
+					Config:  string(config),
+				},
+			})
+		}
+
+		h.respond(w, http.StatusCreated, newBinding)
+	} else {
+		h.respond(w, http.StatusCreated, binding)
+	}
 }
 
 func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
@@ -295,6 +375,8 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
 	}
+
+	details.Context = req.Context()
 
 	if err := h.serviceBroker.Unbind(instanceID, bindingID, details); err != nil {
 		switch err {

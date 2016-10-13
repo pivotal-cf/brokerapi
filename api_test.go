@@ -203,6 +203,14 @@ var _ = Describe("Service Broker API", func() {
 			var instanceID string
 			var provisionDetails map[string]interface{}
 
+			var verify = func(provisionDetails brokerapi.ProvisionDetails) {
+				Expect(provisionDetails.ServiceID).To(Equal("service-id"))
+				Expect(provisionDetails.PlanID).To(Equal("plan-id"))
+				Expect(provisionDetails.OrganizationGUID).To(Equal("organization-guid"))
+				Expect(provisionDetails.SpaceGUID).To(Equal("space-guid"))
+				Expect(provisionDetails.Context).NotTo(BeNil())
+			}
+
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				provisionDetails = map[string]interface{}{
@@ -215,12 +223,7 @@ var _ = Describe("Service Broker API", func() {
 
 			It("calls Provision on the service broker with all params", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-					ServiceID:        "service-id",
-					PlanID:           "plan-id",
-					OrganizationGUID: "organization-guid",
-					SpaceGUID:        "space-guid",
-				}))
+				verify(fakeServiceBroker.ProvisionDetails)
 			})
 
 			It("calls Provision on the service broker with the instance id", func() {
@@ -279,6 +282,11 @@ var _ = Describe("Service Broker API", func() {
 				It("returns empty json", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
+				})
+
+				It("is Contextualized", func() {
+					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(fakeServiceBroker.ProvisionDetails.Context).NotTo(BeNil())
 				})
 
 				Context("when the broker returns a dashboard URL", func() {
@@ -419,13 +427,7 @@ var _ = Describe("Service Broker API", func() {
 					It("calls ProvisionAsync on the service broker", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-							ServiceID:        "service-id",
-							PlanID:           "plan-id",
-							OrganizationGUID: "organization-guid",
-							SpaceGUID:        "space-guid",
-						}))
-
+						verify(fakeServiceBroker.ProvisionDetails)
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 					})
 
@@ -528,6 +530,14 @@ var _ = Describe("Service Broker API", func() {
 
 				response *testflight.Response
 			)
+			var verify = func(updateDetails brokerapi.UpdateDetails) {
+				Expect(updateDetails.ServiceID).To(Equal(details.ServiceID))
+				Expect(updateDetails.PlanID).To(Equal(details.PlanID))
+				Expect(updateDetails.Parameters).To(Equal(details.Parameters))
+				Expect(updateDetails.PreviousValues).To(Equal(details.PreviousValues))
+				Expect(updateDetails.Context).NotTo(BeNil())
+
+			}
 
 			makeInstanceUpdateRequest := func(instanceID string, details brokerapi.UpdateDetails, queryString string) *testflight.Response {
 				response := &testflight.Response{}
@@ -582,7 +592,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("calls broker with instanceID and update details", func() {
 						Expect(fakeServiceBroker.UpdatedInstanceIDs).To(ConsistOf(instanceID))
-						Expect(fakeServiceBroker.UpdateDetails).To(Equal(details))
+						verify(fakeServiceBroker.UpdateDetails)
 					})
 
 					Context("when accepts_incomplete=true", func() {
@@ -716,6 +726,11 @@ var _ = Describe("Service Broker API", func() {
 						Expect(response.Body).To(MatchJSON(`{}`))
 					})
 				}
+
+				It("is Contextualized", func() {
+					makeInstanceDeprovisioningRequest(instanceID, "")
+					Expect(fakeServiceBroker.DeprovisionDetails.Context).NotTo(BeNil())
+				})
 
 				Context("when the broker can only operate synchronously", func() {
 					Context("when the accepts_incomplete flag is not set", func() {
@@ -858,7 +873,8 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("binding lifecycle endpoint", func() {
-		makeBindingRequest := func(instanceID, bindingID string, details *brokerapi.BindDetails) *testflight.Response {
+		const currentApiVersion = "2.10"
+		makeBindingRequest := func(instanceID, bindingID string, details *brokerapi.BindDetails, brokerApiVersion string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
@@ -875,6 +891,7 @@ var _ = Describe("Service Broker API", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				request.Header.Add("Content-Type", "application/json")
+				request.Header.Add("X-Broker-Api-Version", brokerApiVersion)
 				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
@@ -889,6 +906,13 @@ var _ = Describe("Service Broker API", func() {
 				details    *brokerapi.BindDetails
 			)
 
+			var verify = func(bindDetails brokerapi.BindDetails) {
+				Expect(bindDetails.ServiceID).To(Equal(details.ServiceID))
+				Expect(bindDetails.PlanID).To(Equal(details.PlanID))
+				Expect(bindDetails.AppGUID).To(Equal(details.AppGUID))
+				Expect(bindDetails.Context).NotTo(BeNil())
+			}
+
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				bindingID = uniqueBindingID()
@@ -901,19 +925,19 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
-					makeBindingRequest(instanceID, bindingID, details)
+					makeBindingRequest(instanceID, bindingID, details, currentApiVersion)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
 					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
-					Expect(fakeServiceBroker.BoundBindingDetails).To(Equal(*details))
+					verify(fakeServiceBroker.BoundBindingDetails)
 				})
 
 				It("returns the credentials returned by Bind", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.Body).To(MatchJSON(fixture("binding.json")))
 				})
 
 				It("returns a 201", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.StatusCode).To(Equal(201))
 				})
 
@@ -923,7 +947,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("responds with the syslog drain url", func() {
-						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 						Expect(response.Body).To(MatchJSON(fixture("binding_with_syslog.json")))
 					})
 				})
@@ -934,7 +958,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("responds with the route service url", func() {
-						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 						Expect(response.Body).To(MatchJSON(fixture("binding_with_route_service.json")))
 					})
 				})
@@ -954,14 +978,19 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("responds with a volume mount", func() {
-						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 						Expect(response.Body).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
+					})
+
+					It("responds with a volume mount", func() {
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, "2.9")
+						Expect(response.Body).To(MatchJSON(fixture("2.9binding_with_volume_mounts.json")))
 					})
 				})
 
 				Context("when no bind details are being passed", func() {
 					It("returns a 422", func() {
-						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
+						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil, currentApiVersion)
 						Expect(response.StatusCode).To(Equal(422))
 					})
 				})
@@ -977,7 +1006,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("calls Bind on the service broker with all params", func() {
-						makeBindingRequest(instanceID, bindingID, details)
+						makeBindingRequest(instanceID, bindingID, details, currentApiVersion)
 						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["string"]).To(Equal("some-string"))
 						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["number"]).To(Equal(1.0))
 						Expect(fakeServiceBroker.BoundBindingDetails.Parameters["array"]).To(Equal([]interface{}{"a", "b", "c"}))
@@ -992,7 +1021,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("calls Bind on the service broker with the bind_resource", func() {
-						makeBindingRequest(instanceID, bindingID, details)
+						makeBindingRequest(instanceID, bindingID, details, currentApiVersion)
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(Equal("a-guid"))
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(BeEmpty())
@@ -1005,7 +1034,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("calls Bind on the service broker with the bind_resource", func() {
-						makeBindingRequest(instanceID, bindingID, details)
+						makeBindingRequest(instanceID, bindingID, details, currentApiVersion)
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(Equal("route.cf-apps.com"))
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(BeEmpty())
@@ -1021,18 +1050,18 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a 404", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.StatusCode).To(Equal(404))
 				})
 
 				It("returns an error JSON object", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.Body).To(MatchJSON(`{"description":"instance does not exist"}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
-					makeBindingRequest(instanceID, uniqueBindingID(), details)
+					makeBindingRequest(instanceID, uniqueBindingID(), details, currentApiVersion)
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
@@ -1046,19 +1075,19 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a 409", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.StatusCode).To(Equal(409))
 				})
 
 				It("returns an error JSON object", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.Body).To(MatchJSON(`{"description":"binding already exists"}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
-					makeBindingRequest(instanceID, uniqueBindingID(), details)
-					makeBindingRequest(instanceID, uniqueBindingID(), details)
+					makeBindingRequest(instanceID, uniqueBindingID(), details, currentApiVersion)
+					makeBindingRequest(instanceID, uniqueBindingID(), details, currentApiVersion)
 
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding already exists"))
@@ -1071,13 +1100,13 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns a generic 500 error response", func() {
-					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 					Expect(response.StatusCode).To(Equal(500))
 					Expect(response.Body).To(MatchJSON(`{"description":"random error"}`))
 				})
 
 				It("logs a detailed error message", func() {
-					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details, currentApiVersion)
 
 					Expect(lastLogLine().Message).To(ContainSubstring("bind.unknown-error"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("random error"))
@@ -1103,6 +1132,7 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the associated instance exists", func() {
 				var instanceID string
 				var provisionDetails map[string]interface{}
+				var response *testflight.Response
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
@@ -1119,27 +1149,28 @@ var _ = Describe("Service Broker API", func() {
 
 					BeforeEach(func() {
 						bindingID = uniqueBindingID()
-						makeBindingRequest(instanceID, bindingID, &brokerapi.BindDetails{})
+						makeBindingRequest(instanceID, bindingID, &brokerapi.BindDetails{}, currentApiVersion)
+						response = makeUnbindingRequest(instanceID, bindingID)
 					})
 
 					It("returns a 200", func() {
-						response := makeUnbindingRequest(instanceID, bindingID)
 						Expect(response.StatusCode).To(Equal(200))
 					})
 
 					It("returns an empty JSON object", func() {
-						response := makeUnbindingRequest(instanceID, bindingID)
 						Expect(response.Body).To(MatchJSON(`{}`))
 					})
 
 					It("contains plan_id", func() {
-						makeUnbindingRequest(instanceID, bindingID)
 						Expect(fakeServiceBroker.UnbindingDetails.PlanID).To(Equal("plan-id"))
 					})
 
 					It("contains service_id", func() {
-						makeUnbindingRequest(instanceID, bindingID)
 						Expect(fakeServiceBroker.UnbindingDetails.ServiceID).To(Equal("service-id"))
+					})
+
+					It("is Contextualized", func() {
+						Expect(fakeServiceBroker.UnbindingDetails.Context).NotTo(BeNil())
 					})
 				})
 
@@ -1253,6 +1284,32 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(response.StatusCode).To(Equal(500))
 				Expect(response.Body).To(MatchJSON(`{"description": "Blah"}`))
+			})
+		})
+
+		Describe("version_compare", func() {
+			Context("when given versions of the same length", func() {
+				It("returns the numerically larger one", func() {
+					Expect(brokerapi.VersionCompare("2.10", "2.10")).To(Equal(0))
+					Expect(brokerapi.VersionCompare("2.9", "2.10")).To(Equal(-1))
+					Expect(brokerapi.VersionCompare("2.10", "2.9")).To(Equal(1))
+					Expect(brokerapi.VersionCompare("1.10", "2.10")).To(Equal(-1))
+					Expect(brokerapi.VersionCompare("2.10", "1.10")).To(Equal(1))
+					Expect(brokerapi.VersionCompare("2.10.1.2.3.4", "2.10.1.2.3.4")).To(Equal(0))
+					Expect(brokerapi.VersionCompare("2.10.1.2.3.4", "2.10.1.2.3.5")).To(Equal(-1))
+				})
+			})
+			Context("when one side is longer", func() {
+				It("returns the longer side unless the common part is unequal", func() {
+					Expect(brokerapi.VersionCompare("2.10.1", "2.10")).To(Equal(1))
+					Expect(brokerapi.VersionCompare("2.9.1", "2.10")).To(Equal(-1))
+				})
+			})
+			Context("when the content is non-numeric", func() {
+				It("treats alpha content as 0", func() {
+					Expect(brokerapi.VersionCompare("foo", "0")).To(Equal(0))
+					Expect(brokerapi.VersionCompare("2.foo.1", "2.0.1")).To(Equal(0))
+				})
 			})
 		})
 	})
