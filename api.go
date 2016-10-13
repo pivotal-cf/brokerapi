@@ -43,12 +43,16 @@ type BrokerCredentials struct {
 }
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
+	return NewWithContext(NewServiceBrokerWithContextFrom(serviceBroker), logger, brokerCredentials)
+}
+
+func NewWithContext(serviceBrokerWithContext ServiceBrokerWithContext, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
-	AttachRoutes(router, serviceBroker, logger)
+	AttachRoutes(router, serviceBrokerWithContext, logger)
 	return auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap(router)
 }
 
-func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+func AttachRoutes(router *mux.Router, serviceBroker ServiceBrokerWithContext, logger lager.Logger) {
 	handler := serviceBrokerHandler{serviceBroker: serviceBroker, logger: logger}
 	router.HandleFunc("/v2/catalog", handler.catalog).Methods("GET")
 
@@ -62,7 +66,7 @@ func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.
 }
 
 type serviceBrokerHandler struct {
-	serviceBroker ServiceBroker
+	serviceBroker ServiceBrokerWithContext
 	logger        lager.Logger
 }
 
@@ -97,7 +101,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		instanceDetailsLogKey: details,
 	})
 
-	provisionResponse, err := h.serviceBroker.Provision(instanceID, details, acceptsIncompleteFlag)
+	provisionResponse, err := h.serviceBroker.Provision(instanceID, details, acceptsIncompleteFlag, req.Context())
 
 	if err != nil {
 		switch err {
@@ -156,7 +160,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
-	updateServiceSpec, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
+	updateServiceSpec, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag, req.Context())
 	if err != nil {
 		switch err {
 		case ErrAsyncRequired:
@@ -204,7 +208,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
-	deprovisionSpec, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed)
+	deprovisionSpec, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed, req.Context())
 	if err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
@@ -251,7 +255,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	binding, err := h.serviceBroker.Bind(instanceID, bindingID, details)
+	binding, err := h.serviceBroker.Bind(instanceID, bindingID, details, req.Context())
 	if err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
@@ -296,7 +300,7 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 		ServiceID: req.FormValue("service_id"),
 	}
 
-	if err := h.serviceBroker.Unbind(instanceID, bindingID, details); err != nil {
+	if err := h.serviceBroker.Unbind(instanceID, bindingID, details, req.Context()); err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
 			logger.Error(instanceMissingErrorKey, err)
