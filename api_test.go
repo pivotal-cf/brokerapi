@@ -203,6 +203,14 @@ var _ = Describe("Service Broker API", func() {
 			var instanceID string
 			var provisionDetails map[string]interface{}
 
+			var verify = func(provisionDetails brokerapi.ProvisionDetails) {
+				Expect(provisionDetails.ServiceID).To(Equal("service-id"))
+				Expect(provisionDetails.PlanID).To(Equal("plan-id"))
+				Expect(provisionDetails.OrganizationGUID).To(Equal("organization-guid"))
+				Expect(provisionDetails.SpaceGUID).To(Equal("space-guid"))
+				Expect(provisionDetails.Context).NotTo(BeNil())
+			}
+
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				provisionDetails = map[string]interface{}{
@@ -215,12 +223,7 @@ var _ = Describe("Service Broker API", func() {
 
 			It("calls Provision on the service broker with all params", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-					ServiceID:        "service-id",
-					PlanID:           "plan-id",
-					OrganizationGUID: "organization-guid",
-					SpaceGUID:        "space-guid",
-				}))
+				verify(fakeServiceBroker.ProvisionDetails)
 			})
 
 			It("calls Provision on the service broker with the instance id", func() {
@@ -279,6 +282,11 @@ var _ = Describe("Service Broker API", func() {
 				It("returns empty json", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
+				})
+
+				It("is Contextualized", func() {
+					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(fakeServiceBroker.ProvisionDetails.Context).NotTo(BeNil())
 				})
 
 				Context("when the broker returns a dashboard URL", func() {
@@ -419,13 +427,7 @@ var _ = Describe("Service Broker API", func() {
 					It("calls ProvisionAsync on the service broker", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
-							ServiceID:        "service-id",
-							PlanID:           "plan-id",
-							OrganizationGUID: "organization-guid",
-							SpaceGUID:        "space-guid",
-						}))
-
+						verify(fakeServiceBroker.ProvisionDetails)
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
 					})
 
@@ -528,6 +530,14 @@ var _ = Describe("Service Broker API", func() {
 
 				response *testflight.Response
 			)
+			var verify = func(updateDetails brokerapi.UpdateDetails) {
+				Expect(updateDetails.ServiceID).To(Equal(details.ServiceID))
+				Expect(updateDetails.PlanID).To(Equal(details.PlanID))
+				Expect(updateDetails.Parameters).To(Equal(details.Parameters))
+				Expect(updateDetails.PreviousValues).To(Equal(details.PreviousValues))
+				Expect(updateDetails.Context).NotTo(BeNil())
+
+			}
 
 			makeInstanceUpdateRequest := func(instanceID string, details brokerapi.UpdateDetails, queryString string) *testflight.Response {
 				response := &testflight.Response{}
@@ -582,7 +592,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("calls broker with instanceID and update details", func() {
 						Expect(fakeServiceBroker.UpdatedInstanceIDs).To(ConsistOf(instanceID))
-						Expect(fakeServiceBroker.UpdateDetails).To(Equal(details))
+						verify(fakeServiceBroker.UpdateDetails)
 					})
 
 					Context("when accepts_incomplete=true", func() {
@@ -716,6 +726,11 @@ var _ = Describe("Service Broker API", func() {
 						Expect(response.Body).To(MatchJSON(`{}`))
 					})
 				}
+
+				It("is Contextualized", func() {
+					makeInstanceDeprovisioningRequest(instanceID, "")
+					Expect(fakeServiceBroker.DeprovisionDetails.Context).NotTo(BeNil())
+				})
 
 				Context("when the broker can only operate synchronously", func() {
 					Context("when the accepts_incomplete flag is not set", func() {
@@ -889,6 +904,13 @@ var _ = Describe("Service Broker API", func() {
 				details    *brokerapi.BindDetails
 			)
 
+			var verify = func(bindDetails brokerapi.BindDetails) {
+				Expect(bindDetails.ServiceID).To(Equal(details.ServiceID))
+				Expect(bindDetails.PlanID).To(Equal(details.PlanID))
+				Expect(bindDetails.AppGUID).To(Equal(details.AppGUID))
+				Expect(bindDetails.Context).NotTo(BeNil())
+			}
+
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				bindingID = uniqueBindingID()
@@ -904,7 +926,7 @@ var _ = Describe("Service Broker API", func() {
 					makeBindingRequest(instanceID, bindingID, details)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
 					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
-					Expect(fakeServiceBroker.BoundBindingDetails).To(Equal(*details))
+					verify(fakeServiceBroker.BoundBindingDetails)
 				})
 
 				It("returns the credentials returned by Bind", func() {
@@ -1103,6 +1125,7 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the associated instance exists", func() {
 				var instanceID string
 				var provisionDetails map[string]interface{}
+				var response *testflight.Response
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
@@ -1120,26 +1143,27 @@ var _ = Describe("Service Broker API", func() {
 					BeforeEach(func() {
 						bindingID = uniqueBindingID()
 						makeBindingRequest(instanceID, bindingID, &brokerapi.BindDetails{})
+						response = makeUnbindingRequest(instanceID, bindingID)
 					})
 
 					It("returns a 200", func() {
-						response := makeUnbindingRequest(instanceID, bindingID)
 						Expect(response.StatusCode).To(Equal(200))
 					})
 
 					It("returns an empty JSON object", func() {
-						response := makeUnbindingRequest(instanceID, bindingID)
 						Expect(response.Body).To(MatchJSON(`{}`))
 					})
 
 					It("contains plan_id", func() {
-						makeUnbindingRequest(instanceID, bindingID)
 						Expect(fakeServiceBroker.UnbindingDetails.PlanID).To(Equal("plan-id"))
 					})
 
 					It("contains service_id", func() {
-						makeUnbindingRequest(instanceID, bindingID)
 						Expect(fakeServiceBroker.UnbindingDetails.ServiceID).To(Equal("service-id"))
+					})
+
+					It("is Contextualized", func() {
+						Expect(fakeServiceBroker.UnbindingDetails.Context).NotTo(BeNil())
 					})
 				})
 
