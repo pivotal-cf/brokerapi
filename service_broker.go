@@ -9,27 +9,13 @@ import (
 type ServiceBroker interface {
 	Services() []Service
 
-	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
-	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+	Provision(context context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
+	Deprovision(context context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
 
-	Bind(instanceID, bindingID string, details BindDetails) (Binding, error)
-	Unbind(instanceID, bindingID string, details UnbindDetails) error
+	Bind(context context.Context, instanceID, bindingID string, details BindDetails) (Binding, error)
+	Unbind(context context.Context, instanceID, bindingID string, details UnbindDetails) error
 
-	Update(instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
-
-	LastOperation(instanceID, operationData string) (LastOperation, error)
-}
-
-type ServiceBrokerWithContext interface {
-	Services() []Service
-
-	Provision(instanceID string, details ProvisionDetails, asyncAllowed bool, context context.Context) (ProvisionedServiceSpec, error)
-	Deprovision(instanceID string, details DeprovisionDetails, asyncAllowed bool, context context.Context) (DeprovisionServiceSpec, error)
-
-	Bind(instanceID, bindingID string, details BindDetails, context context.Context) (Binding, error)
-	Unbind(instanceID, bindingID string, details UnbindDetails, context context.Context) error
-
-	Update(instanceID string, details UpdateDetails, asyncAllowed bool, context context.Context) (UpdateServiceSpec, error)
+	Update(context context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
 	LastOperation(instanceID, operationData string) (LastOperation, error)
 }
