@@ -278,6 +278,38 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if req.Header.Get("X-Broker-Api-Version") == "2.9" {
+		experimentalVols := []ExperimentalVolumeMount{}
+
+		for _, vol := range binding.VolumeMounts {
+			experimentalConfig, err := json.Marshal(vol.Device.MountConfig)
+			if err != nil {
+				logger.Error(unknownErrorKey, err)
+				h.respond(w, http.StatusInternalServerError, ErrorResponse{Description: err.Error()})
+				return
+			}
+
+			experimentalVols = append(experimentalVols, ExperimentalVolumeMount{
+				ContainerPath: vol.ContainerDir,
+				Mode:          vol.Mode,
+				Private: ExperimentalVolumeMountPrivate{
+					Driver:  vol.Driver,
+					GroupID: vol.Device.VolumeId,
+					Config:  string(experimentalConfig),
+				},
+			})
+		}
+
+		experimentalBinding := ExperimentalVolumeMountBindingResponse{
+			Credentials:     binding.Credentials,
+			RouteServiceURL: binding.RouteServiceURL,
+			SyslogDrainURL:  binding.SyslogDrainURL,
+			VolumeMounts:    experimentalVols,
+		}
+		h.respond(w, http.StatusCreated, experimentalBinding)
+		return
+	}
+
 	h.respond(w, http.StatusCreated, binding)
 }
 

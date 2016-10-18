@@ -858,7 +858,7 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("binding lifecycle endpoint", func() {
-		makeBindingRequest := func(instanceID, bindingID string, details *brokerapi.BindDetails) *testflight.Response {
+		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details *brokerapi.BindDetails, apiVersion string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
@@ -875,11 +875,16 @@ var _ = Describe("Service Broker API", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				request.Header.Add("Content-Type", "application/json")
+				request.Header.Add("X-Broker-Api-Version", apiVersion)
 				request.SetBasicAuth("username", "password")
 
 				response = r.Do(request)
 			})
 			return response
+		}
+
+		makeBindingRequest := func(instanceID, bindingID string, details *brokerapi.BindDetails) *testflight.Response {
+			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.10")
 		}
 
 		Describe("binding", func() {
@@ -953,9 +958,18 @@ var _ = Describe("Service Broker API", func() {
 						}}
 					})
 
-					It("responds with a volume mount", func() {
-						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-						Expect(response.Body).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
+					Context("when the broker API version is greater than 2.9", func() {
+						It("responds with a volume mount", func() {
+							response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+							Expect(response.Body).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
+						})
+					})
+
+					Context("when the broker API version is 2.9", func() {
+						It("responds with an experimental volume mount", func() {
+							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.9")
+							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
+						})
 					})
 				})
 

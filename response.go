@@ -28,3 +28,22 @@ type LastOperationResponse struct {
 	State       string `json:"state"`
 	Description string `json:"description,omitempty"`
 }
+
+type ExperimentalVolumeMountBindingResponse struct {
+	Credentials     interface{}               `json:"credentials"`
+	SyslogDrainURL  string                    `json:"syslog_drain_url,omitempty"`
+	RouteServiceURL string                    `json:"route_service_url,omitempty"`
+	VolumeMounts    []ExperimentalVolumeMount `json:"volume_mounts,omitempty"`
+}
+
+type ExperimentalVolumeMount struct {
+	ContainerPath string                         `json:"container_path"`
+	Mode          string                         `json:"mode"`
+	Private       ExperimentalVolumeMountPrivate `json:"private"`
+}
+
+type ExperimentalVolumeMountPrivate struct {
+	Driver  string `json:"driver"`
+	GroupID string `json:"group_id"`
+	Config  string `json:"config"`
+}
