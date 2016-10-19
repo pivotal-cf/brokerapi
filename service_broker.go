@@ -7,7 +7,7 @@ import (
 )
 
 type ServiceBroker interface {
-	Services() []Service
+	Services(context context.Context) []Service
 
 	Provision(context context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(context context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
@@ -17,7 +17,7 @@ type ServiceBroker interface {
 
 	Update(context context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
-	LastOperation(instanceID, operationData string) (LastOperation, error)
+	LastOperation(context context.Context, instanceID, operationData string) (LastOperation, error)
 }
 
 type ProvisionDetails struct {

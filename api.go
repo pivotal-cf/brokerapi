@@ -68,7 +68,7 @@ type serviceBrokerHandler struct {
 
 func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	catalog := CatalogResponse{
-		Services: h.serviceBroker.Services(),
+		Services: h.serviceBroker.Services(req.Context()),
 	}
 
 	h.respond(w, http.StatusOK, catalog)
@@ -327,7 +327,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 
 	logger.Info("starting-check-for-operation")
 
-	lastOperation, err := h.serviceBroker.LastOperation(instanceID, operationData)
+	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, operationData)
 
 	if err != nil {
 		switch err {

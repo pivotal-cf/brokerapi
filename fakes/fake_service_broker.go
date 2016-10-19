@@ -54,7 +54,7 @@ type FakeAsyncOnlyServiceBroker struct {
 	FakeServiceBroker
 }
 
-func (fakeBroker *FakeServiceBroker) Services() []brokerapi.Service {
+func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokerapi.Service {
 	fakeBroker.BrokerCalled = true
 
 	return []brokerapi.Service{
@@ -260,7 +260,7 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 	return brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) LastOperation(instanceID, operationData string) (brokerapi.LastOperation, error) {
+func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
 	fakeBroker.LastOperationInstanceID = instanceID
 	fakeBroker.LastOperationData = operationData
 
