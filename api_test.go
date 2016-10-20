@@ -971,6 +971,13 @@ var _ = Describe("Service Broker API", func() {
 							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
 						})
 					})
+
+					Context("when the broker API version is 2.8", func() {
+						It("responds with an experimental volume mount", func() {
+							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.8")
+							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
+						})
+					})
 				})
 
 				Context("when no bind details are being passed", func() {
