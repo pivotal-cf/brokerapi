@@ -68,7 +68,7 @@ type serviceBrokerHandler struct {
 
 func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	catalog := CatalogResponse{
-		Services: h.serviceBroker.Services(),
+		Services: h.serviceBroker.Services(req.Context()),
 	}
 
 	h.respond(w, http.StatusOK, catalog)
@@ -97,7 +97,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		instanceDetailsLogKey: details,
 	})
 
-	provisionResponse, err := h.serviceBroker.Provision(instanceID, details, acceptsIncompleteFlag)
+	provisionResponse, err := h.serviceBroker.Provision(req.Context(), instanceID, details, acceptsIncompleteFlag)
 
 	if err != nil {
 		switch err {
@@ -156,7 +156,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 
 	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
 
-	updateServiceSpec, err := h.serviceBroker.Update(instanceID, details, acceptsIncompleteFlag)
+	updateServiceSpec, err := h.serviceBroker.Update(req.Context(), instanceID, details, acceptsIncompleteFlag)
 	if err != nil {
 		switch err {
 		case ErrAsyncRequired:
@@ -204,7 +204,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
-	deprovisionSpec, err := h.serviceBroker.Deprovision(instanceID, details, asyncAllowed)
+	deprovisionSpec, err := h.serviceBroker.Deprovision(req.Context(), instanceID, details, asyncAllowed)
 	if err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
@@ -251,7 +251,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	binding, err := h.serviceBroker.Bind(instanceID, bindingID, details)
+	binding, err := h.serviceBroker.Bind(req.Context(), instanceID, bindingID, details)
 	if err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
@@ -329,7 +329,7 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 		ServiceID: req.FormValue("service_id"),
 	}
 
-	if err := h.serviceBroker.Unbind(instanceID, bindingID, details); err != nil {
+	if err := h.serviceBroker.Unbind(req.Context(), instanceID, bindingID, details); err != nil {
 		switch err {
 		case ErrInstanceDoesNotExist:
 			logger.Error(instanceMissingErrorKey, err)
@@ -360,7 +360,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 
 	logger.Info("starting-check-for-operation")
 
-	lastOperation, err := h.serviceBroker.LastOperation(instanceID, operationData)
+	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, operationData)
 
 	if err != nil {
 		switch err {
