@@ -1,8 +1,9 @@
 package fakes
 
 import (
-	"github.com/pivotal-cf/brokerapi"
 	"context"
+
+	"github.com/pivotal-cf/brokerapi"
 )
 
 type FakeServiceBroker struct {
@@ -43,6 +44,8 @@ type FakeServiceBroker struct {
 
 	LastOperationInstanceID string
 	LastOperationData       string
+
+	ReceivedContext bool
 }
 
 type FakeAsyncServiceBroker struct {
@@ -56,6 +59,10 @@ type FakeAsyncOnlyServiceBroker struct {
 
 func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokerapi.Service {
 	fakeBroker.BrokerCalled = true
+
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
 
 	return []brokerapi.Service{
 		brokerapi.Service{
@@ -91,6 +98,10 @@ func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokera
 
 func (fakeBroker *FakeServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
+
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
 
 	if fakeBroker.ProvisionError != nil {
 		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
@@ -156,6 +167,10 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(context context.Context,
 func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
 	if fakeBroker.UpdateError != nil {
 		return brokerapi.UpdateServiceSpec{}, fakeBroker.UpdateError
 	}
@@ -168,6 +183,10 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 
 func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
+
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
 
 	if fakeBroker.DeprovisionError != nil {
 		return brokerapi.DeprovisionServiceSpec{}, fakeBroker.DeprovisionError
@@ -223,6 +242,10 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
 	fakeBroker.BrokerCalled = true
 
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
 	if fakeBroker.BindError != nil {
 		return brokerapi.Binding{}, fakeBroker.BindError
 	}
@@ -248,6 +271,10 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
 	fakeBroker.BrokerCalled = true
 
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
 	fakeBroker.UnbindingDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
@@ -263,6 +290,10 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
 	fakeBroker.LastOperationInstanceID = instanceID
 	fakeBroker.LastOperationData = operationData
+
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
 
 	if fakeBroker.LastOperationError != nil {
 		return brokerapi.LastOperation{}, fakeBroker.LastOperationError
