@@ -9,7 +9,7 @@ A Go package for building [V2 Cloud Foundry Service Brokers](https://docs.cloudf
 ## Dependencies
 
 - Go 1.7+
-- [lager](https://github.com/pivotal-golang/lager)
+- [lager](https://github.com/cloudfoundry/lager)
 - [gorilla/mux](https://github.com/gorilla/mux)
 
 ## Usage
