@@ -1,9 +1,9 @@
 package brokerapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"context"
 )
 
 type ServiceBroker interface {
@@ -68,10 +68,10 @@ type DeprovisionDetails struct {
 }
 
 type UpdateDetails struct {
-	ServiceID      string                 `json:"service_id"`
-	PlanID         string                 `json:"plan_id"`
-	Parameters     map[string]interface{} `json:"parameters"`
-	PreviousValues PreviousValues         `json:"previous_values"`
+	ServiceID      string          `json:"service_id"`
+	PlanID         string          `json:"plan_id"`
+	RawParameters  json.RawMessage `json:"parameters,omitempty"`
+	PreviousValues PreviousValues  `json:"previous_values"`
 }
 
 type PreviousValues struct {
