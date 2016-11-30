@@ -125,4 +125,5 @@ var (
 	ErrPlanChangeNotSupported = errors.New("The requested plan migration cannot be performed")
 	ErrRawParamsInvalid       = errors.New("The format of the parameters is not valid JSON")
 	ErrAppGuidNotProvided     = errors.New("app_guid is a required field but was not provided")
+	ErrInstanceNotUpdateable  = errors.New("instance is not updateable")
 )
