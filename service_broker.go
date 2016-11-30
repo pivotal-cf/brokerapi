@@ -35,11 +35,11 @@ type ProvisionedServiceSpec struct {
 }
 
 type BindDetails struct {
-	AppGUID      string                 `json:"app_guid"`
-	PlanID       string                 `json:"plan_id"`
-	ServiceID    string                 `json:"service_id"`
-	BindResource *BindResource          `json:"bind_resource,omitempty"`
-	Parameters   map[string]interface{} `json:"parameters,omitempty"`
+	AppGUID       string          `json:"app_guid"`
+	PlanID        string          `json:"plan_id"`
+	ServiceID     string          `json:"service_id"`
+	BindResource  *BindResource   `json:"bind_resource,omitempty"`
+	RawParameters json.RawMessage `json:"parameters,omitempty"`
 }
 
 type BindResource struct {
