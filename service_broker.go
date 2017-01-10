@@ -1,9 +1,9 @@
 package brokerapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"context"
 )
 
 type ServiceBroker interface {

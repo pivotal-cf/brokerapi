@@ -24,6 +24,7 @@ type ServicePlan struct {
 	Name        string               `json:"name"`
 	Description string               `json:"description"`
 	Free        *bool                `json:"free,omitempty"`
+	Bindable    *bool                `json:"bindable,omitempty"`
 	Metadata    *ServicePlanMetadata `json:"metadata,omitempty"`
 }
 
@@ -48,6 +49,10 @@ type ServiceMetadata struct {
 }
 
 func FreeValue(v bool) *bool {
+	return &v
+}
+
+func BindableValue(v bool) *bool {
 	return &v
 }
 

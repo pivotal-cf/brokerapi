@@ -99,6 +99,7 @@ var _ = Describe("Catalog", func() {
 					ID:          "ID-1",
 					Name:        "Cassandra",
 					Description: "A Cassandra Plan",
+					Bindable:    brokerapi.BindableValue(true),
 					Free:        brokerapi.FreeValue(true),
 					Metadata: &brokerapi.ServicePlanMetadata{
 						Bullets:     []string{"hello", "its me"},
@@ -110,6 +111,7 @@ var _ = Describe("Catalog", func() {
 					"name":"Cassandra",
 					"description":"A Cassandra Plan",
 					"free": true,
+					"bindable": true,
 					"metadata":{
 						"bullets":["hello", "its me"],
 						"displayName":"name"
