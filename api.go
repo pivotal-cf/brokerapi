@@ -382,7 +382,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 	logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-operation")
 
 	lastOperationResponse := LastOperationResponse{
-		State:       string(lastOperation.State),
+		State:       lastOperation.State,
 		Description: lastOperation.Description,
 	}
 
