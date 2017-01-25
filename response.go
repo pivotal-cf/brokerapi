@@ -25,8 +25,8 @@ type DeprovisionResponse struct {
 }
 
 type LastOperationResponse struct {
-	State       string `json:"state"`
-	Description string `json:"description,omitempty"`
+	State       LastOperationState `json:"state"`
+	Description string             `json:"description,omitempty"`
 }
 
 type ExperimentalVolumeMountBindingResponse struct {
