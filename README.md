@@ -22,5 +22,6 @@ Alternatively, if you already have a `*mux.Router` that you want to attach servi
 
 `brokerapi` defines a handful of error types in `service_broker.go` for some common error cases that your service broker may encounter. Return these from your `ServiceBroker` methods where appropriate, and `brokerapi` will do the "right thing" (™), and give Cloud Foundry an appropriate status code, as per the [Service Broker API specification](https://docs.cloudfoundry.org/services/api.html).
 
-  Ser
- You can see the [cf-redis](https://github.com/pivotal-cf/cf-redis-broker/blob/2f0e9a8ebb1012a9be74bbef2d411b0b3b60352f/broker/broker.go) service broker uses the BrokerAPI package to create a service broker for Redis.
+## Example Service Broker
+
+You can see the [cf-redis](https://github.com/pivotal-cf/cf-redis-broker/blob/2f0e9a8ebb1012a9be74bbef2d411b0b3b60352f/broker/broker.go) service broker uses the BrokerAPI package to create a service broker for Redis.
