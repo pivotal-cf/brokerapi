@@ -1333,7 +1333,7 @@ var _ = Describe("Service Broker API", func() {
 				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.instance-missing"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 
-				Expect(response.StatusCode).To(Equal(404))
+				Expect(response.StatusCode).To(Equal(410))
 				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
 			})
 

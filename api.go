@@ -366,7 +366,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 		switch err {
 		case ErrInstanceDoesNotExist:
 			logger.Error(instanceMissingErrorKey, err)
-			h.respond(w, http.StatusNotFound, ErrorResponse{
+			h.respond(w, http.StatusGone, ErrorResponse{
 				Description: err.Error(),
 			})
 		default:
