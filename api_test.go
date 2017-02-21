@@ -1325,7 +1325,7 @@ var _ = Describe("Service Broker API", func() {
 				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
 			})
 
-			It("should return a 404 and log in case the instance id is not found", func() {
+			It("should return a 410 and log in case the instance id is not found", func() {
 				fakeServiceBroker.LastOperationError = brokerapi.ErrInstanceDoesNotExist
 				instanceID := "non-existing"
 				response := makeLastOperationRequest(instanceID, "")
