@@ -303,6 +303,8 @@ var _ = Describe("Service Broker API", func() {
 			})
 
 			Context("when there are arbitrary params", func() {
+				var rawParams string
+
 				BeforeEach(func() {
 					provisionDetails["parameters"] = map[string]interface{}{
 						"string": "some-string",
@@ -310,18 +312,24 @@ var _ = Describe("Service Broker API", func() {
 						"object": struct{ Name string }{"some-name"},
 						"array":  []interface{}{"a", "b", "c"},
 					}
-				})
-
-				It("calls Provision on the service broker with all params", func() {
-					rawParams := `{
+					rawParams = `{
 						"string":"some-string",
 						"number":1,
 						"object": { "Name": "some-name" },
 						"array": [ "a", "b", "c" ]
 					}`
+				})
 
+				It("calls Provision on the service broker with all params", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(string(fakeServiceBroker.ProvisionDetails.RawParameters)).To(MatchJSON(rawParams))
+				})
+
+				It("calls Provision with details with raw parameters", func() {
+					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.ProvisionDetails)
+					rawParameters := detailsWithRawParameters.GetRawParameters()
+					Expect(string(rawParameters)).To(MatchJSON(rawParams))
 				})
 			})
 
@@ -651,6 +659,12 @@ var _ = Describe("Service Broker API", func() {
 						Expect(fakeServiceBroker.UpdateDetails.RawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
 					})
 
+					It("calls update with details with raw parameters", func() {
+						detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.UpdateDetails)
+						rawParameters := detailsWithRawParameters.GetRawParameters()
+						Expect(rawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
+					})
+
 					Context("when accepts_incomplete=true", func() {
 						BeforeEach(func() {
 							queryString = "?accepts_incomplete=true"
@@ -967,6 +981,9 @@ var _ = Describe("Service Broker API", func() {
 					"app_guid":   "app_guid",
 					"plan_id":    "plan_id",
 					"service_id": "service_id",
+					"parameters": map[string]interface{}{
+						"new-param": "new-param-value",
+					},
 				}
 			})
 
@@ -976,10 +993,18 @@ var _ = Describe("Service Broker API", func() {
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
 					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
 					Expect(fakeServiceBroker.BoundBindingDetails).To(Equal(brokerapi.BindDetails{
-						AppGUID:   "app_guid",
-						PlanID:    "plan_id",
-						ServiceID: "service_id",
+						AppGUID:       "app_guid",
+						PlanID:        "plan_id",
+						ServiceID:     "service_id",
+						RawParameters: json.RawMessage(`{"new-param":"new-param-value"}`),
 					}))
+				})
+
+				It("calls bind with details with raw parameters", func() {
+					makeBindingRequest(instanceID, bindingID, details)
+					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.BoundBindingDetails)
+					rawParameters := detailsWithRawParameters.GetRawParameters()
+					Expect(rawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
 				})
 
 				It("returns the credentials returned by Bind", func() {

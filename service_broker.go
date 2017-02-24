@@ -20,6 +20,22 @@ type ServiceBroker interface {
 	LastOperation(context context.Context, instanceID, operationData string) (LastOperation, error)
 }
 
+type DetailsWithRawParameters interface {
+	GetRawParameters() json.RawMessage
+}
+
+func (d ProvisionDetails) GetRawParameters() json.RawMessage {
+	return d.RawParameters
+}
+
+func (d BindDetails) GetRawParameters() json.RawMessage {
+	return d.RawParameters
+}
+
+func (d UpdateDetails) GetRawParameters() json.RawMessage {
+	return d.RawParameters
+}
+
 type ProvisionDetails struct {
 	ServiceID        string          `json:"service_id"`
 	PlanID           string          `json:"plan_id"`
