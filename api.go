@@ -22,8 +22,6 @@ const bindingIDLogKey = "binding-id"
 
 const invalidServiceDetailsErrorKey = "invalid-service-details"
 const invalidBindDetailsErrorKey = "invalid-bind-details"
-const invalidUnbindDetailsErrorKey = "invalid-unbind-details"
-const invalidDeprovisionDetailsErrorKey = "invalid-deprovision-details"
 const instanceLimitReachedErrorKey = "instance-limit-reached"
 const instanceAlreadyExistsErrorKey = "instance-already-exists"
 const bindingAlreadyExistsErrorKey = "binding-already-exists"
