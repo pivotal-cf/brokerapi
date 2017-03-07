@@ -33,8 +33,6 @@ const unknownErrorKey = "unknown-error"
 const invalidRawParamsKey = "invalid-raw-params"
 const appGuidNotProvidedErrorKey = "app-guid-not-provided"
 
-const statusUnprocessableEntity = 422
-
 type BrokerCredentials struct {
 	Username string
 	Password string
@@ -83,7 +81,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	var details ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, statusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -101,7 +99,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		switch err {
 		case ErrRawParamsInvalid:
 			logger.Error(invalidRawParamsKey, err)
-			h.respond(w, 422, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Description: err.Error(),
 			})
 		case ErrInstanceAlreadyExists:
@@ -114,7 +112,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 			})
 		case ErrAsyncRequired:
 			logger.Error(asyncRequiredKey, err)
-			h.respond(w, 422, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Error:       "AsyncRequired",
 				Description: err.Error(),
 			})
@@ -146,7 +144,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	var details UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		h.logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, statusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -159,7 +157,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 		switch err {
 		case ErrAsyncRequired:
 			h.logger.Error(asyncRequiredKey, err)
-			h.respond(w, 422, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Error:       "AsyncRequired",
 				Description: err.Error(),
 			})
@@ -167,7 +165,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 
 		case ErrPlanChangeNotSupported:
 			h.logger.Error(planChangeNotSupportedKey, err)
-			h.respond(w, 422, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Error:       "PlanChangeNotSupported",
 				Description: err.Error(),
 			})
@@ -210,7 +208,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 			h.respond(w, http.StatusGone, EmptyResponse{})
 		case ErrAsyncRequired:
 			logger.Error(asyncRequiredKey, err)
-			h.respond(w, 422, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Error:       "AsyncRequired",
 				Description: err.Error(),
 			})
@@ -243,7 +241,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	var details BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
-		h.respond(w, statusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -264,7 +262,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 			})
 		case ErrAppGuidNotProvided:
 			logger.Error(appGuidNotProvidedErrorKey, err)
-			h.respond(w, statusUnprocessableEntity, ErrorResponse{
+			h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 				Description: err.Error(),
 			})
 		default:

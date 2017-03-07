@@ -408,7 +408,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 422", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.StatusCode).To(Equal(422))
+						Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 					})
 
 					It("returns json with a description field and a useful error message", func() {
@@ -444,7 +444,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 422 bad request", func() {
 						response := makeBadInstanceProvisioningRequest(instanceID)
-						Expect(response.StatusCode).Should(Equal(422))
+						Expect(response.StatusCode).Should(Equal(http.StatusUnprocessableEntity))
 					})
 
 					It("logs a message", func() {
@@ -548,7 +548,7 @@ var _ = Describe("Service Broker API", func() {
 						It("returns a 422", func() {
 							acceptsIncomplete := false
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-							Expect(response.StatusCode).To(Equal(422))
+							Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
@@ -574,7 +574,7 @@ var _ = Describe("Service Broker API", func() {
 						It("returns a 422", func() {
 							acceptsIncomplete := false
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-							Expect(response.StatusCode).To(Equal(422))
+							Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
@@ -712,7 +712,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns HTTP 422", func() {
-					Expect(response.StatusCode).To(Equal(422))
+					Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 				})
 
 				It("returns a descriptive message", func() {
@@ -730,7 +730,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns HTTP 422", func() {
-					Expect(response.StatusCode).To(Equal(422))
+					Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 				})
 
 				It("returns a descriptive message", func() {
@@ -817,7 +817,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					Context("when the accepts_incomplete flag is not set", func() {
-						itReturnsStatus(422, "")
+						itReturnsStatus(http.StatusUnprocessableEntity, "")
 
 						It("returns a descriptive error", func() {
 							response := makeInstanceDeprovisioningRequest(instanceID, "")
@@ -1077,7 +1077,7 @@ var _ = Describe("Service Broker API", func() {
 				Context("when no bind details are being passed", func() {
 					It("returns a 422", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
-						Expect(response.StatusCode).To(Equal(422))
+						Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
 					})
 				})
 
