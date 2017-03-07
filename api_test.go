@@ -11,14 +11,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pivotal-cf/brokerapi"
-	"github.com/pivotal-cf/brokerapi/fakes"
-
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
