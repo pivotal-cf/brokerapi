@@ -540,7 +540,7 @@ var _ = Describe("Service Broker API", func() {
 								InstanceLimit: 3,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
-								*fakeServiceBroker,
+								FakeServiceBroker: *fakeServiceBroker,
 							}
 							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
 						})
@@ -566,7 +566,7 @@ var _ = Describe("Service Broker API", func() {
 								InstanceLimit: 3,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
-								*fakeServiceBroker,
+								FakeServiceBroker: *fakeServiceBroker,
 							}
 							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
 						})
