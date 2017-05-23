@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 )
 
 type ServiceBroker interface {
@@ -130,16 +131,57 @@ type SharedDevice struct {
 	MountConfig map[string]interface{} `json:"mount_config"`
 }
 
+const (
+	instanceExistsMsg           = "instance already exists"
+	instanceDoesntExistMsg      = "instance does not exist"
+	serviceLimitReachedMsg      = "instance limit for this service has been reached"
+	servicePlanQuotaExceededMsg = "The quota for this service plan has been exceeded. Please contact your Operator for help."
+	serviceQuotaExceededMsg     = "The quota for this service has been exceeded. Please contact your Operator for help."
+	bindingExistsMsg            = "binding already exists"
+	bindingDoesntExistMsg       = "binding does not exist"
+	asyncRequiredMsg            = "This service plan requires client support for asynchronous service operations."
+	planChangeUnsupportedMsg    = "The requested plan migration cannot be performed"
+	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
+	appGuidMissingMsg           = "app_guid is a required field but was not provided"
+)
+
 var (
-	ErrInstanceAlreadyExists  = errors.New("instance already exists")
-	ErrInstanceDoesNotExist   = errors.New("instance does not exist")
-	ErrInstanceLimitMet       = errors.New("instance limit for this service has been reached")
-	ErrPlanQuotaExceeded      = errors.New("The quota for this service plan has been exceeded. Please contact your Operator for help.")
-	ErrServiceQuotaExceeded   = errors.New("The quota for this service has been exceeded. Please contact your Operator for help.")
-	ErrBindingAlreadyExists   = errors.New("binding already exists")
-	ErrBindingDoesNotExist    = errors.New("binding does not exist")
-	ErrAsyncRequired          = errors.New("This service plan requires client support for asynchronous service operations.")
-	ErrPlanChangeNotSupported = errors.New("The requested plan migration cannot be performed")
-	ErrRawParamsInvalid       = errors.New("The format of the parameters is not valid JSON")
-	ErrAppGuidNotProvided     = errors.New("app_guid is a required field but was not provided")
+	ErrInstanceAlreadyExists = NewFailureResponseBuilder(
+		errors.New(instanceExistsMsg), http.StatusConflict, instanceAlreadyExistsErrorKey,
+	).WithEmptyResponse().Build()
+
+	ErrInstanceDoesNotExist = NewFailureResponseBuilder(
+		errors.New(instanceDoesntExistMsg), http.StatusGone, instanceMissingErrorKey,
+	).WithEmptyResponse().Build()
+
+	ErrInstanceLimitMet = NewFailureResponse(
+		errors.New(serviceLimitReachedMsg), http.StatusInternalServerError, instanceLimitReachedErrorKey,
+	)
+
+	ErrBindingAlreadyExists = NewFailureResponse(
+		errors.New(bindingExistsMsg), http.StatusConflict, bindingAlreadyExistsErrorKey,
+	)
+
+	ErrBindingDoesNotExist = NewFailureResponse(
+		errors.New(bindingDoesntExistMsg), http.StatusGone, bindingMissingErrorKey,
+	)
+
+	ErrAsyncRequired = NewFailureResponseBuilder(
+		errors.New(asyncRequiredMsg), http.StatusUnprocessableEntity, asyncRequiredKey,
+	).WithErrorKey("AsyncRequired").Build()
+
+	ErrPlanChangeNotSupported = NewFailureResponseBuilder(
+		errors.New(planChangeUnsupportedMsg), http.StatusUnprocessableEntity, planChangeNotSupportedKey,
+	).WithErrorKey("PlanChangeNotSupported").Build()
+
+	ErrRawParamsInvalid = NewFailureResponse(
+		errors.New(rawInvalidParamsMsg), http.StatusUnprocessableEntity, invalidRawParamsKey,
+	)
+
+	ErrAppGuidNotProvided = NewFailureResponse(
+		errors.New(appGuidMissingMsg), http.StatusUnprocessableEntity, appGuidNotProvidedErrorKey,
+	)
+
+	ErrPlanQuotaExceeded    = errors.New(servicePlanQuotaExceededMsg)
+	ErrServiceQuotaExceeded = errors.New(serviceQuotaExceededMsg)
 )

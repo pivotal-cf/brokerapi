@@ -374,7 +374,7 @@ var _ = Describe("Service Broker API", func() {
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-						Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-limit-reached"))
+						Expect(lastLogLine().Message).To(ContainSubstring(".provision.instance-limit-reached"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance limit for this service has been reached"))
 					})
 				})
@@ -396,8 +396,34 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
+						Expect(lastLogLine().Message).To(ContainSubstring(".provision.unknown-error"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
+					})
+				})
+
+				Context("when a custom error occurs", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.ProvisionError = brokerapi.NewFailureResponse(
+							errors.New("I failed in unique and interesting ways"),
+							http.StatusTeapot,
+							"interesting-failure",
+						)
+					})
+
+					It("returns status teapot", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.StatusCode).To(Equal(http.StatusTeapot))
+					})
+
+					It("returns json with a description field and a useful error message", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+					})
+
+					It("logs an appropriate error", func() {
+						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(lastLogLine().Message).To(ContainSubstring(".provision.interesting-failure"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
 					})
 				})
 
@@ -418,7 +444,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs an appropriate error", func() {
 						makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(lastLogLine().Message).To(ContainSubstring("provision.invalid-raw-params"))
+						Expect(lastLogLine().Message).To(ContainSubstring(".provision.invalid-raw-params"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("The format of the parameters is not valid JSON"))
 					})
 				})
@@ -449,7 +475,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("logs a message", func() {
 						makeBadInstanceProvisioningRequest(instanceID)
-						Expect(lastLogLine().Message).To(ContainSubstring("provision.invalid-service-details"))
+						Expect(lastLogLine().Message).To(ContainSubstring(".provision.invalid-service-details"))
 					})
 				})
 			})
@@ -471,7 +497,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("logs an appropriate error", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(lastLogLine().Message).To(ContainSubstring("provision.instance-already-exists"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".provision.instance-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance already exists"))
 				})
 			})
@@ -894,7 +920,7 @@ var _ = Describe("Service Broker API", func() {
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
 					makeInstanceDeprovisioningRequest(instanceID, "")
-					Expect(lastLogLine().Message).To(ContainSubstring("deprovision.instance-missing"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
@@ -913,24 +939,52 @@ var _ = Describe("Service Broker API", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
 
-				BeforeEach(func() {
-					fakeServiceBroker.DeprovisionError = errors.New("broker failed")
+				Context("when an unexpected error occurs", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.DeprovisionError = errors.New("broker failed")
+					})
+
+					It("returns a 500", func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(response.StatusCode).To(Equal(500))
+					})
+
+					It("returns json with a description field and a useful error message", func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
+					})
+
+					It("logs an appropriate error", func() {
+						makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.unknown-error"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
+					})
 				})
 
-				It("returns a 500", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID, "")
-					Expect(response.StatusCode).To(Equal(500))
-				})
+				Context("when a custom error occurs", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.DeprovisionError = brokerapi.NewFailureResponse(
+							errors.New("I failed in unique and interesting ways"),
+							http.StatusTeapot,
+							"interesting-failure",
+						)
+					})
 
-				It("returns json with a description field and a useful error message", func() {
-					response := makeInstanceDeprovisioningRequest(instanceID, "")
-					Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
-				})
+					It("returns status teapot", func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(response.StatusCode).To(Equal(http.StatusTeapot))
+					})
 
-				It("logs an appropriate error", func() {
-					makeInstanceDeprovisioningRequest(instanceID, "")
-					Expect(lastLogLine().Message).To(ContainSubstring("provision.unknown-error"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("broker failed"))
+					It("returns json with a description field and a useful error message", func() {
+						response := makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+					})
+
+					It("logs an appropriate error", func() {
+						makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.interesting-failure"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
+					})
 				})
 			})
 		})
@@ -1142,15 +1196,15 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(404))
 				})
 
-				It("returns an error JSON object", func() {
+				It("returns an empty JSON object", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.Body).To(MatchJSON(`{"description":"instance does not exist"}`))
+					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
 					instanceID = uniqueInstanceID()
 					makeBindingRequest(instanceID, uniqueBindingID(), details)
-					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 				})
 			})
@@ -1177,27 +1231,53 @@ var _ = Describe("Service Broker API", func() {
 					makeBindingRequest(instanceID, uniqueBindingID(), details)
 					makeBindingRequest(instanceID, uniqueBindingID(), details)
 
-					Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-already-exists"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.binding-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding already exists"))
 				})
 			})
 
-			Context("when the binding returns an error", func() {
+			Context("when the binding returns an unknown error", func() {
 				BeforeEach(func() {
-					fakeServiceBroker.BindError = errors.New("random error")
+					fakeServiceBroker.BindError = errors.New("unknown error")
 				})
 
 				It("returns a generic 500 error response", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(response.StatusCode).To(Equal(500))
-					Expect(response.Body).To(MatchJSON(`{"description":"random error"}`))
+					Expect(response.Body).To(MatchJSON(`{"description":"unknown error"}`))
 				})
 
 				It("logs a detailed error message", func() {
 					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 
-					Expect(lastLogLine().Message).To(ContainSubstring("bind.unknown-error"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("random error"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("unknown error"))
+				})
+			})
+
+			Context("when the binding returns a custom error", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.BindError = brokerapi.NewFailureResponse(
+						errors.New("I failed in unique and interesting ways"),
+						http.StatusTeapot,
+						"interesting-failure",
+					)
+				})
+
+				It("returns status teapot", func() {
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					Expect(response.StatusCode).To(Equal(http.StatusTeapot))
+				})
+
+				It("returns json with a description field and a useful error message", func() {
+					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+				})
+
+				It("logs an appropriate error", func() {
+					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.interesting-failure"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
 				})
 			})
 		})
@@ -1269,7 +1349,7 @@ var _ = Describe("Service Broker API", func() {
 					It("logs an appropriate error message", func() {
 						makeUnbindingRequest(instanceID, "does-not-exist")
 
-						Expect(lastLogLine().Message).To(ContainSubstring("bind.binding-missing"))
+						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.binding-missing"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding does not exist"))
 					})
 				})
@@ -1292,8 +1372,53 @@ var _ = Describe("Service Broker API", func() {
 					instanceID = uniqueInstanceID()
 					makeUnbindingRequest(instanceID, uniqueBindingID())
 
-					Expect(lastLogLine().Message).To(ContainSubstring("bind.instance-missing"))
+					Expect(lastLogLine().Message).To(ContainSubstring(".unbind.instance-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
+				})
+			})
+
+			Context("when unbinding returns an unknown error", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UnbindError = errors.New("unknown error")
+				})
+
+				It("returns a generic 500 error response", func() {
+					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
+					Expect(response.StatusCode).To(Equal(500))
+					Expect(response.Body).To(MatchJSON(`{"description":"unknown error"}`))
+				})
+
+				It("logs a detailed error message", func() {
+					makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
+
+					Expect(lastLogLine().Message).To(ContainSubstring(".unbind.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("unknown error"))
+				})
+			})
+
+			Context("when unbinding returns a custom error", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.UnbindError = brokerapi.NewFailureResponse(
+						errors.New("I failed in unique and interesting ways"),
+						http.StatusTeapot,
+						"interesting-failure",
+					)
+				})
+
+				It("returns status teapot", func() {
+					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
+					Expect(response.StatusCode).To(Equal(http.StatusTeapot))
+				})
+
+				It("returns json with a description field and a useful error message", func() {
+					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
+					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+				})
+
+				It("logs an appropriate error", func() {
+					makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
+					Expect(lastLogLine().Message).To(ContainSubstring(".unbind.interesting-failure"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
 				})
 			})
 		})
@@ -1338,10 +1463,10 @@ var _ = Describe("Service Broker API", func() {
 
 				logs := brokerLogger.Logs()
 
-				Expect(logs[0].Message).To(ContainSubstring("lastOperation.starting-check-for-operation"))
+				Expect(logs[0].Message).To(ContainSubstring(".lastOperation.starting-check-for-operation"))
 				Expect(logs[0].Data["instance-id"]).To(ContainSubstring(instanceID))
 
-				Expect(logs[1].Message).To(ContainSubstring("lastOperation.done-check-for-operation"))
+				Expect(logs[1].Message).To(ContainSubstring(".lastOperation.done-check-for-operation"))
 				Expect(logs[1].Data["instance-id"]).To(ContainSubstring(instanceID))
 				Expect(logs[1].Data["state"]).To(ContainSubstring(string(fakeServiceBroker.LastOperationState)))
 
@@ -1354,22 +1479,57 @@ var _ = Describe("Service Broker API", func() {
 				instanceID := "non-existing"
 				response := makeLastOperationRequest(instanceID, "")
 
-				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.instance-missing"))
+				Expect(lastLogLine().Message).To(ContainSubstring(".lastOperation.instance-missing"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance does not exist"))
 
 				Expect(response.StatusCode).To(Equal(410))
-				Expect(response.Body).To(MatchJSON(`{"description": "instance does not exist"}`))
+				Expect(response.Body).To(MatchJSON(`{}`))
 			})
 
-			It("should return an internal sever error for all other errors", func() {
-				fakeServiceBroker.LastOperationError = errors.New("Blah")
-				response := makeLastOperationRequest("instanceID", "")
+			Context("when last_operation returns an unknown error", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.LastOperationError = errors.New("unknown error")
+				})
 
-				Expect(lastLogLine().Message).To(ContainSubstring("lastOperation.unknown-error"))
-				Expect(lastLogLine().Data["error"]).To(ContainSubstring("Blah"))
+				It("returns a generic 500 error response", func() {
+					response := makeLastOperationRequest("instanceID", "")
 
-				Expect(response.StatusCode).To(Equal(500))
-				Expect(response.Body).To(MatchJSON(`{"description": "Blah"}`))
+					Expect(response.StatusCode).To(Equal(500))
+					Expect(response.Body).To(MatchJSON(`{"description": "unknown error"}`))
+				})
+
+				It("logs a detailed error message", func() {
+					makeLastOperationRequest("instanceID", "")
+
+					Expect(lastLogLine().Message).To(ContainSubstring(".lastOperation.unknown-error"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("unknown error"))
+				})
+			})
+
+			Context("when last_operation returns a custom error", func() {
+				BeforeEach(func() {
+					fakeServiceBroker.LastOperationError = brokerapi.NewFailureResponse(
+						errors.New("I failed in unique and interesting ways"),
+						http.StatusTeapot,
+						"interesting-failure",
+					)
+				})
+
+				It("returns status teapot", func() {
+					response := makeLastOperationRequest("instanceID", "")
+					Expect(response.StatusCode).To(Equal(http.StatusTeapot))
+				})
+
+				It("returns json with a description field and a useful error message", func() {
+					response := makeLastOperationRequest("instanceID", "")
+					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+				})
+
+				It("logs an appropriate error", func() {
+					makeLastOperationRequest("instanceID", "")
+					Expect(lastLogLine().Message).To(ContainSubstring(".lastOperation.interesting-failure"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
+				})
 			})
 		})
 	})

@@ -28,6 +28,7 @@ type FakeServiceBroker struct {
 
 	ProvisionError     error
 	BindError          error
+	UnbindError        error
 	DeprovisionError   error
 	LastOperationError error
 	UpdateError        error
@@ -273,6 +274,10 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 
 	if val, ok := context.Value("test_context").(bool); ok {
 		fakeBroker.ReceivedContext = val
+	}
+
+	if fakeBroker.UnbindError != nil {
+		return fakeBroker.UnbindError
 	}
 
 	fakeBroker.UnbindingDetails = details
