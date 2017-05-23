@@ -1196,9 +1196,9 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(404))
 				})
 
-				It("returns an empty JSON object", func() {
+				It("returns an error JSON object", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.Body).To(MatchJSON(`{}`))
+					Expect(response.Body).To(MatchJSON(`{"description":"instance does not exist"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -1351,6 +1351,11 @@ var _ = Describe("Service Broker API", func() {
 
 						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.binding-missing"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("binding does not exist"))
+					})
+
+					It("returns an empty JSON object", func() {
+						response := makeUnbindingRequest(instanceID, "does-not-exist")
+						Expect(response.Body).To(MatchJSON(`{}`))
 					})
 				})
 			})

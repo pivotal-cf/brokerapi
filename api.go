@@ -219,11 +219,16 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *FailureResponse:
 			statusCode := err.ValidatedStatusCode(logger)
+			errorResponse := err.ErrorResponse()
 			if err == ErrInstanceDoesNotExist {
+				// work around ErrInstanceDoesNotExist having different pre-refactor behaviour to other actions
+				errorResponse = ErrorResponse{
+					Description: err.Error(),
+				}
 				statusCode = http.StatusNotFound
 			}
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, statusCode, err.ErrorResponse())
+			h.respond(w, statusCode, errorResponse)
 		default:
 			logger.Error(unknownErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, ErrorResponse{

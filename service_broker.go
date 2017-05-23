@@ -162,9 +162,9 @@ var (
 		errors.New(bindingExistsMsg), http.StatusConflict, bindingAlreadyExistsErrorKey,
 	)
 
-	ErrBindingDoesNotExist = NewFailureResponse(
+	ErrBindingDoesNotExist = NewFailureResponseBuilder(
 		errors.New(bindingDoesntExistMsg), http.StatusGone, bindingMissingErrorKey,
-	)
+	).WithEmptyResponse().Build()
 
 	ErrAsyncRequired = NewFailureResponseBuilder(
 		errors.New(asyncRequiredMsg), http.StatusUnprocessableEntity, asyncRequiredKey,
