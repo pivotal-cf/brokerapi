@@ -14,6 +14,9 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
+// FailureResponse can be returned from any of the `ServiceBroker` interface methods
+// which allow an error to be returned. Doing so will provide greater control over
+// the HTTP response.
 type FailureResponse struct {
 	error
 	statusCode    int
@@ -22,43 +25,10 @@ type FailureResponse struct {
 	errorKey      string
 }
 
-type FailureResponseBuilder struct {
-	error
-	statusCode    int
-	loggerAction  string
-	emptyResponse bool
-	errorKey      string
-}
-
-func (f *FailureResponseBuilder) WithErrorKey(errorKey string) *FailureResponseBuilder {
-	f.errorKey = errorKey
-	return f
-}
-
-func (f *FailureResponseBuilder) WithEmptyResponse() *FailureResponseBuilder {
-	f.emptyResponse = true
-	return f
-}
-
-func (f *FailureResponseBuilder) Build() *FailureResponse {
-	return &FailureResponse{
-		error:         f.error,
-		statusCode:    f.statusCode,
-		loggerAction:  f.loggerAction,
-		emptyResponse: f.emptyResponse,
-		errorKey:      f.errorKey,
-	}
-}
-
-func NewFailureResponseBuilder(err error, statusCode int, loggerAction string) *FailureResponseBuilder {
-	return &FailureResponseBuilder{
-		error:         err,
-		statusCode:    statusCode,
-		loggerAction:  loggerAction,
-		emptyResponse: false,
-	}
-}
-
+// NewFailureResponse returns a pointer to a new instance of FailureResponse.
+// err will by default be used as both a logging message and HTTP response description.
+// statusCode is the HTTP status code to be returned, must be 4xx or 5xx
+// loggerAction is a short description which will be used as the action if the error is logged.
 func NewFailureResponse(err error, statusCode int, loggerAction string) *FailureResponse {
 	return &FailureResponse{
 		error:        err,
@@ -67,6 +37,8 @@ func NewFailureResponse(err error, statusCode int, loggerAction string) *Failure
 	}
 }
 
+// ErrorResponse returns an interface{} which will be JSON encoded and form the body
+// of the HTTP response
 func (f *FailureResponse) ErrorResponse() interface{} {
 	if f.emptyResponse {
 		return EmptyResponse{}
@@ -78,6 +50,8 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	}
 }
 
+// ValidatedStatusCode returns the HTTP response status code. If the code is not 4xx
+// or 5xx, an InternalServerError will be returned instead.
 func (f *FailureResponse) ValidatedStatusCode(logger lager.Logger) int {
 	if f.statusCode < 400 || 600 <= f.statusCode {
 		if logger != nil {
@@ -88,6 +62,52 @@ func (f *FailureResponse) ValidatedStatusCode(logger lager.Logger) int {
 	return f.statusCode
 }
 
+// LoggerAction returns the loggerAction, used as the action when logging
 func (f *FailureResponse) LoggerAction() string {
 	return f.loggerAction
+}
+
+// FailureResponseBuilder provides a fluent set of methods to build a *FailureResponse.
+type FailureResponseBuilder struct {
+	error
+	statusCode    int
+	loggerAction  string
+	emptyResponse bool
+	errorKey      string
+}
+
+// NewFailureResponseBuilder returns a pointer to a newly instantiated FailureResponseBuilder
+// Accepts required arguments to create a FailureResponse.
+func NewFailureResponseBuilder(err error, statusCode int, loggerAction string) *FailureResponseBuilder {
+	return &FailureResponseBuilder{
+		error:         err,
+		statusCode:    statusCode,
+		loggerAction:  loggerAction,
+		emptyResponse: false,
+	}
+}
+
+// WithErrorKey adds a custom ErrorKey which will be used in FailureResponse to add an `Error`
+// field to the JSON HTTP response body
+func (f *FailureResponseBuilder) WithErrorKey(errorKey string) *FailureResponseBuilder {
+	f.errorKey = errorKey
+	return f
+}
+
+// WithEmptyResponse will cause the built FailureResponse to return an empty JSON object as the
+// HTTP response body
+func (f *FailureResponseBuilder) WithEmptyResponse() *FailureResponseBuilder {
+	f.emptyResponse = true
+	return f
+}
+
+// Build returns the generated FailureResponse built using previously configured variables.
+func (f *FailureResponseBuilder) Build() *FailureResponse {
+	return &FailureResponse{
+		error:         f.error,
+		statusCode:    f.statusCode,
+		loggerAction:  f.loggerAction,
+		emptyResponse: f.emptyResponse,
+		errorKey:      f.errorKey,
+	}
 }
