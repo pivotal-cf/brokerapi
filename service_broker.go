@@ -8,17 +8,17 @@ import (
 )
 
 type ServiceBroker interface {
-	Services(context context.Context) []Service
+	Services(ctx context.Context) []Service
 
-	Provision(context context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
-	Deprovision(context context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
+	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
 
-	Bind(context context.Context, instanceID, bindingID string, details BindDetails) (Binding, error)
-	Unbind(context context.Context, instanceID, bindingID string, details UnbindDetails) error
+	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails) (Binding, error)
+	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails) error
 
-	Update(context context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
+	Update(ctx context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
-	LastOperation(context context.Context, instanceID, operationData string) (LastOperation, error)
+	LastOperation(ctx context.Context, instanceID, operationData string) (LastOperation, error)
 }
 
 type DetailsWithRawParameters interface {
