@@ -33,6 +33,10 @@ func (d ProvisionDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
 
+func (d BindDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
+}
+
 func (d BindDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
@@ -61,6 +65,7 @@ type BindDetails struct {
 	PlanID        string          `json:"plan_id"`
 	ServiceID     string          `json:"service_id"`
 	BindResource  *BindResource   `json:"bind_resource,omitempty"`
+	RawContext    json.RawMessage `json:"context,omitempty"`
 	RawParameters json.RawMessage `json:"parameters,omitempty"`
 }
 
