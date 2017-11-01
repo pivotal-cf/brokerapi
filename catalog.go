@@ -26,6 +26,25 @@ type ServicePlan struct {
 	Free        *bool                `json:"free,omitempty"`
 	Bindable    *bool                `json:"bindable,omitempty"`
 	Metadata    *ServicePlanMetadata `json:"metadata,omitempty"`
+	Schemas     *ServiceSchemas      `json:"schemas,omitempty"`
+}
+
+type ServiceSchemas struct {
+	Instance ServiceInstanceSchema `json:"service_instance"`
+	Binding  ServiceBindingSchema  `json:"service_binding,omitempty"`
+}
+
+type ServiceInstanceSchema struct {
+	Create Schema `json:"create"`
+	Update Schema `json:"update"`
+}
+
+type ServiceBindingSchema struct {
+	Create Schema `json:"create"`
+}
+
+type Schema struct {
+	Schema interface{} `json:"parameters"`
 }
 
 type ServicePlanMetadata struct {

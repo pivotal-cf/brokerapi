@@ -25,6 +25,10 @@ type DetailsWithRawParameters interface {
 	GetRawParameters() json.RawMessage
 }
 
+func (d ProvisionDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
+}
+
 func (d ProvisionDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
@@ -42,6 +46,7 @@ type ProvisionDetails struct {
 	PlanID           string          `json:"plan_id"`
 	OrganizationGUID string          `json:"organization_guid"`
 	SpaceGUID        string          `json:"space_guid"`
+	RawContext       json.RawMessage `json:"context,omitempty"`
 	RawParameters    json.RawMessage `json:"parameters,omitempty"`
 }
 
