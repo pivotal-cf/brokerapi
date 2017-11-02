@@ -30,21 +30,21 @@ type ServicePlan struct {
 }
 
 type ServiceSchemas struct {
-	Instance ServiceInstanceSchema `json:"service_instance"`
+	Instance ServiceInstanceSchema `json:"service_instance,omitempty"`
 	Binding  ServiceBindingSchema  `json:"service_binding,omitempty"`
 }
 
 type ServiceInstanceSchema struct {
-	Create Schema `json:"create"`
-	Update Schema `json:"update"`
+	Create Schema `json:"create,omitempty"`
+	Update Schema `json:"update,omitempty"`
 }
 
 type ServiceBindingSchema struct {
-	Create Schema `json:"create"`
+	Create Schema `json:"create,omitempty"`
 }
 
 type Schema struct {
-	Schema interface{} `json:"parameters"`
+	Schema interface{} `json:"parameters,omitempty"`
 }
 
 type ServicePlanMetadata struct {
