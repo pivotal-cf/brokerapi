@@ -25,6 +25,10 @@ type DetailsWithRawParameters interface {
 	GetRawParameters() json.RawMessage
 }
 
+type DetailsWithRawContext interface {
+	GetRawContext() json.RawMessage
+}
+
 func (d ProvisionDetails) GetRawContext() json.RawMessage {
 	return d.RawContext
 }
