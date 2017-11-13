@@ -25,8 +25,20 @@ type DetailsWithRawParameters interface {
 	GetRawParameters() json.RawMessage
 }
 
+type DetailsWithRawContext interface {
+	GetRawContext() json.RawMessage
+}
+
+func (d ProvisionDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
+}
+
 func (d ProvisionDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
+}
+
+func (d BindDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
 }
 
 func (d BindDetails) GetRawParameters() json.RawMessage {
@@ -42,6 +54,7 @@ type ProvisionDetails struct {
 	PlanID           string          `json:"plan_id"`
 	OrganizationGUID string          `json:"organization_guid"`
 	SpaceGUID        string          `json:"space_guid"`
+	RawContext       json.RawMessage `json:"context,omitempty"`
 	RawParameters    json.RawMessage `json:"parameters,omitempty"`
 }
 
@@ -56,6 +69,7 @@ type BindDetails struct {
 	PlanID        string          `json:"plan_id"`
 	ServiceID     string          `json:"service_id"`
 	BindResource  *BindResource   `json:"bind_resource,omitempty"`
+	RawContext    json.RawMessage `json:"context,omitempty"`
 	RawParameters json.RawMessage `json:"parameters,omitempty"`
 }
 

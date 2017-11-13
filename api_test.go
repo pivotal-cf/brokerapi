@@ -14,10 +14,10 @@ import (
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi"
 	"github.com/pivotal-cf/brokerapi/fakes"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -303,6 +303,7 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when there are arbitrary params", func() {
 				var rawParams string
+				var rawCtx string
 
 				BeforeEach(func() {
 					provisionDetails["parameters"] = map[string]interface{}{
@@ -317,6 +318,18 @@ var _ = Describe("Service Broker API", func() {
 						"object": { "Name": "some-name" },
 						"array": [ "a", "b", "c" ]
 					}`
+					provisionDetails["context"] = map[string]interface{}{
+						"platform":      "fake-platform",
+						"serial-number": 12648430,
+						"object":        struct{ Name string }{"parameter"},
+						"array":         []interface{}{"1", "2", "3"},
+					}
+					rawCtx = `{
+						"platform":"fake-platform",
+						"serial-number":12648430,
+						"object": {"Name":"parameter"},
+						"array":[ "1", "2", "3" ]
+					}`
 				})
 
 				It("calls Provision on the service broker with all params", func() {
@@ -329,6 +342,13 @@ var _ = Describe("Service Broker API", func() {
 					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.ProvisionDetails)
 					rawParameters := detailsWithRawParameters.GetRawParameters()
 					Expect(string(rawParameters)).To(MatchJSON(rawParams))
+				})
+
+				It("calls Provision with details with raw context", func() {
+					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.ProvisionDetails)
+					rawContext := detailsWithRawContext.GetRawContext()
+					Expect(string(rawContext)).To(MatchJSON(rawCtx))
 				})
 			})
 
