@@ -113,37 +113,37 @@ var _ = Describe("Service Broker API", func() {
 			ctx = context.WithValue(context.Background(), "test_context", true)
 		})
 
-		It("catalog endpoint passes the request context to the broker", func() {
+		Specify("a catalog endpoint which passes the request context to the broker", func() {
 			makeRequest("GET", "/v2/catalog", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("provision endpoint passes the request context to the broker", func() {
+		Specify("a provision endpoint which passes the request context to the broker", func() {
 			makeRequest("PUT", "/v2/service_instances/instance-id", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("deprovision endpoint passes the request context to the broker", func() {
+		Specify("a deprovision endpoint which passes the request context to the broker", func() {
 			makeRequest("DELETE", "/v2/service_instances/instance-id", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("bind endpoint passes the request context to the broker", func() {
+		Specify("a bind endpoint which passes the request context to the broker", func() {
 			makeRequest("PUT", "/v2/service_instances/instance-id/service_bindings/binding-id", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("unbind endpoint passes the request context to the broker", func() {
+		Specify("an unbind endpoint which passes the request context to the broker", func() {
 			makeRequest("DELETE", "/v2/service_instances/instance-id/service_bindings/binding-id", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("update endpoint passes the request context to the broker", func() {
+		Specify("an update endpoint which passes the request context to the broker", func() {
 			makeRequest("PATCH", "/v2/service_instances/instance-id", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		It("last operation endpoint passes the request context to the broker", func() {
+		Specify("a last operation endpoint which passes the request context to the broker", func() {
 			makeRequest("GET", "/v2/service_instances/instance-id/last_operation", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
