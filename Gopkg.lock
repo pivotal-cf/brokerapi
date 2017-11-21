@@ -3,8 +3,8 @@
 
 [[projects]]
   name = "code.cloudfoundry.org/lager"
-  packages = [".","lagertest"]
-  revision = "62951a8009ab331bb21dc418074fa54e66eb9b6a"
+  packages = [".","lagerctx","lagertest"]
+  revision = "0bfa98e49e7a976af91e918d47978f07c00b081f"
 
 [[projects]]
   name = "github.com/drewolson/testflight"
@@ -50,6 +50,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fff8323e2e36777e6455ea13945ddfb90b810c8735cedb306078d88a7ab27403"
+  inputs-digest = "c7fa45d440275d0771b076da933b2136c5573ea86746d2874094c7b2276c00b3"
   solver-name = "gps-cdcl"
   solver-version = 1

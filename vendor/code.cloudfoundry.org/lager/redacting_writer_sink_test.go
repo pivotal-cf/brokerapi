@@ -3,7 +3,6 @@ package lager_test
 import (
 	"encoding/json"
 	"fmt"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -13,28 +12,26 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("WriterSink", func() {
+var _ = Describe("RedactingWriterSink", func() {
 	const MaxThreads = 100
 
 	var sink lager.Sink
 	var writer *copyWriter
 
-	BeforeSuite(func() {
-		runtime.GOMAXPROCS(MaxThreads)
-	})
-
 	BeforeEach(func() {
 		writer = NewCopyWriter()
-		sink = lager.NewWriterSink(writer, lager.INFO)
+		var err error
+		sink, err = lager.NewRedactingWriterSink(writer, lager.INFO, nil, nil)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Context("when logging above the minimum log level", func() {
 		BeforeEach(func() {
-			sink.Log(lager.LogFormat{LogLevel: lager.INFO, Message: "hello world"})
+			sink.Log(lager.LogFormat{LogLevel: lager.INFO, Message: "hello world", Data: lager.Data{"password": "abcd"}})
 		})
 
 		It("writes to the given writer", func() {
-			Expect(writer.Copy()).To(MatchJSON(`{"message":"hello world","log_level":1,"timestamp":"","source":"","data":null}`))
+			Expect(writer.Copy()).To(MatchJSON(`{"message":"hello world","log_level":1,"timestamp":"","source":"","data":{"password":"*REDACTED*"}}`))
 		})
 	})
 
@@ -89,35 +86,3 @@ var _ = Describe("WriterSink", func() {
 		})
 	})
 })
-
-// copyWriter is an INTENTIONALLY UNSAFE writer. Use it to test code that
-// should be handling thread safety.
-type copyWriter struct {
-	contents []byte
-	lock     *sync.RWMutex
-}
-
-func NewCopyWriter() *copyWriter {
-	return &copyWriter{
-		contents: []byte{},
-		lock:     new(sync.RWMutex),
-	}
-}
-
-// no, we really mean RLock on write.
-func (writer *copyWriter) Write(p []byte) (n int, err error) {
-	writer.lock.RLock()
-	defer writer.lock.RUnlock()
-
-	writer.contents = append(writer.contents, p...)
-	return len(p), nil
-}
-
-func (writer *copyWriter) Copy() []byte {
-	writer.lock.Lock()
-	defer writer.lock.Unlock()
-
-	contents := make([]byte, len(writer.contents))
-	copy(contents, writer.contents)
-	return contents
-}

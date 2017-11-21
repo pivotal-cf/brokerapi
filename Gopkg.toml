@@ -23,6 +23,7 @@
 
 [[constraint]]
   name = "code.cloudfoundry.org/lager"
+  revision = "0bfa98e49e7a976af91e918d47978f07c00b081f"
 
 [[constraint]]
   name = "github.com/drewolson/testflight"
