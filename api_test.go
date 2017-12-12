@@ -103,6 +103,7 @@ var _ = Describe("Service Broker API", func() {
 		makeRequest := func(method, path, body string) *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
 			request, _ := http.NewRequest(method, path, strings.NewReader(body))
+			request.Header.Add("X-Broker-API-Version", "2.13")
 			request.SetBasicAuth(credentials.Username, credentials.Password)
 			request = request.WithContext(ctx)
 			brokerAPI.ServeHTTP(recorder, request)
@@ -123,8 +124,30 @@ var _ = Describe("Service Broker API", func() {
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
+		Specify("a deprovision endpoint which does not pass the request context to the broker when no version header set", func() {
+			recorder := httptest.NewRecorder()
+			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
+			request.SetBasicAuth(credentials.Username, credentials.Password)
+			request = request.WithContext(ctx)
+			brokerAPI.ServeHTTP(recorder, request)
+			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
+			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
+		})
+
+		Specify("deprovision endpoint which does not pass the request context to the broker when service_id is missing from req", func() {
+			recorder := makeRequest("DELETE", "/v2/service_instances/instance-id?plan_id=fdsa", "")
+			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+		})
+
+		Specify("deprovision endpoint which does not pass the request context to the broker when plan_id is missing from req", func() {
+			recorder := makeRequest("DELETE", "/v2/service_instances/instance-id?service_id=fdsa", "")
+			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+		})
+
 		Specify("a deprovision endpoint which passes the request context to the broker", func() {
-			makeRequest("DELETE", "/v2/service_instances/instance-id", "")
+			makeRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
@@ -246,7 +269,7 @@ var _ = Describe("Service Broker API", func() {
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Add("Content-Type", "application/json")
 				request.SetBasicAuth("username", "password")
-
+				request.Header.Add("X-Broker-API-Version", "2.13")
 				response = r.Do(request)
 
 			})

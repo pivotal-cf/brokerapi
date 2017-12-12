@@ -167,9 +167,25 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 		instanceIDLogKey: instanceID,
 	})
 
+	apiVersion := req.Header.Get("X-Broker-API-Version")
+	if apiVersion != "2.13" {
+		h.respond(w, http.StatusPreconditionFailed, "X-Broker-API-Version Header not set")
+		return
+	}
+
 	details := DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
+	}
+
+	if details.ServiceID == "" {
+		h.respond(w, http.StatusBadRequest, "service_id empty")
+		return
+	}
+
+	if details.PlanID == "" {
+		h.respond(w, http.StatusBadRequest, "plan_id empty")
+		return
 	}
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
