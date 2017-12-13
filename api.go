@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
@@ -168,8 +169,13 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	})
 
 	apiVersion := req.Header.Get("X-Broker-API-Version")
-	if apiVersion != "2.13" {
+	if apiVersion == "" {
 		h.respond(w, http.StatusPreconditionFailed, "X-Broker-API-Version Header not set")
+		return
+	}
+
+	if !strings.HasPrefix(apiVersion, "2.") {
+		h.respond(w, http.StatusPreconditionFailed, "X-Broker-API-Version Header must be 2.x")
 		return
 	}
 

@@ -134,6 +134,28 @@ var _ = Describe("Service Broker API", func() {
 			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
 		})
 
+		Specify("a deprovision endpoint which passes a 1.x version in the header does not pass request context to the broker", func() {
+			recorder := httptest.NewRecorder()
+			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
+			request.Header.Add("X-Broker-API-Version", "1.13")
+			request.SetBasicAuth(credentials.Username, credentials.Password)
+			request = request.WithContext(ctx)
+			brokerAPI.ServeHTTP(recorder, request)
+			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
+			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
+		})
+
+		Specify("a deprovision endpoint which passes a 3.x version in the header does not pass request context to the broker", func() {
+			recorder := httptest.NewRecorder()
+			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
+			request.Header.Add("X-Broker-API-Version", "3.13")
+			request.SetBasicAuth(credentials.Username, credentials.Password)
+			request = request.WithContext(ctx)
+			brokerAPI.ServeHTTP(recorder, request)
+			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
+			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
+		})
+
 		Specify("deprovision endpoint which does not pass the request context to the broker when service_id is missing from req", func() {
 			recorder := makeRequest("DELETE", "/v2/service_instances/instance-id?plan_id=fdsa", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
