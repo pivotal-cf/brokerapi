@@ -1425,21 +1425,29 @@ var _ = Describe("Service Broker API", func() {
 					It("missing header X-Broker-API-Version", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "")
 						Expect(response.StatusCode).To(Equal(412))
+						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.broker-api-version-invalid"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 					})
 
 					It("has wrong version of API", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "1.1")
 						Expect(response.StatusCode).To(Equal(412))
+						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.broker-api-version-invalid"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 					})
 
 					It("missing service-id", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "", "plan-id", "2.13")
 						Expect(response.StatusCode).To(Equal(400))
+						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.service-id-missing"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("service-id missing"))
 					})
 
 					It("missing plan-id", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "", "2.13")
 						Expect(response.StatusCode).To(Equal(400))
+						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.plan-id-missing"))
+						Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan-id missing"))
 					})
 
 				})
