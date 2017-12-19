@@ -2,6 +2,7 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -168,14 +169,8 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 		instanceIDLogKey: instanceID,
 	})
 
-	apiVersion := req.Header.Get("X-Broker-API-Version")
-	if apiVersion == "" {
-		h.respond(w, http.StatusPreconditionFailed, "X-Broker-API-Version Header not set")
-		return
-	}
-
-	if !strings.HasPrefix(apiVersion, "2.") {
-		h.respond(w, http.StatusPreconditionFailed, "X-Broker-API-Version Header must be 2.x")
+	if err := checkBrokerAPIVersionHdr(req); err != nil {
+		h.respond(w, http.StatusPreconditionFailed, err.Error())
 		return
 	}
 
@@ -297,6 +292,11 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
+	if err := checkBrokerAPIVersionHdr(req); err != nil {
+		h.respond(w, http.StatusPreconditionFailed, err.Error())
+		return
+	}
+
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
@@ -309,6 +309,16 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	details := UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
+	}
+
+	if details.ServiceID == "" {
+		h.respond(w, http.StatusBadRequest, "service_id empty")
+		return
+	}
+
+	if details.PlanID == "" {
+		h.respond(w, http.StatusBadRequest, "plan_id empty")
+		return
 	}
 
 	if err := h.serviceBroker.Unbind(req.Context(), instanceID, bindingID, details); err != nil {
@@ -374,4 +384,16 @@ func (h serviceBrokerHandler) respond(w http.ResponseWriter, status int, respons
 	if err != nil {
 		h.logger.Error("encoding response", err, lager.Data{"status": status, "response": response})
 	}
+}
+
+func checkBrokerAPIVersionHdr(req *http.Request) error {
+	apiVersion := req.Header.Get("X-Broker-API-Version")
+	if apiVersion == "" {
+		return errors.New("X-Broker-API-Version Header not set")
+	}
+
+	if !strings.HasPrefix(apiVersion, "2.") {
+		return errors.New("X-Broker-API-Version Header must be 2.x")
+	}
+	return nil
 }

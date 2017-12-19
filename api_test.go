@@ -179,7 +179,7 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		Specify("an unbind endpoint which passes the request context to the broker", func() {
-			makeRequest("DELETE", "/v2/service_instances/instance-id/service_bindings/binding-id", "")
+			makeRequest("DELETE", "/v2/service_instances/instance-id/service_bindings/binding-id?plan_id=plan-id&service_id=service-id", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
@@ -1381,18 +1381,23 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		Describe("unbinding", func() {
-			makeUnbindingRequest := func(instanceID string, bindingID string) *testflight.Response {
+			makeUnbindingRequestWithServiceIDPlanID := func(instanceID, bindingID, serviceID, planID, apiVersion string) *testflight.Response {
 				response := &testflight.Response{}
 				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-					path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?plan_id=plan-id&service_id=service-id",
-						instanceID, bindingID)
+					path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?plan_id=%s&service_id=%s",
+						instanceID, bindingID, planID, serviceID)
 					request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
 					request.Header.Add("Content-Type", "application/json")
+					request.Header.Add("X-Broker-API-Version", apiVersion)
 					request.SetBasicAuth("username", "password")
 
 					response = r.Do(request)
 				})
 				return response
+			}
+
+			makeUnbindingRequest := func(instanceID string, bindingID string) *testflight.Response {
+				return makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "2.13")
 			}
 
 			Context("when the associated instance exists", func() {
@@ -1407,6 +1412,36 @@ var _ = Describe("Service Broker API", func() {
 						"space_guid":        "space-guid",
 					}
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+				})
+
+				Context("the request is malformed", func() {
+					var bindingID string
+
+					BeforeEach(func() {
+						bindingID = uniqueBindingID()
+						makeBindingRequest(instanceID, bindingID, map[string]interface{}{})
+					})
+
+					It("missing header X-Broker-API-Version", func() {
+						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "")
+						Expect(response.StatusCode).To(Equal(412))
+					})
+
+					It("has wrong version of API", func() {
+						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "1.1")
+						Expect(response.StatusCode).To(Equal(412))
+					})
+
+					It("missing service-id", func() {
+						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "", "plan-id", "2.13")
+						Expect(response.StatusCode).To(Equal(400))
+					})
+
+					It("missing plan-id", func() {
+						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "", "2.13")
+						Expect(response.StatusCode).To(Equal(400))
+					})
+
 				})
 
 				Context("and the binding exists", func() {
