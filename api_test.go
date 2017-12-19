@@ -124,50 +124,6 @@ var _ = Describe("Service Broker API", func() {
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
-		Specify("a deprovision endpoint which does not pass the request context to the broker when no version header set", func() {
-			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
-			request.SetBasicAuth(credentials.Username, credentials.Password)
-			request = request.WithContext(ctx)
-			brokerAPI.ServeHTTP(recorder, request)
-			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
-			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
-		})
-
-		Specify("a deprovision endpoint which passes a 1.x version in the header does not pass request context to the broker", func() {
-			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
-			request.Header.Add("X-Broker-API-Version", "1.13")
-			request.SetBasicAuth(credentials.Username, credentials.Password)
-			request = request.WithContext(ctx)
-			brokerAPI.ServeHTTP(recorder, request)
-			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
-			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
-		})
-
-		Specify("a deprovision endpoint which passes a 3.x version in the header does not pass request context to the broker", func() {
-			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", strings.NewReader(""))
-			request.Header.Add("X-Broker-API-Version", "3.13")
-			request.SetBasicAuth(credentials.Username, credentials.Password)
-			request = request.WithContext(ctx)
-			brokerAPI.ServeHTTP(recorder, request)
-			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
-			Expect(recorder.Code).To(Equal(http.StatusPreconditionFailed))
-		})
-
-		Specify("deprovision endpoint which does not pass the request context to the broker when service_id is missing from req", func() {
-			recorder := makeRequest("DELETE", "/v2/service_instances/instance-id?plan_id=fdsa", "")
-			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-		})
-
-		Specify("deprovision endpoint which does not pass the request context to the broker when plan_id is missing from req", func() {
-			recorder := makeRequest("DELETE", "/v2/service_instances/instance-id?service_id=fdsa", "")
-			Expect(fakeServiceBroker.ReceivedContext).To(BeFalse())
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-		})
-
 		Specify("a deprovision endpoint which passes the request context to the broker", func() {
 			makeRequest("DELETE", "/v2/service_instances/instance-id?service_id=asdf&plan_id=fdsa", "")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
@@ -280,10 +236,10 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
-		makeInstanceDeprovisioningRequest := func(instanceID, queryString string) *testflight.Response {
+		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, apiVersion, queryString string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				path := fmt.Sprintf("/v2/service_instances/%s?plan_id=plan-id&service_id=service-id", instanceID)
+				path := fmt.Sprintf("/v2/service_instances/%s?plan_id=%s&service_id=%s", instanceID, planID, serviceID)
 				if queryString != "" {
 					path = fmt.Sprintf("%s&%s", path, queryString)
 				}
@@ -291,11 +247,15 @@ var _ = Describe("Service Broker API", func() {
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Add("Content-Type", "application/json")
 				request.SetBasicAuth("username", "password")
-				request.Header.Add("X-Broker-API-Version", "2.13")
+				request.Header.Add("X-Broker-API-Version", apiVersion)
 				response = r.Do(request)
 
 			})
 			return response
+		}
+
+		makeInstanceDeprovisioningRequest := func(instanceID, queryString string) *testflight.Response {
+			return makeInstanceDeprovisioningRequestFull(instanceID, "service-id", "plan-id", "2.13", queryString)
 		}
 
 		Describe("provisioning", func() {
@@ -1051,6 +1011,37 @@ var _ = Describe("Service Broker API", func() {
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
 					})
 				})
+			})
+
+			Context("the request is malformed", func() {
+				It("missing header X-Broker-API-Version", func() {
+					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "", "")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
+				})
+
+				It("has wrong version of API", func() {
+					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "1.1", "")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
+				})
+
+				It("missing service-id", func() {
+					response := makeInstanceDeprovisioningRequestFull("instance-id", "", "plan-id", "2.13", "")
+					Expect(response.StatusCode).To(Equal(400))
+					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.service-id-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("service-id missing"))
+				})
+
+				It("missing plan-id", func() {
+					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "", "2.13", "")
+					Expect(response.StatusCode).To(Equal(400))
+					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.plan-id-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan-id missing"))
+				})
+
 			})
 		})
 	})
