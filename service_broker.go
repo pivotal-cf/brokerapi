@@ -45,6 +45,10 @@ func (d BindDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
 
+func (d UpdateDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
+}
+
 func (d UpdateDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
@@ -104,6 +108,7 @@ type UpdateDetails struct {
 	PlanID         string          `json:"plan_id"`
 	RawParameters  json.RawMessage `json:"parameters,omitempty"`
 	PreviousValues PreviousValues  `json:"previous_values"`
+	RawContext     json.RawMessage `json:"context,omitempty"`
 }
 
 type PreviousValues struct {
