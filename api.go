@@ -3,6 +3,7 @@ package brokerapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -234,17 +235,42 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
+	brokerAPIVersion := req.Header.Get("X-Broker-Api-Version")
 
 	logger := h.logger.Session(bindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
 	})
 
+	if err := checkBrokerAPIVersionHdr(req); err != nil {
+		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+			Description: err.Error(),
+		})
+		logger.Error(apiVersionInvalidKey, err)
+		return
+	}
+
 	var details BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
 		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
+		})
+		return
+	}
+
+	if details.ServiceID == "" {
+		logger.Error(serviceIdMissingKey, fmt.Errorf("service_id missing"))
+		h.respond(w, http.StatusBadRequest, ErrorResponse{
+			Description: "Missing service_id",
+		})
+		return
+	}
+
+	if details.PlanID == "" {
+		logger.Error(planIdMissingKey, fmt.Errorf("plan_id missing"))
+		h.respond(w, http.StatusBadRequest, ErrorResponse{
+			Description: "Missing plan_id",
 		})
 		return
 	}
@@ -273,7 +299,6 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	brokerAPIVersion := req.Header.Get("X-Broker-Api-Version")
 	if brokerAPIVersion == "2.8" || brokerAPIVersion == "2.9" {
 		experimentalVols := []ExperimentalVolumeMount{}
 
