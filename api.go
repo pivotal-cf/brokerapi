@@ -19,6 +19,7 @@ const (
 	unbindLogKey        = "unbind"
 	updateLogKey        = "update"
 	lastOperationLogKey = "lastOperation"
+	catalogLogKey       = "catalog"
 
 	instanceIDLogKey      = "instance-id"
 	instanceDetailsLogKey = "instance-details"
@@ -76,6 +77,16 @@ type serviceBrokerHandler struct {
 }
 
 func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
+	logger := h.logger.Session(catalogLogKey, lager.Data{})
+
+	if err := checkBrokerAPIVersionHdr(req); err != nil {
+		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+			Description: err.Error(),
+		})
+		logger.Error(apiVersionInvalidKey, err)
+		return
+	}
+
 	catalog := CatalogResponse{
 		Services: h.serviceBroker.Services(req.Context()),
 	}
