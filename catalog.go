@@ -9,7 +9,7 @@ type Service struct {
 	PlanUpdatable   bool                    `json:"plan_updateable"`
 	Plans           []ServicePlan           `json:"plans"`
 	Requires        []RequiredPermission    `json:"requires,omitempty"`
-	Metadata        *ServiceMetadata        `json:"metadata,omitempty"`
+	Metadata        interface{}             `json:"metadata,omitempty"`
 	DashboardClient *ServiceDashboardClient `json:"dashboard_client,omitempty"`
 }
 
@@ -20,13 +20,13 @@ type ServiceDashboardClient struct {
 }
 
 type ServicePlan struct {
-	ID          string               `json:"id"`
-	Name        string               `json:"name"`
-	Description string               `json:"description"`
-	Free        *bool                `json:"free,omitempty"`
-	Bindable    *bool                `json:"bindable,omitempty"`
-	Metadata    *ServicePlanMetadata `json:"metadata,omitempty"`
-	Schemas     *ServiceSchemas      `json:"schemas,omitempty"`
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Free        *bool           `json:"free,omitempty"`
+	Bindable    *bool           `json:"bindable,omitempty"`
+	Metadata    interface{}     `json:"metadata,omitempty"`
+	Schemas     *ServiceSchemas `json:"schemas,omitempty"`
 }
 
 type ServiceSchemas struct {

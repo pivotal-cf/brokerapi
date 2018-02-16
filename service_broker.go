@@ -45,6 +45,10 @@ func (d BindDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
 
+func (d UpdateDetails) GetRawContext() json.RawMessage {
+	return d.RawContext
+}
+
 func (d UpdateDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
