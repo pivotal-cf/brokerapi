@@ -84,7 +84,7 @@ func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokera
 					Schemas: &brokerapi.ServiceSchemas{
 						Instance: brokerapi.ServiceInstanceSchema{
 							Create: brokerapi.Schema{
-								Schema: map[string]interface{}{
+								Parameters: map[string]interface{}{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
 									"properties": map[string]interface{}{
@@ -96,7 +96,7 @@ func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokera
 								},
 							},
 							Update: brokerapi.Schema{
-								Schema: map[string]interface{}{
+								Parameters: map[string]interface{}{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
 									"properties": map[string]interface{}{
@@ -110,7 +110,7 @@ func (fakeBroker *FakeServiceBroker) Services(context context.Context) []brokera
 						},
 						Binding: brokerapi.ServiceBindingSchema{
 							Create: brokerapi.Schema{
-								Schema: map[string]interface{}{
+								Parameters: map[string]interface{}{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
 									"properties": map[string]interface{}{

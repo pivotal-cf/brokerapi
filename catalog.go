@@ -44,7 +44,7 @@ type ServiceBindingSchema struct {
 }
 
 type Schema struct {
-	Schema interface{} `json:"parameters,omitempty"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 type ServicePlanMetadata struct {
