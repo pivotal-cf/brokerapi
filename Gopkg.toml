@@ -27,11 +27,11 @@
 
 [[constraint]]
   name = "github.com/drewolson/testflight"
-  branch = "master"
+  version = "1.0.0"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
-  branch = "master"
+  version = "1.6.0"
 
 [[constraint]]
   name = "github.com/onsi/ginkgo"

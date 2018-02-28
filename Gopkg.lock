@@ -12,10 +12,10 @@
   revision = "a77e1033ba8d8e36597be5c0d384ee6054105bc2"
 
 [[projects]]
-  branch = "master"
   name = "github.com/drewolson/testflight"
   packages = ["."]
-  revision = "c54c55b4ab48c318c22d137df453620dc247ebe0"
+  revision = "ab2d9a74b97eda058004c8deef80ac624432f408"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -24,10 +24,10 @@
   version = "v1.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "07ba1fd60e210dc5cc6f86ec25dc9ecc7c95c295"
+  revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
+  version = "v1.6.1"
 
 [[projects]]
   branch = "master"
@@ -127,6 +127,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "874f95a9e9bf348653912b67558067a157aa1e401e9509536838f0928c0ebdd6"
+  inputs-digest = "f5bfe5f275adcd02ff0727a3f378547c393e64ad2de6a2ce7e21f4b617d83456"
   solver-name = "gps-cdcl"
   solver-version = 1
