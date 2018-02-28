@@ -23,19 +23,24 @@
 
 [[constraint]]
   name = "code.cloudfoundry.org/lager"
-  revision = "0bfa98e49e7a976af91e918d47978f07c00b081f"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/drewolson/testflight"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/onsi/ginkgo"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/onsi/gomega"
+  branch = "master"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/pborman/uuid"

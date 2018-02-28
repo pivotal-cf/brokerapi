@@ -102,13 +102,16 @@ func TestWebSocket(t *testing.T) {
 
 ## Contributing
 
-First, run the tests.
+First, install [vgo](https://godoc.org/golang.org/x/vgo)
 
 ```bash
-git clone git@github.com:drewolson/testflight.git $GOPATH/src/github.com/drewolson/testflight
-cd $GOPATH/src/github.com/drewolson/testflight
+go get -u golang.org/x/vgo
+```
 
-make test
+Next, run the tests.
+
+```bash
+vgo test -v ./...
 ```
 
 Now write new tests, fix them and send me a pull request!
