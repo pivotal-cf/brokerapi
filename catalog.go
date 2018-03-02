@@ -92,18 +92,10 @@ const (
 
 func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 	type Alias ServicePlanMetadata
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(&spm),
-	}
 
-	b, _ := json.Marshal(aux)
-
+	b, _ := json.Marshal(Alias(spm))
 	m := spm.AdditionalMetadata
-
 	json.Unmarshal(b, &m)
-
 	delete(m, "AdditionalMetadata")
 
 	return json.Marshal(m)
@@ -111,12 +103,8 @@ func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 
 func (spm *ServicePlanMetadata) UnmarshalJSON(data []byte) error {
 	type Alias ServicePlanMetadata
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(spm),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
+
+	if err := json.Unmarshal(data, (*Alias)(spm)); err != nil {
 		return err
 	}
 
@@ -136,18 +124,10 @@ func (spm *ServicePlanMetadata) UnmarshalJSON(data []byte) error {
 
 func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 	type Alias ServiceMetadata
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(&sm),
-	}
 
-	b, _ := json.Marshal(aux)
-
+	b, _ := json.Marshal(Alias(sm))
 	m := sm.AdditionalMetadata
-
 	json.Unmarshal(b, &m)
-
 	delete(m, "AdditionalMetadata")
 
 	return json.Marshal(m)
@@ -155,12 +135,8 @@ func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 
 func (sm *ServiceMetadata) UnmarshalJSON(data []byte) error {
 	type Alias ServiceMetadata
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(sm),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
+
+	if err := json.Unmarshal(data, (*Alias)(sm)); err != nil {
 		return err
 	}
 
