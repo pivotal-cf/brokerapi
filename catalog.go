@@ -2,6 +2,8 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"reflect"
+	"strings"
 )
 
 type Service struct {
@@ -88,6 +90,8 @@ const (
 	PermissionRouteForwarding = RequiredPermission("route_forwarding")
 	PermissionSyslogDrain     = RequiredPermission("syslog_drain")
 	PermissionVolumeMount     = RequiredPermission("volume_mount")
+
+	additionalMetadataName = "AdditionalMetadata"
 )
 
 func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
@@ -96,7 +100,7 @@ func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 	b, _ := json.Marshal(Alias(spm))
 	m := spm.AdditionalMetadata
 	json.Unmarshal(b, &m)
-	delete(m, "AdditionalMetadata")
+	delete(m, additionalMetadataName)
 
 	return json.Marshal(m)
 }
@@ -113,13 +117,33 @@ func (spm *ServicePlanMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	delete(additionalMetadata, "displayName")
-	delete(additionalMetadata, "bullets")
-	delete(additionalMetadata, "costs")
+	s := reflect.ValueOf(spm).Elem()
+	for _, jsonName := range GetJsonNames(s) {
+		if jsonName == additionalMetadataName {
+			continue
+		}
+		delete(additionalMetadata, jsonName)
+	}
 
 	spm.AdditionalMetadata = additionalMetadata
-
 	return nil
+}
+
+func GetJsonNames(s reflect.Value) (res []string) {
+	valType := s.Type()
+	for i := 0; i < s.NumField(); i++ {
+		field := valType.Field(i)
+		tag := field.Tag
+		jsonVal := tag.Get("json")
+		if jsonVal != "" {
+			components := strings.Split(jsonVal, ",")
+			jsonName := components[0]
+			res = append(res, jsonName)
+		} else {
+			res = append(res, field.Name)
+		}
+	}
+	return res
 }
 
 func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
@@ -128,7 +152,7 @@ func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 	b, _ := json.Marshal(Alias(sm))
 	m := sm.AdditionalMetadata
 	json.Unmarshal(b, &m)
-	delete(m, "AdditionalMetadata")
+	delete(m, additionalMetadataName)
 
 	return json.Marshal(m)
 }
@@ -145,15 +169,13 @@ func (sm *ServiceMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	delete(additionalMetadata, "displayName")
-	delete(additionalMetadata, "imageUrl")
-	delete(additionalMetadata, "longDescription")
-	delete(additionalMetadata, "providerDisplayName")
-	delete(additionalMetadata, "documentationUrl")
-	delete(additionalMetadata, "supportUrl")
-	delete(additionalMetadata, "shareable")
+	for _, jsonName := range GetJsonNames(reflect.ValueOf(sm).Elem()) {
+		if jsonName == additionalMetadataName {
+			continue
+		}
+		delete(additionalMetadata, jsonName)
+	}
 
 	sm.AdditionalMetadata = additionalMetadata
-
 	return nil
 }

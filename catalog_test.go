@@ -2,6 +2,7 @@ package brokerapi_test
 
 import (
 	"encoding/json"
+	"reflect"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -248,5 +249,17 @@ var _ = Describe("Catalog", func() {
 
 			})
 		})
+	})
+
+	It("Reflects JSON names from struct", func() {
+		type Example1 struct {
+			Foo int    `json:"foo"`
+			Bar string `yaml:"hello" json:"bar,omitempty"`
+			Qux float64
+		}
+
+		s := Example1{}
+		Expect(brokerapi.GetJsonNames(reflect.ValueOf(&s).Elem())).To(
+			ConsistOf([]string{"foo", "bar", "Qux"}))
 	})
 })
