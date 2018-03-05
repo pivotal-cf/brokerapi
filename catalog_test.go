@@ -172,8 +172,7 @@ var _ = Describe("Catalog", func() {
 
 				err := json.Unmarshal([]byte(jsonString), &metadata)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(metadata.AdditionalMetadata).To(BeEmpty())
-
+				Expect(metadata.AdditionalMetadata).To(BeNil())
 			})
 		})
 	})
@@ -221,6 +220,7 @@ var _ = Describe("Catalog", func() {
 				Expect(json.Marshal(metadata)).To(MatchJSON(jsonString))
 			})
 		})
+
 		Describe("JSON decoding", func() {
 			It("sets the AdditionalMetadata from unrecognized fields", func() {
 				metadata := brokerapi.ServiceMetadata{}
@@ -245,8 +245,7 @@ var _ = Describe("Catalog", func() {
 				}`
 				err := json.Unmarshal([]byte(jsonString), &metadata)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(metadata.AdditionalMetadata).To(BeEmpty())
-
+				Expect(metadata.AdditionalMetadata).To(BeNil())
 			})
 		})
 	})

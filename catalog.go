@@ -125,7 +125,9 @@ func (spm *ServicePlanMetadata) UnmarshalJSON(data []byte) error {
 		delete(additionalMetadata, jsonName)
 	}
 
-	spm.AdditionalMetadata = additionalMetadata
+	if len(additionalMetadata) > 0 {
+		spm.AdditionalMetadata = additionalMetadata
+	}
 	return nil
 }
 
@@ -176,6 +178,8 @@ func (sm *ServiceMetadata) UnmarshalJSON(data []byte) error {
 		delete(additionalMetadata, jsonName)
 	}
 
-	sm.AdditionalMetadata = additionalMetadata
+	if len(additionalMetadata) > 0 {
+		sm.AdditionalMetadata = additionalMetadata
+	}
 	return nil
 }
