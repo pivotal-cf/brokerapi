@@ -8,7 +8,7 @@ import (
 )
 
 type ServiceBroker interface {
-	Services(ctx context.Context) []Service
+	Services(ctx context.Context) ([]Service, error)
 
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)

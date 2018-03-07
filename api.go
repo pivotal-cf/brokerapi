@@ -87,8 +87,16 @@ func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	services, err := h.serviceBroker.Services(req.Context())
+	if err != nil {
+		h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			Description: err.Error(),
+		})
+		return
+	}
+
 	catalog := CatalogResponse{
-		Services: h.serviceBroker.Services(req.Context()),
+		Services: services,
 	}
 
 	h.respond(w, http.StatusOK, catalog)

@@ -214,41 +214,50 @@ var _ = Describe("Service Broker API", func() {
 		})
 	})
 
-	Describe("catalog endpoint", func() {
-		makeCatalogRequest := func(apiVersion string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
-				request.SetBasicAuth("username", "password")
-				if apiVersion != "" {
-					request.Header.Add("X-Broker-API-Version", apiVersion)
-				}
-				response = r.Do(request)
-			})
-			return response
+	Describe("catalog entpoint", func() {
+		makeCatalogRequest := func(apiVersion string, fail bool) *httptest.ResponseRecorder {
+			recorder := httptest.NewRecorder()
+			request, _ := http.NewRequest(http.MethodGet, "/v2/catalog", nil)
+			if apiVersion != "" {
+				request.Header.Add("X-Broker-API-Version", apiVersion)
+			}
+			request.SetBasicAuth(credentials.Username, credentials.Password)
+			ctx := context.Background()
+			if fail {
+				ctx = context.WithValue(ctx, "fails", true)
+			}
+			request = request.WithContext(ctx)
+			brokerAPI.ServeHTTP(recorder, request)
+			return recorder
 		}
 
 		It("returns a 200", func() {
-			response := makeCatalogRequest("2.14")
-			Expect(response.StatusCode).To(Equal(200))
+			response := makeCatalogRequest("2.14", false)
+			Expect(response.Code).To(Equal(200))
 		})
 
 		It("returns valid catalog json", func() {
-			response := makeCatalogRequest("2.14")
+			response := makeCatalogRequest("2.14", false)
 			Expect(response.Body).To(MatchJSON(fixture("catalog.json")))
+		})
+
+		It("returns a 500", func() {
+			response := makeCatalogRequest("2.14", true)
+			Expect(response.Code).To(Equal(500))
+			Expect(response.Body.String()).To(MatchJSON(`{ "description": "something went wrong!" }`))
 		})
 
 		Context("the request is malformed", func() {
 			It("missing header X-Broker-API-Version", func() {
-				response := makeCatalogRequest("")
-				Expect(response.StatusCode).To(Equal(412))
+				response := makeCatalogRequest("", false)
+				Expect(response.Code).To(Equal(412))
 				Expect(lastLogLine().Message).To(ContainSubstring(".catalog.broker-api-version-invalid"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 			})
 
 			It("has wrong version of API", func() {
-				response := makeCatalogRequest("1.14")
-				Expect(response.StatusCode).To(Equal(412))
+				response := makeCatalogRequest("1.14", false)
+				Expect(response.Code).To(Equal(412))
 				Expect(lastLogLine().Message).To(ContainSubstring(".catalog.broker-api-version-invalid"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 			})
