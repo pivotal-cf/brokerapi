@@ -12,6 +12,8 @@ A Go package for building [V2 Open Service Broker API](https://github.com/opense
 - [lager](https://github.com/cloudfoundry/lager)
 - [gorilla/mux](https://github.com/gorilla/mux)
 
+We use [dep](https://github.com/golang/dep) to manager our dependencies. Use `dep ensure` in order to download the required packages.
+
 ## Usage
 
 `brokerapi` defines a [`ServiceBroker`](https://godoc.org/github.com/pivotal-cf/brokerapi#ServiceBroker) interface. Pass an implementation of this to [`brokerapi.New`](https://godoc.org/github.com/pivotal-cf/brokerapi#New), which returns an `http.Handler` that you can use to serve handle HTTP requests.
