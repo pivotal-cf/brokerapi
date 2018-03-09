@@ -7,7 +7,7 @@ go:
   - 1.10.x
 
 install:
-  - go get ./...
+  - go get -v -t ./...
   - go get -v github.com/onsi/ginkgo/ginkgo
 
 script: ginkgo -r
