@@ -7,7 +7,7 @@
     "plan_updateable": true,
     "plans": [{
       "description": "The default Cassandra plan",
-      "id": "ABE176EE-F69F-4A96-80CE-142595CC24E3",
+      "id": "plan-id",
       "name": "default",
       "metadata": {
         "displayName": "Cassandra"

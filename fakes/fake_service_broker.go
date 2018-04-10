@@ -48,6 +48,9 @@ type FakeServiceBroker struct {
 	LastOperationData       string
 
 	ReceivedContext bool
+
+	ServiceID string
+	PlanID    string
 }
 
 type FakeAsyncServiceBroker struct {
@@ -72,14 +75,14 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 
 	return []brokerapi.Service{
 		{
-			ID:            "0A789746-596F-4CEA-BFAC-A0795DA056E3",
+			ID:            fakeBroker.ServiceID,
 			Name:          "p-cassandra",
 			Description:   "Cassandra service for application development and testing",
 			Bindable:      true,
 			PlanUpdatable: true,
 			Plans: []brokerapi.ServicePlan{
 				{
-					ID:          "ABE176EE-F69F-4A96-80CE-142595CC24E3",
+					ID:          fakeBroker.PlanID,
 					Name:        "default",
 					Description: "The default Cassandra plan",
 					Metadata: &brokerapi.ServicePlanMetadata{
