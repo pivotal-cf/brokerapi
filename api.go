@@ -40,8 +40,6 @@ const (
 	apiVersionInvalidKey          = "broker-api-version-invalid"
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
-	organizationGuidMissingKey    = "organization-guid-missing"
-	spaceGuidMissingKey           = "space-guid-missing"
 	invalidServiceID              = "invalid-service-id"
 	invalidPlanID                 = "invalid-plan-id"
 )
@@ -49,8 +47,6 @@ const (
 var (
 	serviceIdError        = errors.New("service_id missing")
 	planIdError           = errors.New("plan_id missing")
-	organizationGuidError = errors.New("organization_guid missing")
-	spaceGuidError        = errors.New("space_guid missing")
 	invalidServiceIDError = errors.New("service-id not in the catalog")
 	invalidPlanIDError    = errors.New("plan-id not in the catalog")
 )
@@ -147,22 +143,6 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		logger.Error(planIdMissingKey, planIdError)
 		h.respond(w, http.StatusBadRequest, ErrorResponse{
 			Description: planIdError.Error(),
-		})
-		return
-	}
-
-	if details.SpaceGUID == "" {
-		logger.Error(spaceGuidMissingKey, spaceGuidError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
-			Description: spaceGuidError.Error(),
-		})
-		return
-	}
-
-	if details.OrganizationGUID == "" {
-		logger.Error(organizationGuidMissingKey, organizationGuidError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
-			Description: organizationGuidError.Error(),
 		})
 		return
 	}

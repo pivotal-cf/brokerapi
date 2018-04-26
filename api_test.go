@@ -120,7 +120,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			ctx = context.WithValue(context.Background(), "test_context", true)
-			reqBody = fmt.Sprintf(`{"service_id":"%s","plan_id":"456","organization_guid":"some-guid","space_guid":"some-space"}`, fakeServiceBroker.ServiceID)
+			reqBody = fmt.Sprintf(`{"service_id":"%s","plan_id":"456"}`, fakeServiceBroker.ServiceID)
 		})
 
 		Specify("a catalog endpoint which passes the request context to the broker", func() {
@@ -712,22 +712,6 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(400))
 					Expect(lastLogLine().Message).To(ContainSubstring(".provision.plan-id-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan_id missing"))
-				})
-
-				It("missing organization_guid", func() {
-					delete(provisionDetails, "organization_guid")
-					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.StatusCode).To(Equal(400))
-					Expect(lastLogLine().Message).To(ContainSubstring(".provision.organization-guid-missing"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("organization_guid missing"))
-				})
-
-				It("missing space_guid", func() {
-					delete(provisionDetails, "space_guid")
-					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.StatusCode).To(Equal(400))
-					Expect(lastLogLine().Message).To(ContainSubstring(".provision.space-guid-missing"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("space_guid missing"))
 				})
 
 				It("service_id not in the catalog", func() {
