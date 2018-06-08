@@ -55,6 +55,19 @@ var _ = Describe("FailureResponse", func() {
 		})
 	})
 
+	Describe("AppendErrorMessage", func() {
+		It("returns the error with the additional error message included", func() {
+			failureResponse := brokerapi.NewFailureResponseBuilder(errors.New("my error message"), http.StatusForbidden, "log-key").WithErrorKey("error key").Build()
+			Expect(failureResponse.Error()).To(Equal("my error message"))
+
+			newError := failureResponse.AppendErrorMessage("and some more details")
+
+			Expect(newError.Error()).To(Equal("my error message and some more details"))
+			Expect(newError.ValidatedStatusCode(nil)).To(Equal(http.StatusForbidden))
+			Expect(newError.LoggerAction()).To(Equal(failureResponse.LoggerAction()))
+		})
+	})
+
 	Describe("ValidatedStatusCode", func() {
 		It("returns the status code that was passed in", func() {
 			failureResponse := brokerapi.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key")
