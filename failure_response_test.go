@@ -56,8 +56,8 @@ var _ = Describe("FailureResponse", func() {
 	})
 
 	Describe("AppendErrorMessage", func() {
-		It("returns the error with the additional error message included", func() {
-			failureResponse := brokerapi.NewFailureResponseBuilder(errors.New("my error message"), http.StatusForbidden, "log-key").WithErrorKey("error key").Build()
+		It("returns the error with the additional error message included, with a non-empty body", func() {
+			failureResponse := brokerapi.NewFailureResponseBuilder(errors.New("my error message"), http.StatusForbidden, "log-key").WithErrorKey("some-key").Build()
 			Expect(failureResponse.Error()).To(Equal("my error message"))
 
 			newError := failureResponse.AppendErrorMessage("and some more details")
@@ -65,6 +65,23 @@ var _ = Describe("FailureResponse", func() {
 			Expect(newError.Error()).To(Equal("my error message and some more details"))
 			Expect(newError.ValidatedStatusCode(nil)).To(Equal(http.StatusForbidden))
 			Expect(newError.LoggerAction()).To(Equal(failureResponse.LoggerAction()))
+			
+			errorResponse, typeCast := newError.ErrorResponse().(brokerapi.ErrorResponse)
+			Expect(typeCast).To(BeTrue())
+			Expect(errorResponse.Error).To(Equal("some-key"))
+			Expect(errorResponse.Description).To(Equal("my error message and some more details"))
+		})
+
+		It("returns the error with the additional error message included, with an empty body", func() {
+			failureResponse := brokerapi.NewFailureResponseBuilder(errors.New("my error message"), http.StatusForbidden, "log-key").WithEmptyResponse().Build()
+			Expect(failureResponse.Error()).To(Equal("my error message"))
+
+			newError := failureResponse.AppendErrorMessage("and some more details")
+
+			Expect(newError.Error()).To(Equal("my error message and some more details"))
+			Expect(newError.ValidatedStatusCode(nil)).To(Equal(http.StatusForbidden))
+			Expect(newError.LoggerAction()).To(Equal(failureResponse.LoggerAction()))
+			Expect(newError.ErrorResponse()).To(Equal(failureResponse.ErrorResponse()))
 		})
 	})
 

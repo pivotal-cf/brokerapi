@@ -70,11 +70,13 @@ func (f *FailureResponse) LoggerAction() string {
 
 // AppendErrorMessage returns an error with the message updated. Status Code and Logger Action are preserved.
 func (f *FailureResponse) AppendErrorMessage(msg string) *FailureResponse {
-	return NewFailureResponse(
-		errors.New(fmt.Sprintf("%s %s", f.Error(), msg)),
-		f.statusCode,
-		f.loggerAction,
-	)
+	return &FailureResponse{
+		error: errors.New(fmt.Sprintf("%s %s", f.Error(), msg)),
+		statusCode: f.statusCode,
+		loggerAction: f.loggerAction,
+		emptyResponse: f.emptyResponse,
+		errorKey: f.errorKey,
+	}
 }
 
 // FailureResponseBuilder provides a fluent set of methods to build a *FailureResponse.
