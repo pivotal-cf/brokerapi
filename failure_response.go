@@ -68,7 +68,7 @@ func (f *FailureResponse) LoggerAction() string {
 	return f.loggerAction
 }
 
-// AppendErrorMessage returns an error with the message updated. Status Code and Logger Action are preserved.
+// AppendErrorMessage returns an error with the message updated. All other properties are preserved.
 func (f *FailureResponse) AppendErrorMessage(msg string) *FailureResponse {
 	return &FailureResponse{
 		error: errors.New(fmt.Sprintf("%s %s", f.Error(), msg)),
