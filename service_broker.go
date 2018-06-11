@@ -90,6 +90,7 @@ type BindDetails struct {
 
 type BindResource struct {
 	AppGuid            string `json:"app_guid,omitempty"`
+	SpaceGuid          string `json:"space_guid,omitempty"`
 	Route              string `json:"route,omitempty"`
 	CredentialClientID string `json:"credential_client_id,omitempty"`
 }
