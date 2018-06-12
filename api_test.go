@@ -1434,31 +1434,41 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
-				Context("when there is a app_guid in the bind_resource", func() {
-					BeforeEach(func() {
-						details["bind_resource"] = map[string]interface{}{"app_guid": "a-guid"}
-					})
+				When("there are details in the bind_resource", func() {
 
 					It("calls Bind on the service broker with the bind_resource", func() {
+
+						details["bind_resource"] = map[string]interface{}{
+							"app_guid": "a-guid",
+							"space_guid": "a-space-guid",
+							"route": "route.cf-apps.com",
+							"credential_client_id": "some-credentials",
+						}
+
 						makeBindingRequest(instanceID, bindingID, details)
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(Equal("a-guid"))
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.SpaceGuid).To(Equal("a-space-guid"))
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(Equal("route.cf-apps.com"))
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.CredentialClientID).To(Equal("some-credentials"))
 					})
 				})
 
-				Context("when there is a route in the bind_resource", func() {
-					BeforeEach(func() {
-						details["bind_resource"] = map[string]interface{}{"route": "route.cf-apps.com"}
-					})
+				When("there are no details in the bind_resource", func() {
 
-					It("calls Bind on the service broker with the bind_resource", func() {
+					It("calls Bind on the service broker with an empty bind_resource", func() {
+
+						details["bind_resource"] = map[string]interface{}{}
+
 						makeBindingRequest(instanceID, bindingID, details)
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(Equal("route.cf-apps.com"))
 						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.SpaceGuid).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.CredentialClientID).To(BeEmpty())
 					})
 				})
+
 			})
 
 			Context("when the associated instance does not exist", func() {
