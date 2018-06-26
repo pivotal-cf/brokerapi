@@ -229,7 +229,7 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 	fakeBroker.UpdateDetails = details
 	fakeBroker.UpdatedInstanceIDs = append(fakeBroker.UpdatedInstanceIDs, instanceID)
 	fakeBroker.AsyncAllowed = asyncAllowed
-	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn}, nil
+	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {

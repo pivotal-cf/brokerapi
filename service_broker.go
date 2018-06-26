@@ -102,6 +102,7 @@ type UnbindDetails struct {
 
 type UpdateServiceSpec struct {
 	IsAsync       bool
+	DashboardURL  string
 	OperationData string
 }
 

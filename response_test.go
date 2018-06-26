@@ -60,6 +60,30 @@ var _ = Describe("Provisioning Response", func() {
 	})
 })
 
+var _ = Describe("Update Response", func() {
+	Describe("JSON encoding", func() {
+		Context("when the dashboard URL is not present", func() {
+			It("does not return it in the JSON", func() {
+				updateResponse := brokerapi.UpdateResponse{}
+				jsonString := `{}`
+
+				Expect(json.Marshal(updateResponse)).To(MatchJSON(jsonString))
+			})
+		})
+
+		Context("when the dashboard URL is present", func() {
+			It("returns it in the JSON", func() {
+				updateResponse := brokerapi.UpdateResponse{
+					DashboardURL: "http://example.com/broker_updated",
+				}
+				jsonString := `{"dashboard_url":"http://example.com/broker_updated"}`
+
+				Expect(json.Marshal(updateResponse)).To(MatchJSON(jsonString))
+			})
+		})
+	})
+})
+
 var _ = Describe("Binding Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a credentials object", func() {
