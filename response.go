@@ -44,6 +44,26 @@ type LastOperationResponse struct {
 	Description string             `json:"description,omitempty"`
 }
 
+type AsyncBindResponse struct {
+	OperationData string `json:"operation,omitempty"`
+}
+
+type BindingResponse struct {
+	Credentials     interface{}   `json:"credentials"`
+	SyslogDrainURL  string        `json:"syslog_drain_url,omitempty"`
+	RouteServiceURL string        `json:"route_service_url,omitempty"`
+	VolumeMounts    []VolumeMount `json:"volume_mounts,omitempty"`
+}
+
+type GetBindingResponse struct {
+	BindingResponse
+	Parameters interface{} `json:"parameters"`
+}
+
+type UnbindResponse struct {
+	OperationData string `json:"operation,omitempty"`
+}
+
 type ExperimentalVolumeMountBindingResponse struct {
 	Credentials     interface{}               `json:"credentials"`
 	SyslogDrainURL  string                    `json:"syslog_drain_url,omitempty"`

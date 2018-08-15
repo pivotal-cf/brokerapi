@@ -81,6 +81,16 @@
   revision = "c65b2f87fee37d1c7854c9164a450713c28d50cd"
 
 [[projects]]
+  name = "github.com/pivotal-cf/brokerapi"
+  packages = [
+    ".",
+    "auth",
+    "fakes"
+  ]
+  revision = "d1fcddd951a6776bc01659143dda6aca057e98b7"
+  version = "v2.0.4"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
@@ -127,6 +137,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5bfe5f275adcd02ff0727a3f378547c393e64ad2de6a2ce7e21f4b617d83456"
+  inputs-digest = "45092a33e183a6dc6304f8e76a8f2e22031ef45ca85cb1f7d01653c149e3c774"
   solver-name = "gps-cdcl"
   solver-version = 1

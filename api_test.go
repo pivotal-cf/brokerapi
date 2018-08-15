@@ -29,10 +29,10 @@ import (
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
+	"github.com/liorokman/brokerapi"
+	"github.com/liorokman/brokerapi/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi"
-	"github.com/pivotal-cf/brokerapi/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -1439,9 +1439,9 @@ var _ = Describe("Service Broker API", func() {
 					It("calls Bind on the service broker with the bind_resource", func() {
 
 						details["bind_resource"] = map[string]interface{}{
-							"app_guid": "a-guid",
-							"space_guid": "a-space-guid",
-							"route": "route.cf-apps.com",
+							"app_guid":             "a-guid",
+							"space_guid":           "a-space-guid",
+							"route":                "route.cf-apps.com",
 							"credential_client_id": "some-credentials",
 						}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/liorokman/brokerapi"
 )
 
 type FakeServiceBroker struct {
@@ -290,7 +290,13 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 	return brokerapi.DeprovisionServiceSpec{OperationData: fakeBroker.OperationDataToReturn, IsAsync: asyncAllowed}, brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
+func (fakeBroker *FakeServiceBroker) GetBinding(ctx context.Context, instanceID, bindingID string) (brokerapi.GetBindingSpec, error) {
+	fakeBroker.BrokerCalled = true
+
+	return brokerapi.GetBindingSpec{}, nil
+}
+
+func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {
@@ -319,7 +325,7 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 	}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
+func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails, asyncAllowed bool) (brokerapi.UnbindSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {
@@ -327,24 +333,29 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 	}
 
 	if fakeBroker.UnbindError != nil {
-		return fakeBroker.UnbindError
+		return brokerapi.UnbindSpec{}, fakeBroker.UnbindError
 	}
 
 	fakeBroker.UnbindingDetails = details
 
 	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
 		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
-			return nil
+			return brokerapi.UnbindSpec{}, nil
 		}
-		return brokerapi.ErrBindingDoesNotExist
+		return brokerapi.UnbindSpec{}, brokerapi.ErrBindingDoesNotExist
 	}
 
-	return brokerapi.ErrInstanceDoesNotExist
+	return brokerapi.UnbindSpec{}, brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
+func (fakeBroker *FakeServiceBroker) LastBindingOperation(context context.Context, instanceID, bindingID string, details brokerapi.PollDetails) (brokerapi.LastOperation, error) {
+
+	return brokerapi.LastOperation{}, nil
+}
+
+func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, instanceID string, details brokerapi.PollDetails) (brokerapi.LastOperation, error) {
 	fakeBroker.LastOperationInstanceID = instanceID
-	fakeBroker.LastOperationData = operationData
+	fakeBroker.LastOperationData = details.OperationData
 
 	if val, ok := context.Value("test_context").(bool); ok {
 		fakeBroker.ReceivedContext = val
