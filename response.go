@@ -57,7 +57,7 @@ type BindingResponse struct {
 
 type GetBindingResponse struct {
 	BindingResponse
-	Parameters interface{} `json:"parameters"`
+	Parameters interface{} `json:"parameters,omitempty"`
 }
 
 type UnbindResponse struct {

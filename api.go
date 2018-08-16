@@ -89,6 +89,7 @@ func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.
 	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", handler.lastOperation).Methods("GET")
 	router.HandleFunc("/v2/service_instances/{instance_id}", handler.update).Methods("PATCH")
 
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.getBinding).Methods("GET")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.bind).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.unbind).Methods("DELETE")
 
@@ -104,6 +105,7 @@ func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) 
 	logger := h.logger.Session(catalogLogKey, lager.Data{})
 
 	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
+		logger.Error("Check failed", err)
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
 			Description: err.Error(),
 		})
@@ -449,7 +451,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 	if asyncAllowed && versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: "async binding only supported from OSB version 2.14 and up",
 		})
 		logger.Error(apiVersionInvalidKey, err)
@@ -484,6 +486,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		h.respond(w, http.StatusAccepted, AsyncBindResponse{
 			OperationData: binding.OperationData,
 		})
+		return
 	}
 
 	if versionCompatibility.Minor == 8 || versionCompatibility.Minor == 9 {
@@ -568,7 +571,7 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 	if asyncAllowed && versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: "async unbinding only supported from OSB version 2.14 and up",
 		})
 		logger.Error(apiVersionInvalidKey, err)
@@ -614,9 +617,17 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 		instanceIDLogKey: instanceID,
 	})
 
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
+	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
+	if err != nil {
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
 			Description: err.Error(),
+		})
+		logger.Error(apiVersionInvalidKey, err)
+		return
+	}
+	if versionCompatibility.Minor < 14 {
+		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+			Description: "get binding endpoint only supported starting with OSB version 2.14",
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return
@@ -721,7 +732,9 @@ func checkBrokerAPIVersionHdr(req *http.Request) (brokerVersion, error) {
 	if apiVersion == "" {
 		return version, errors.New("X-Broker-API-Version Header not set")
 	}
-	fmt.Sscanf("%d.%d", apiVersion, &version.Major, &version.Minor)
+	if n, err := fmt.Sscanf(apiVersion, "%d.%d", &version.Major, &version.Minor); err != nil || n < 2 {
+		return version, errors.New("X-Broker-API-Version Header must contain a version")
+	}
 
 	if version.Major != 2 {
 		return version, errors.New("X-Broker-API-Version Header must be 2.x")

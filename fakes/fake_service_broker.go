@@ -56,6 +56,7 @@ type FakeServiceBroker struct {
 type FakeAsyncServiceBroker struct {
 	FakeServiceBroker
 	ShouldProvisionAsync bool
+	ShouldBindAsync      bool
 }
 
 type FakeAsyncOnlyServiceBroker struct {
@@ -290,10 +291,42 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 	return brokerapi.DeprovisionServiceSpec{OperationData: fakeBroker.OperationDataToReturn, IsAsync: asyncAllowed}, brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) GetBinding(ctx context.Context, instanceID, bindingID string) (brokerapi.GetBindingSpec, error) {
+func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string) (brokerapi.GetBindingSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	return brokerapi.GetBindingSpec{}, nil
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
+	return brokerapi.GetBindingSpec{
+		Credentials: FakeCredentials{
+			Host:     "127.0.0.1",
+			Port:     3000,
+			Username: "batman",
+			Password: "robin",
+		},
+		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
+		RouteServiceURL: fakeBroker.RouteServiceURL,
+		VolumeMounts:    fakeBroker.VolumeMounts,
+	}, nil
+}
+
+func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
+	fakeBroker.BrokerCalled = true
+
+	fakeBroker.BoundBindingDetails = details
+
+	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
+	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)
+
+	if fakeBroker.ShouldBindAsync {
+		return brokerapi.Binding{
+			IsAsync:       true,
+			OperationData: "0xDEADBEEF",
+		}, nil
+	} else {
+		return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, false)
+	}
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
@@ -350,7 +383,15 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 
 func (fakeBroker *FakeServiceBroker) LastBindingOperation(context context.Context, instanceID, bindingID string, details brokerapi.PollDetails) (brokerapi.LastOperation, error) {
 
-	return brokerapi.LastOperation{}, nil
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
+	if fakeBroker.LastOperationError != nil {
+		return brokerapi.LastOperation{}, fakeBroker.LastOperationError
+	}
+
+	return brokerapi.LastOperation{State: fakeBroker.LastOperationState, Description: fakeBroker.LastOperationDescription}, nil
 }
 
 func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, instanceID string, details brokerapi.PollDetails) (brokerapi.LastOperation, error) {
