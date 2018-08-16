@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/liorokman/brokerapi"
+	"github.com/pivotal-cf/brokerapi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
