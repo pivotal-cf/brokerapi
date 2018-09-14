@@ -3,34 +3,43 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:e5a6dff65fb1ea477350d48ecd5f92e29be4212ca0a17d2bdb8932ef8149ba45"
   name = "code.cloudfoundry.org/lager"
   packages = [
     ".",
     "lagerctx",
-    "lagertest"
+    "lagertest",
   ]
+  pruneopts = ""
   revision = "a77e1033ba8d8e36597be5c0d384ee6054105bc2"
 
 [[projects]]
+  digest = "1:029f604c64cb13a3e2facee76fd1ae446d343df36fbb280b536bf36f9864ef1f"
   name = "github.com/drewolson/testflight"
   packages = ["."]
+  pruneopts = ""
   revision = "ab2d9a74b97eda058004c8deef80ac624432f408"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:20ed7daa9b3b38b6d1d39b48ab3fd31122be5419461470d0c28de3e121c93ecf"
   name = "github.com/gorilla/context"
   packages = ["."]
+  pruneopts = ""
   revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
   version = "v1.1"
 
 [[projects]]
+  digest = "1:aa016bbb412f496a7baed9e02787a60cd15c9a3edfa72da9c4a95d6cea610334"
   name = "github.com/gorilla/mux"
   packages = ["."]
+  pruneopts = ""
   revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
   version = "v1.6.1"
 
 [[projects]]
   branch = "master"
+  digest = "1:8df8625c851c00c5c55a8cde64323d203fd1221a8ea3e137ad2d05d01945ca55"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -50,12 +59,14 @@
     "reporters/stenographer",
     "reporters/stenographer/support/go-colorable",
     "reporters/stenographer/support/go-isatty",
-    "types"
+    "types",
   ]
+  pruneopts = ""
   revision = "9008c7b79f9636c46a0a945141020124702f0ecf"
 
 [[projects]]
   branch = "master"
+  digest = "1:44c1e18198c748e250810263a25205168c1cb452bdd8b850c40ef93b92ab4c7d"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -70,32 +81,48 @@
     "matchers/support/goraph/edge",
     "matchers/support/goraph/node",
     "matchers/support/goraph/util",
-    "types"
+    "types",
   ]
+  pruneopts = ""
   revision = "49e4233a3b46c26dddd43cf84547cf31c92d0f2b"
 
 [[projects]]
   branch = "master"
+  digest = "1:beeb9206cc21cfeb113066c3dcf4bbb0ba304d73dd441f3244721566f51f44e6"
   name = "github.com/pborman/uuid"
   packages = ["."]
+  pruneopts = ""
   revision = "c65b2f87fee37d1c7854c9164a450713c28d50cd"
 
 [[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = ""
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
+  digest = "1:b4ba046df563f56fe42b6270b20039107a37e1ab47c97aa47a16f848aa5b6d9a"
   name = "golang.org/x/net"
   packages = [
     "html",
     "html/atom",
-    "html/charset"
+    "html/charset",
   ]
+  pruneopts = ""
   revision = "cbe0f9307d0156177f9dd5dc85da1a31abc5f2fb"
 
 [[projects]]
+  digest = "1:1ed067f6338b4c6496a27a889a53e5c1adcafdcc4442024a01e035e5dcf28698"
   name = "golang.org/x/sys"
   packages = ["unix"]
+  pruneopts = ""
   revision = "a408501be4d17ee978c04a618e7a1b22af058c0e"
 
 [[projects]]
+  digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
   name = "golang.org/x/text"
   packages = [
     "encoding",
@@ -114,19 +141,32 @@
     "language",
     "runes",
     "transform",
-    "unicode/cldr"
+    "unicode/cldr",
   ]
+  pruneopts = ""
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:59925e8b791ee90b60e4dc05099d34fd38d0922a2a8f9b4e700cb61fc421e6b2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
+  pruneopts = ""
   revision = "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5bfe5f275adcd02ff0727a3f378547c393e64ad2de6a2ce7e21f4b617d83456"
+  input-imports = [
+    "code.cloudfoundry.org/lager",
+    "code.cloudfoundry.org/lager/lagertest",
+    "github.com/drewolson/testflight",
+    "github.com/gorilla/mux",
+    "github.com/onsi/ginkgo",
+    "github.com/onsi/gomega",
+    "github.com/onsi/gomega/gbytes",
+    "github.com/pborman/uuid",
+    "github.com/pkg/errors",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

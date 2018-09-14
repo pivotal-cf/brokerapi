@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Service struct {
@@ -112,10 +114,18 @@ const (
 func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 	type Alias ServicePlanMetadata
 
-	b, _ := json.Marshal(Alias(spm))
-	m := spm.AdditionalMetadata
+	b, err := json.Marshal(Alias(spm))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "unmarshallable content in AdditionalMetadata")
+	}
+
+	var m map[string]interface{}
 	json.Unmarshal(b, &m)
 	delete(m, additionalMetadataName)
+
+	for k, v := range spm.AdditionalMetadata {
+		m[k] = v
+	}
 
 	return json.Marshal(m)
 }
@@ -166,11 +176,18 @@ func GetJsonNames(s reflect.Value) (res []string) {
 func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 	type Alias ServiceMetadata
 
-	b, _ := json.Marshal(Alias(sm))
-	m := sm.AdditionalMetadata
+	b, err := json.Marshal(Alias(sm))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "unmarshallable content in AdditionalMetadata")
+	}
+
+	var m map[string]interface{}
 	json.Unmarshal(b, &m)
 	delete(m, additionalMetadataName)
 
+	for k, v := range sm.AdditionalMetadata {
+		m[k] = v
+	}
 	return json.Marshal(m)
 }
 

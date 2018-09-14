@@ -44,3 +44,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/pborman/uuid"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "^0.8.0"
