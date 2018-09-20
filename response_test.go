@@ -18,9 +18,9 @@ package brokerapi_test
 import (
 	"encoding/json"
 
+	"github.com/pivotal-cf/brokerapi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi"
 )
 
 var _ = Describe("Catalog Response", func() {
@@ -63,7 +63,7 @@ var _ = Describe("Provisioning Response", func() {
 var _ = Describe("Binding Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a credentials object", func() {
-			binding := brokerapi.Binding{}
+			binding := brokerapi.BindingResponse{}
 			jsonString := `{"credentials":null}`
 
 			Expect(json.Marshal(binding)).To(MatchJSON(jsonString))

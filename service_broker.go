@@ -28,12 +28,14 @@ type ServiceBroker interface {
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
 
-	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails) (Binding, error)
-	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails) error
+	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
+	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
+	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
 
 	Update(ctx context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
-	LastOperation(ctx context.Context, instanceID, operationData string) (LastOperation, error)
+	LastOperation(ctx context.Context, instanceID string, details PollDetails) (LastOperation, error)
+	LastBindingOperation(ctx context.Context, instanceID, bindingID string, details PollDetails) (LastOperation, error)
 }
 
 type DetailsWithRawParameters interface {
@@ -76,6 +78,11 @@ type ProvisionDetails struct {
 type ProvisionedServiceSpec struct {
 	IsAsync       bool
 	DashboardURL  string
+	OperationData string
+}
+
+type UnbindSpec struct {
+	IsAsync       bool
 	OperationData string
 }
 
@@ -130,6 +137,12 @@ type PreviousValues struct {
 	SpaceID   string `json:"space_id"`
 }
 
+type PollDetails struct {
+	ServiceID     string `json:"service_id"`
+	PlanID        string `json:"plan_id"`
+	OperationData string `json:"operation"`
+}
+
 type LastOperation struct {
 	State       LastOperationState
 	Description string
@@ -144,10 +157,20 @@ const (
 )
 
 type Binding struct {
-	Credentials     interface{}   `json:"credentials"`
-	SyslogDrainURL  string        `json:"syslog_drain_url,omitempty"`
-	RouteServiceURL string        `json:"route_service_url,omitempty"`
-	VolumeMounts    []VolumeMount `json:"volume_mounts,omitempty"`
+	IsAsync         bool
+	OperationData   string
+	Credentials     interface{}
+	SyslogDrainURL  string
+	RouteServiceURL string
+	VolumeMounts    []VolumeMount
+}
+
+type GetBindingSpec struct {
+	Credentials     interface{}
+	SyslogDrainURL  string
+	RouteServiceURL string
+	VolumeMounts    []VolumeMount
+	Parameters      interface{}
 }
 
 type VolumeMount struct {
@@ -171,6 +194,7 @@ const (
 	serviceQuotaExceededMsg     = "The quota for this service has been exceeded. Please contact your Operator for help."
 	bindingExistsMsg            = "binding already exists"
 	bindingDoesntExistMsg       = "binding does not exist"
+	bindingNotFoundMsg          = "binding cannot be fetched"
 	asyncRequiredMsg            = "This service plan requires client support for asynchronous service operations."
 	planChangeUnsupportedMsg    = "The requested plan migration cannot be performed"
 	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
@@ -196,6 +220,10 @@ var (
 
 	ErrBindingDoesNotExist = NewFailureResponseBuilder(
 		errors.New(bindingDoesntExistMsg), http.StatusGone, bindingMissingErrorKey,
+	).WithEmptyResponse().Build()
+
+	ErrBindingNotFound = NewFailureResponseBuilder(
+		errors.New(bindingNotFoundMsg), http.StatusNotFound, bindingNotFoundErrorKey,
 	).WithEmptyResponse().Build()
 
 	ErrAsyncRequired = NewFailureResponseBuilder(

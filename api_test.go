@@ -29,10 +29,10 @@ import (
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi"
 	"github.com/pivotal-cf/brokerapi/fakes"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -126,7 +126,7 @@ var _ = Describe("Service Broker API", func() {
 		makeRequest := func(method, path, body string) *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
 			request, _ := http.NewRequest(method, path, strings.NewReader(body))
-			request.Header.Add("X-Broker-API-Version", "2.13")
+			request.Header.Add("X-Broker-API-Version", "2.14")
 			request.SetBasicAuth(credentials.Username, credentials.Password)
 			request = request.WithContext(ctx)
 			brokerAPI.ServeHTTP(recorder, request)
@@ -165,6 +165,16 @@ var _ = Describe("Service Broker API", func() {
 
 		Specify("an update endpoint which passes the request context to the broker", func() {
 			makeRequest("PATCH", "/v2/service_instances/instance-id", `{"service_id":"123"}`)
+			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
+		})
+
+		Specify("a get binding operation endpoint which passes the request context to the broker", func() {
+			makeRequest("GET", "/v2/service_instances/instance-id/service_bindings/binding-id", "{}")
+			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
+		})
+
+		Specify("a last binding operation endpoint which passes the request context to the broker", func() {
+			makeRequest("GET", "/v2/service_instances/instance-id/service_bindings/binding-id/last_operation", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
 
@@ -1199,11 +1209,56 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("binding lifecycle endpoint", func() {
-		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]interface{}, apiVersion string) *testflight.Response {
+
+		makeLastBindingOperationRequestWithSpecificAPIVersion := func(instanceID, bindingID string, apiVersion string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s",
-					instanceID, bindingID)
+				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s/last_operation", instanceID, bindingID)
+
+				buffer := &bytes.Buffer{}
+
+				request, err := http.NewRequest("GET", path, buffer)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				if apiVersion != "" {
+					request.Header.Add("X-Broker-Api-Version", apiVersion)
+				}
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		makeGetBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, apiVersion string) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s", instanceID, bindingID)
+
+				buffer := &bytes.Buffer{}
+
+				request, err := http.NewRequest("GET", path, buffer)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				if apiVersion != "" {
+					request.Header.Add("X-Broker-Api-Version", apiVersion)
+				}
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth("username", "password")
+
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]interface{}, apiVersion string, async bool) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?accepts_incomplete=%v",
+					instanceID, bindingID, async)
 
 				buffer := &bytes.Buffer{}
 
@@ -1227,7 +1282,11 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		makeBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *testflight.Response {
-			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.10")
+			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.10", false)
+		}
+
+		makeAsyncBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *testflight.Response {
+			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.14", true)
 		}
 
 		Describe("binding", func() {
@@ -1256,28 +1315,28 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("missing header X-Broker-API-Version", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "")
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
 					Expect(response.StatusCode).To(Equal(412))
 					Expect(lastLogLine().Message).To(ContainSubstring(".bind.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
 				It("has wrong version of API", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14")
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
 					Expect(response.StatusCode).To(Equal(412))
 					Expect(lastLogLine().Message).To(ContainSubstring(".bind.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
 				It("missing service-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14")
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14", false)
 					Expect(response.StatusCode).To(Equal(400))
 					Expect(lastLogLine().Message).To(ContainSubstring(".bind.service-id-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("service_id missing"))
 				})
 
 				It("missing plan-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14")
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14", false)
 					Expect(response.StatusCode).To(Equal(400))
 					Expect(lastLogLine().Message).To(ContainSubstring(".bind.plan-id-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan_id missing"))
@@ -1359,14 +1418,14 @@ var _ = Describe("Service Broker API", func() {
 
 					Context("when the broker API version is 2.9", func() {
 						It("responds with an experimental volume mount", func() {
-							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.9")
+							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.9", false)
 							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
 						})
 					})
 
 					Context("when the broker API version is 2.8", func() {
 						It("responds with an experimental volume mount", func() {
-							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.8")
+							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.8", false)
 							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
 						})
 					})
@@ -1439,9 +1498,9 @@ var _ = Describe("Service Broker API", func() {
 					It("calls Bind on the service broker with the bind_resource", func() {
 
 						details["bind_resource"] = map[string]interface{}{
-							"app_guid": "a-guid",
-							"space_guid": "a-space-guid",
-							"route": "route.cf-apps.com",
+							"app_guid":             "a-guid",
+							"space_guid":           "a-space-guid",
+							"route":                "route.cf-apps.com",
 							"credential_client_id": "some-credentials",
 						}
 
@@ -1565,6 +1624,58 @@ var _ = Describe("Service Broker API", func() {
 					makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 					Expect(lastLogLine().Message).To(ContainSubstring(".bind.interesting-failure"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("I failed in unique and interesting ways"))
+				})
+			})
+
+			Context("when an async binding is requested", func() {
+				var (
+					fakeAsyncServiceBroker *fakes.FakeAsyncServiceBroker
+				)
+				BeforeEach(func() {
+					fakeAsyncServiceBroker = &fakes.FakeAsyncServiceBroker{
+						FakeServiceBroker: *fakeServiceBroker,
+						ShouldBindAsync:   true,
+					}
+					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+				})
+
+				It("when the api version is before 2.14 for Bind request", func() {
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.13", true)
+					Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+				})
+
+				It("when the api version is before 2.14 for LastBindingOperation request", func() {
+					response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
+					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+					response = makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
+					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+				})
+
+				It("when the api version is before 2.14 for GetBinding request", func() {
+					response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
+					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+					response = makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
+					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+				})
+
+				It("it returns an appropriate status code and operation data", func() {
+					response := makeAsyncBindingRequest(instanceID, bindingID, details)
+					Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+					Expect(response.Body).To(MatchJSON(fixture("async_bind_response.json")))
+				})
+
+				It("can be polled with lastBindingOperation", func() {
+					fakeAsyncServiceBroker.LastOperationState = "succeeded"
+					fakeAsyncServiceBroker.LastOperationDescription = "some description"
+					response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+				})
+
+				It("getBinding returns the binding for the async request", func() {
+					response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(response.Body).To(MatchJSON(fixture("binding.json")))
 				})
 			})
 		})
