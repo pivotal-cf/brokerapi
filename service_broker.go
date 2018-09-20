@@ -157,12 +157,12 @@ const (
 )
 
 type Binding struct {
-	IsAsync         bool
-	OperationData   string
-	Credentials     interface{}
-	SyslogDrainURL  string
-	RouteServiceURL string
-	VolumeMounts    []VolumeMount
+	IsAsync         bool          `json:"is_async"`
+	OperationData   string        `json:"operation_data"`
+	Credentials     interface{}   `json:"credentials"`
+	SyslogDrainURL  string        `json:"syslog_drain_url"`
+	RouteServiceURL string        `json:"route_service_url"`
+	VolumeMounts    []VolumeMount `json:"volume_mounts"`
 }
 
 type GetBindingSpec struct {
