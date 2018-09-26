@@ -56,7 +56,6 @@ type FakeServiceBroker struct {
 type FakeAsyncServiceBroker struct {
 	FakeServiceBroker
 	ShouldProvisionAsync bool
-	ShouldBindAsync      bool
 }
 
 type FakeAsyncOnlyServiceBroker struct {
@@ -319,7 +318,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instance
 	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
 	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)
 
-	if fakeBroker.ShouldBindAsync {
+	if asyncAllowed {
 		return brokerapi.Binding{
 			IsAsync:       true,
 			OperationData: "0xDEADBEEF",

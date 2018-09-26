@@ -29,10 +29,10 @@ import (
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
-	"github.com/pivotal-cf/brokerapi"
-	"github.com/pivotal-cf/brokerapi/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -1631,51 +1631,56 @@ var _ = Describe("Service Broker API", func() {
 				var (
 					fakeAsyncServiceBroker *fakes.FakeAsyncServiceBroker
 				)
+
 				BeforeEach(func() {
 					fakeAsyncServiceBroker = &fakes.FakeAsyncServiceBroker{
 						FakeServiceBroker: *fakeServiceBroker,
-						ShouldBindAsync:   true,
 					}
 					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
 				})
 
-				It("when the api version is before 2.14 for Bind request", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.13", true)
-					Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+				When("the api version is < 2.14", func() {
+					It("successfully returns a sync binding response", func() {
+						response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.13", true)
+						Expect(response.StatusCode).To(Equal(http.StatusCreated))
+						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+					})
+
+					It("fails for LastBindingOperation request", func() {
+						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
+						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+						response = makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
+						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+					})
+
+					It("fails for GetBinding request", func() {
+						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
+						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+						response = makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
+						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+					})
 				})
 
-				It("when the api version is before 2.14 for LastBindingOperation request", func() {
-					response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
-					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-					response = makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
-					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-				})
+				When("the api version is 2.14", func() {
+					It("returns an appropriate status code and operation data", func() {
+						response := makeAsyncBindingRequest(instanceID, bindingID, details)
+						Expect(response.StatusCode).To(Equal(http.StatusAccepted))
+						Expect(response.Body).To(MatchJSON(fixture("async_bind_response.json")))
+					})
 
-				It("when the api version is before 2.14 for GetBinding request", func() {
-					response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
-					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-					response = makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
-					Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-				})
+					It("can be polled with lastBindingOperation", func() {
+						fakeAsyncServiceBroker.LastOperationState = "succeeded"
+						fakeAsyncServiceBroker.LastOperationDescription = "some description"
+						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+						Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+					})
 
-				It("it returns an appropriate status code and operation data", func() {
-					response := makeAsyncBindingRequest(instanceID, bindingID, details)
-					Expect(response.StatusCode).To(Equal(http.StatusAccepted))
-					Expect(response.Body).To(MatchJSON(fixture("async_bind_response.json")))
-				})
-
-				It("can be polled with lastBindingOperation", func() {
-					fakeAsyncServiceBroker.LastOperationState = "succeeded"
-					fakeAsyncServiceBroker.LastOperationDescription = "some description"
-					response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
-					Expect(response.StatusCode).To(Equal(http.StatusOK))
-					Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
-				})
-
-				It("getBinding returns the binding for the async request", func() {
-					response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
-					Expect(response.StatusCode).To(Equal(http.StatusOK))
-					Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+					It("returns the binding for the async request on getBinding", func() {
+						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+					})
 				})
 			})
 		})

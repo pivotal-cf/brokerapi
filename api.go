@@ -449,13 +449,9 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
-	if asyncAllowed && versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
-			Description: "async binding only supported from OSB version 2.14 and up",
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
+	asyncAllowed := false
+	if versionCompatibility.Minor >= 14 {
+		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
 	binding, err := h.serviceBroker.Bind(req.Context(), instanceID, bindingID, details, asyncAllowed)
