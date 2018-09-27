@@ -29,10 +29,10 @@ import (
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
+	"github.com/liorokman/brokerapi"
+	"github.com/liorokman/brokerapi/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi"
-	"github.com/pivotal-cf/brokerapi/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -182,6 +182,11 @@ var _ = Describe("Service Broker API", func() {
 			makeRequest("GET", "/v2/service_instances/instance-id/last_operation", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
+
+		Specify("a get instance operation endpoint which passes the request context to the broker", func() {
+			makeRequest("GET", "/v2/service_instances/instance-id", "{}")
+			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
+		})
 	})
 
 	Describe("authentication", func() {
@@ -297,6 +302,19 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
+		makeGetInstanceRequest := func(instanceID string) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
+				request, err := http.NewRequest("GET", path, strings.NewReader(""))
+				Expect(err).NotTo(HaveOccurred())
+				request.Header.Add("X-Broker-API-Version", apiVersion)
+				request.SetBasicAuth("username", "password")
+				response = r.Do(request)
+			})
+			return response
+		}
+
 		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, queryString string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
@@ -346,6 +364,15 @@ var _ = Describe("Service Broker API", func() {
 			It("calls Provision on the service broker with the instance id", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+			})
+
+			It("calls GetInstance on the service broker with the instance id", func() {
+				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+				fakeServiceBroker.DashboardURL = "https://example.com/dashboard/some-instance"
+				resp := makeGetInstanceRequest(instanceID)
+				Expect(fakeServiceBroker.GetInstanceIDs).To(ContainElement(instanceID))
+				Expect(resp.Body).To(MatchJSON(fixture("get_instance.json")))
 			})
 
 			Context("when the broker returns some operation data", func() {

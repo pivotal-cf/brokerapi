@@ -24,7 +24,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/auth"
+	"github.com/liorokman/brokerapi/auth"
 )
 
 const (
@@ -60,6 +60,7 @@ const (
 	planIdMissingKey              = "plan-id-missing"
 	invalidServiceID              = "invalid-service-id"
 	invalidPlanID                 = "invalid-plan-id"
+	concurrentAccessKey           = "get-instance-during-update"
 )
 
 var (
@@ -84,6 +85,7 @@ func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.
 	handler := serviceBrokerHandler{serviceBroker: serviceBroker, logger: logger}
 	router.HandleFunc("/v2/catalog", handler.catalog).Methods("GET")
 
+	router.HandleFunc("/v2/service_instances/{instance_id}", handler.getInstance).Methods("GET")
 	router.HandleFunc("/v2/service_instances/{instance_id}", handler.provision).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{instance_id}", handler.deprovision).Methods("DELETE")
 	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", handler.lastOperation).Methods("GET")
@@ -290,7 +292,10 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, UpdateResponse{OperationData: updateServiceSpec.OperationData})
+	h.respond(w, statusCode, UpdateResponse{
+		OperationData: updateServiceSpec.OperationData,
+		DashboardURL:  updateServiceSpec.DashboardURL,
+	})
 }
 
 func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Request) {
@@ -351,6 +356,53 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	} else {
 		h.respond(w, http.StatusOK, EmptyResponse{})
 	}
+}
+
+func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	instanceID := vars["instance_id"]
+
+	logger := h.logger.Session(getBindLogKey, lager.Data{
+		instanceIDLogKey: instanceID,
+	})
+
+	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
+	if err != nil {
+		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+			Description: err.Error(),
+		})
+		logger.Error(apiVersionInvalidKey, err)
+		return
+	}
+	if versionCompatibility.Minor < 14 {
+		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+			Description: "get instance endpoint only supported starting with OSB version 2.14",
+		})
+		logger.Error(apiVersionInvalidKey, err)
+		return
+	}
+
+	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID)
+	if err != nil {
+		switch err := err.(type) {
+		case *FailureResponse:
+			logger.Error(err.LoggerAction(), err)
+			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+		default:
+			logger.Error(unknownErrorKey, err)
+			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+				Description: err.Error(),
+			})
+		}
+		return
+	}
+
+	h.respond(w, http.StatusOK, GetInstanceResponse{
+		ServiceID:    instanceDetails.ServiceID,
+		PlanID:       instanceDetails.PlanID,
+		DashboardURL: instanceDetails.DashboardURL,
+		Parameters:   instanceDetails.Parameters,
+	})
 }
 
 func (h serviceBrokerHandler) getBinding(w http.ResponseWriter, req *http.Request) {

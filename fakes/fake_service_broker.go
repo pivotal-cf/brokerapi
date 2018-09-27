@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/liorokman/brokerapi"
 )
 
 type FakeServiceBroker struct {
@@ -15,6 +15,7 @@ type FakeServiceBroker struct {
 	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
 	UpdatedInstanceIDs       []string
+	GetInstanceIDs           []string
 
 	BoundInstanceIDs    []string
 	BoundBindingIDs     []string
@@ -230,6 +231,24 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 	fakeBroker.UpdatedInstanceIDs = append(fakeBroker.UpdatedInstanceIDs, instanceID)
 	fakeBroker.AsyncAllowed = asyncAllowed
 	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn}, nil
+}
+
+func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string) (brokerapi.GetInstanceDetailsSpec, error) {
+	fakeBroker.BrokerCalled = true
+
+	if val, ok := context.Value("test_context").(bool); ok {
+		fakeBroker.ReceivedContext = val
+	}
+
+	fakeBroker.GetInstanceIDs = append(fakeBroker.GetInstanceIDs, instanceID)
+	return brokerapi.GetInstanceDetailsSpec{
+		ServiceID:    fakeBroker.ServiceID,
+		PlanID:       fakeBroker.PlanID,
+		DashboardURL: fakeBroker.DashboardURL,
+		Parameters: map[string]interface{}{
+			"param1": "value1",
+		},
+	}, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {

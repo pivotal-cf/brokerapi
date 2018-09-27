@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/liorokman/brokerapi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
