@@ -18,9 +18,9 @@ package brokerapi_test
 import (
 	"encoding/json"
 
-	"github.com/liorokman/brokerapi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pivotal-cf/brokerapi"
 )
 
 var _ = Describe("Catalog Response", func() {

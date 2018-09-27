@@ -20,9 +20,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/liorokman/brokerapi"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pivotal-cf/brokerapi"
 )
 
 var _ = Describe("Catalog", func() {
