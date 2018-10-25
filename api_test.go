@@ -463,7 +463,7 @@ var _ = Describe("Service Broker API", func() {
 						fakeServiceBroker.DashboardURL = "some-dashboard-url"
 					})
 
-					It("returns json with dasboard URL", func() {
+					It("returns json with dashboard URL", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 						Expect(response.Body).To(MatchJSON(fixture("provisioning_with_dashboard.json")))
 					})
@@ -942,6 +942,18 @@ var _ = Describe("Service Broker API", func() {
 						})
 					})
 				})
+
+				Context("when the broker returns a dashboard URL", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.DashboardURL = "some-dashboard-url"
+					})
+
+					It("returns json with dashboard URL", func() {
+						response := makeInstanceUpdateRequest(instanceID, details, "", "2.14")
+						Expect(response.Body).To(MatchJSON(fixture("updating_with_dashboard.json")))
+					})
+				})
+
 			})
 
 			Context("when the broker indicates that it needs async support", func() {

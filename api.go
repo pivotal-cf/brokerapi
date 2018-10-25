@@ -294,7 +294,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	}
 	h.respond(w, statusCode, UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
-		DashboardURL:  updateServiceSpec.DashboardURL,
+		DashboardURL: updateServiceSpec.DashboardURL,
 	})
 }
 
