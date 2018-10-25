@@ -290,7 +290,10 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, UpdateResponse{OperationData: updateServiceSpec.OperationData})
+	h.respond(w, statusCode, UpdateResponse{
+		OperationData: updateServiceSpec.OperationData,
+		DashboardURL: updateServiceSpec.DashboardURL,
+	})
 }
 
 func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Request) {
