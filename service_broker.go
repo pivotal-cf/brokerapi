@@ -119,7 +119,6 @@ type UpdateServiceSpec struct {
 	IsAsync       bool
 	DashboardURL  string
 	OperationData string
-	DashboardURL  string
 }
 
 type DeprovisionServiceSpec struct {

@@ -41,7 +41,6 @@ type GetInstanceResponse struct {
 type UpdateResponse struct {
 	DashboardURL  string `json:"dashboard_url,omitempty"`
 	OperationData string `json:"operation,omitempty"`
-	DashboardURL  string `json:"dashboard_url,omitempty"`
 }
 
 type DeprovisionResponse struct {
