@@ -27,6 +27,7 @@ type ServiceBroker interface {
 
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+	GetInstance(ctx context.Context, instanceID string) (GetInstanceDetailsSpec, error)
 
 	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
 	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
@@ -79,6 +80,13 @@ type ProvisionedServiceSpec struct {
 	IsAsync       bool
 	DashboardURL  string
 	OperationData string
+}
+
+type GetInstanceDetailsSpec struct {
+	ServiceID    string      `json:"service_id"`
+	PlanID       string      `json:"plan_id"`
+	DashboardURL string      `json:"dashboard_url"`
+	Parameters   interface{} `json:"parameters"`
 }
 
 type UnbindSpec struct {
@@ -200,6 +208,7 @@ const (
 	planChangeUnsupportedMsg    = "The requested plan migration cannot be performed"
 	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
 	appGuidMissingMsg           = "app_guid is a required field but was not provided"
+	concurrentInstanceAccessMsg = "instance is being updated and cannot be retrieved"
 )
 
 var (
@@ -245,4 +254,8 @@ var (
 
 	ErrPlanQuotaExceeded    = errors.New(servicePlanQuotaExceededMsg)
 	ErrServiceQuotaExceeded = errors.New(serviceQuotaExceededMsg)
+
+	ErrConcurrentInstanceAccess = NewFailureResponseBuilder(
+		errors.New(concurrentInstanceAccessMsg), http.StatusUnprocessableEntity, concurrentAccessKey,
+	).WithErrorKey("ConcurrencyError")
 )

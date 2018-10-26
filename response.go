@@ -31,6 +31,13 @@ type ProvisioningResponse struct {
 	OperationData string `json:"operation,omitempty"`
 }
 
+type GetInstanceResponse struct {
+	ServiceID    string      `json:"service_id"`
+	PlanID       string      `json:"plan_id"`
+	DashboardURL string      `json:"dashboard_url,omitempty"`
+	Parameters   interface{} `json:"parameters,omitempty"`
+}
+
 type UpdateResponse struct {
 	DashboardURL  string `json:"dashboard_url,omitempty"`
 	OperationData string `json:"operation,omitempty"`

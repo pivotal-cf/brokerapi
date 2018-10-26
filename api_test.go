@@ -182,6 +182,11 @@ var _ = Describe("Service Broker API", func() {
 			makeRequest("GET", "/v2/service_instances/instance-id/last_operation", "{}")
 			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
 		})
+
+		Specify("a get instance operation endpoint which passes the request context to the broker", func() {
+			makeRequest("GET", "/v2/service_instances/instance-id", "{}")
+			Expect(fakeServiceBroker.ReceivedContext).To(BeTrue())
+		})
 	})
 
 	Describe("authentication", func() {
@@ -297,6 +302,19 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
+		makeGetInstanceRequest := func(instanceID string) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
+				request, err := http.NewRequest("GET", path, strings.NewReader(""))
+				Expect(err).NotTo(HaveOccurred())
+				request.Header.Add("X-Broker-API-Version", apiVersion)
+				request.SetBasicAuth("username", "password")
+				response = r.Do(request)
+			})
+			return response
+		}
+
 		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, queryString string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
@@ -346,6 +364,15 @@ var _ = Describe("Service Broker API", func() {
 			It("calls Provision on the service broker with the instance id", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+			})
+
+			It("calls GetInstance on the service broker with the instance id", func() {
+				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+				fakeServiceBroker.DashboardURL = "https://example.com/dashboard/some-instance"
+				resp := makeGetInstanceRequest(instanceID)
+				Expect(fakeServiceBroker.GetInstanceIDs).To(ContainElement(instanceID))
+				Expect(resp.Body).To(MatchJSON(fixture("get_instance.json")))
 			})
 
 			Context("when the broker returns some operation data", func() {
@@ -1215,6 +1242,60 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(400))
 					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.plan-id-missing"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan_id missing"))
+				})
+			})
+		})
+
+		Describe("getting instance", func() {
+			It("returns the appropriate status code when it fails with a known error", func() {
+				fakeServiceBroker.GetInstanceError = brokerapi.NewFailureResponse(errors.New("some error"), http.StatusUnprocessableEntity, "fire")
+
+				response := makeGetInstanceRequest("instance-id")
+
+				Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getInstance.fire"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("some error"))
+			})
+
+			It("returns 500 when it fails with an unknown error", func() {
+				fakeServiceBroker.GetInstanceError = errors.New("failed to get instance")
+
+				response := makeGetInstanceRequest("instance-id")
+
+				Expect(response.StatusCode).To(Equal(500))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getInstance.unknown-error"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("failed to get instance"))
+			})
+
+			Context("the request is malformed", func() {
+				It("missing header X-Broker-API-Version", func() {
+					apiVersion = ""
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
+				})
+
+				It("has wrong version of API", func() {
+					apiVersion = "1.1"
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
+				})
+
+				It("is using api version < 2.14", func() {
+					apiVersion = "2.13"
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("get instance endpoint only supported starting with OSB version 2.14"))
+				})
+
+				It("missing instance-id", func() {
+					response := makeGetInstanceRequest("")
+					Expect(response.StatusCode).To(Equal(404))
 				})
 			})
 		})
