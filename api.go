@@ -32,6 +32,7 @@ const (
 	deprovisionLogKey          = "deprovision"
 	bindLogKey                 = "bind"
 	getBindLogKey              = "getBinding"
+	getInstanceLogKey          = "getInstance"
 	unbindLogKey               = "unbind"
 	updateLogKey               = "update"
 	lastOperationLogKey        = "lastOperation"
@@ -294,7 +295,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	}
 	h.respond(w, statusCode, UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
-		DashboardURL: updateServiceSpec.DashboardURL,
+		DashboardURL:  updateServiceSpec.DashboardURL,
 	})
 }
 
@@ -362,7 +363,7 @@ func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Reque
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
-	logger := h.logger.Session(getBindLogKey, lager.Data{
+	logger := h.logger.Session(getInstanceLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
@@ -375,8 +376,9 @@ func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	if versionCompatibility.Minor < 14 {
+		err = errors.New("get instance endpoint only supported starting with OSB version 2.14")
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: "get instance endpoint only supported starting with OSB version 2.14",
+			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return

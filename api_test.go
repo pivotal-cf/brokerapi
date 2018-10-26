@@ -1245,6 +1245,60 @@ var _ = Describe("Service Broker API", func() {
 				})
 			})
 		})
+
+		Describe("getting instance", func() {
+			It("returns the appropriate status code when it fails with a known error", func() {
+				fakeServiceBroker.GetInstanceError = brokerapi.NewFailureResponse(errors.New("some error"), http.StatusUnprocessableEntity, "fire")
+
+				response := makeGetInstanceRequest("instance-id")
+
+				Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getInstance.fire"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("some error"))
+			})
+
+			It("returns 500 when it fails with an unknown error", func() {
+				fakeServiceBroker.GetInstanceError = errors.New("failed to get instance")
+
+				response := makeGetInstanceRequest("instance-id")
+
+				Expect(response.StatusCode).To(Equal(500))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getInstance.unknown-error"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("failed to get instance"))
+			})
+
+			Context("the request is malformed", func() {
+				It("missing header X-Broker-API-Version", func() {
+					apiVersion = ""
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
+				})
+
+				It("has wrong version of API", func() {
+					apiVersion = "1.1"
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
+				})
+
+				It("is using api version < 2.14", func() {
+					apiVersion = "2.13"
+					response := makeGetInstanceRequest("instance-id")
+					Expect(response.StatusCode).To(Equal(412))
+
+					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("get instance endpoint only supported starting with OSB version 2.14"))
+				})
+
+				It("missing instance-id", func() {
+					response := makeGetInstanceRequest("")
+					Expect(response.StatusCode).To(Equal(404))
+				})
+			})
+		})
 	})
 
 	Describe("binding lifecycle endpoint", func() {

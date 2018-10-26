@@ -34,6 +34,7 @@ type FakeServiceBroker struct {
 	DeprovisionError   error
 	LastOperationError error
 	UpdateError        error
+	GetInstanceError   error
 
 	BrokerCalled             bool
 	LastOperationState       brokerapi.LastOperationState
@@ -248,7 +249,7 @@ func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instan
 		Parameters: map[string]interface{}{
 			"param1": "value1",
 		},
-	}, nil
+	}, fakeBroker.GetInstanceError
 }
 
 func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
