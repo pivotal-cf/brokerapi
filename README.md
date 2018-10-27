@@ -28,6 +28,11 @@ Alternatively, if you already have a `*mux.Router` that you want to attach servi
 
 `NewFailureResponse()` allows you to return a custom error from any of the `ServiceBroker` interface methods which return an error. Within this you must define an error, a HTTP response status code and a logging key. You can also use the `NewFailureResponseBuilder()` to add a custom `Error:` value in the response, or indicate that the broker should return an empty response rather than the error message.
 
+## Originating Identity
+
+The request context for every request contains the unparsed `X-Broker-API-Originating-Identity` header under the key `originatingIdentityKey`.
+More details on how the Open Service Broker API manages request originating identity is available [here](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#originating-identity).
+
 ## Example Service Broker
 
 You can see the [cf-redis](https://github.com/pivotal-cf/cf-redis-broker/blob/2f0e9a8ebb1012a9be74bbef2d411b0b3b60352f/broker/broker.go) service broker uses the BrokerAPI package to create a service broker for Redis.
