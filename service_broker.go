@@ -22,20 +22,56 @@ import (
 	"net/http"
 )
 
+//Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
+//
+//The specification is available here: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md
+//
+//The OpenAPI documentation is available here: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/openservicebrokerapi/servicebroker/v2.14/openapi.yaml
 type ServiceBroker interface {
+	//Catalog
+	//
+	//get the catalog of services that the service broker offers
+	//  GET /v2/catalog
 	Services(ctx context.Context) ([]Service, error)
 
+	//ServiceInstances
+	//
+	//provision a service instance
+	//  PUT /v2/service_instances/{instance_id}
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
+
+	//deprovision a service instance
+	//  DELETE /v2/service_instances/{instance_id}
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+
+	//gets a service instnace
+	//  GET /v2/service_instances/{instance_id}
 	GetInstance(ctx context.Context, instanceID string) (GetInstanceDetailsSpec, error)
 
-	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
-	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
-	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
-
+	//updates a service instance
+	//  PATCH /v2/service_instances/{instance_id}
 	Update(ctx context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
+	//last requested operation state for service instance
+	//  GET /v2/service_instances/{instance_id}/last_operation
 	LastOperation(ctx context.Context, instanceID string, details PollDetails) (LastOperation, error)
+
+	//ServiceBindings
+	//
+	//generation of a service binding
+	//`PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}`
+	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
+
+	//deprovision of a service binding
+	//`DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}`
+	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
+
+	//gets a service binding
+	//`GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}`
+	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
+
+	//last requested operation state for service binding
+	//`GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation`
 	LastBindingOperation(ctx context.Context, instanceID, bindingID string, details PollDetails) (LastOperation, error)
 }
 
