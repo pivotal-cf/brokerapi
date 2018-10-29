@@ -2097,5 +2097,25 @@ var _ = Describe("Service Broker API", func() {
 				})
 			})
 		})
+
+		Describe("get binding", func() {
+			It("responds with 500 when the broker fails with an unknown error", func() {
+				fakeServiceBroker.GetBindingError = errors.New("something failed")
+
+				response := makeGetBindingRequestWithSpecificAPIVersion("some-instance", "some-binding", "2.14")
+				Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getBinding.unknown-error"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("something failed"))
+			})
+
+			It("returns the appropriate status code when it fails with a known error", func() {
+				fakeServiceBroker.GetBindingError = brokerapi.NewFailureResponse(errors.New("some error"), http.StatusUnprocessableEntity, "fire")
+
+				response := makeGetBindingRequestWithSpecificAPIVersion("some-instance", "some-binding", "2.14")
+				Expect(response.StatusCode).To(Equal(http.StatusUnprocessableEntity))
+				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getBinding.fire"))
+				Expect(lastLogLine().Data["error"]).To(ContainSubstring("some error"))
+			})
+		})
 	})
 })

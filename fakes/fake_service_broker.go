@@ -35,6 +35,7 @@ type FakeServiceBroker struct {
 	LastOperationError error
 	UpdateError        error
 	GetInstanceError   error
+	GetBindingError    error
 
 	BrokerCalled             bool
 	LastOperationState       brokerapi.LastOperationState
@@ -327,7 +328,7 @@ func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanc
 		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
 		RouteServiceURL: fakeBroker.RouteServiceURL,
 		VolumeMounts:    fakeBroker.VolumeMounts,
-	}, nil
+	}, fakeBroker.GetBindingError
 }
 
 func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
