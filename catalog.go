@@ -24,16 +24,18 @@ import (
 )
 
 type Service struct {
-	ID              string                  `json:"id"`
-	Name            string                  `json:"name"`
-	Description     string                  `json:"description"`
-	Bindable        bool                    `json:"bindable"`
-	Tags            []string                `json:"tags,omitempty"`
-	PlanUpdatable   bool                    `json:"plan_updateable"`
-	Plans           []ServicePlan           `json:"plans"`
-	Requires        []RequiredPermission    `json:"requires,omitempty"`
-	Metadata        *ServiceMetadata        `json:"metadata,omitempty"`
-	DashboardClient *ServiceDashboardClient `json:"dashboard_client,omitempty"`
+	ID                   string                  `json:"id"`
+	Name                 string                  `json:"name"`
+	Description          string                  `json:"description"`
+	Bindable             bool                    `json:"bindable"`
+	InstancesRetrievable bool                    `json:"instances_retrievable,omitempty"`
+	BindingsRetrievable  bool                    `json:"bindings_retrievable,omitempty"`
+	Tags                 []string                `json:"tags,omitempty"`
+	PlanUpdatable        bool                    `json:"plan_updateable"`
+	Plans                []ServicePlan           `json:"plans"`
+	Requires             []RequiredPermission    `json:"requires,omitempty"`
+	Metadata             *ServiceMetadata        `json:"metadata,omitempty"`
+	DashboardClient      *ServiceDashboardClient `json:"dashboard_client,omitempty"`
 }
 
 type ServiceDashboardClient struct {
