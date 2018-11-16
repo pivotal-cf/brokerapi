@@ -92,6 +92,11 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 						Bullets:     []string{},
 						DisplayName: "Cassandra",
 					},
+					MaintenanceInfo: brokerapi.MaintenanceInfo{
+						Public: map[string]interface{}{
+							"name": "foo",
+						},
+					},
 					Schemas: &brokerapi.ServiceSchemas{
 						Instance: brokerapi.ServiceInstanceSchema{
 							Create: brokerapi.Schema{

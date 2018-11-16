@@ -43,13 +43,14 @@ type ServiceDashboardClient struct {
 }
 
 type ServicePlan struct {
-	ID          string               `json:"id"`
-	Name        string               `json:"name"`
-	Description string               `json:"description"`
-	Free        *bool                `json:"free,omitempty"`
-	Bindable    *bool                `json:"bindable,omitempty"`
-	Metadata    *ServicePlanMetadata `json:"metadata,omitempty"`
-	Schemas     *ServiceSchemas      `json:"schemas,omitempty"`
+	ID              string               `json:"id"`
+	Name            string               `json:"name"`
+	Description     string               `json:"description"`
+	Free            *bool                `json:"free,omitempty"`
+	Bindable        *bool                `json:"bindable,omitempty"`
+	Metadata        *ServicePlanMetadata `json:"metadata,omitempty"`
+	Schemas         *ServiceSchemas      `json:"schemas,omitempty"`
+	MaintenanceInfo MaintenanceInfo      `json:"maintenance_info,omitempty"`
 }
 
 type ServiceSchemas struct {
@@ -91,6 +92,10 @@ type ServiceMetadata struct {
 	SupportUrl          string `json:"supportUrl,omitempty"`
 	Shareable           *bool  `json:"shareable,omitempty"`
 	AdditionalMetadata  map[string]interface{}
+}
+
+type MaintenanceInfo struct {
+	Public map[string]interface{} `json:"public"`
 }
 
 func FreeValue(v bool) *bool {

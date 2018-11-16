@@ -121,6 +121,11 @@ var _ = Describe("Catalog", func() {
 						Bullets:     []string{"hello", "its me"},
 						DisplayName: "name",
 					},
+					MaintenanceInfo: brokerapi.MaintenanceInfo{
+						Public: map[string]interface{}{
+							"name": "foo",
+						},
+					},
 				}
 				jsonString := `{
 					"id":"ID-1",
@@ -131,6 +136,11 @@ var _ = Describe("Catalog", func() {
 					"metadata":{
 						"bullets":["hello", "its me"],
 						"displayName":"name"
+					},
+					"maintenance_info": {
+						"public": {
+							"name": "foo"
+						}
 					}
 				}`
 
