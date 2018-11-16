@@ -122,7 +122,7 @@ var _ = Describe("Catalog", func() {
 						DisplayName: "name",
 					},
 					MaintenanceInfo: brokerapi.MaintenanceInfo{
-						Public: map[string]interface{}{
+						Public: map[string]string{
 							"name": "foo",
 						},
 					},
