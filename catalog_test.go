@@ -121,7 +121,7 @@ var _ = Describe("Catalog", func() {
 						Bullets:     []string{"hello", "its me"},
 						DisplayName: "name",
 					},
-					MaintenanceInfo: brokerapi.MaintenanceInfo{
+					MaintenanceInfo: &brokerapi.MaintenanceInfo{
 						Public: map[string]string{
 							"name": "foo",
 						},

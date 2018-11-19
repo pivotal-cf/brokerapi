@@ -92,7 +92,7 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 						Bullets:     []string{},
 						DisplayName: "Cassandra",
 					},
-					MaintenanceInfo: brokerapi.MaintenanceInfo{
+					MaintenanceInfo: &brokerapi.MaintenanceInfo{
 						Public: map[string]string{
 							"name": "foo",
 						},
