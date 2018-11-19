@@ -50,7 +50,7 @@ type ServicePlan struct {
 	Bindable        *bool                `json:"bindable,omitempty"`
 	Metadata        *ServicePlanMetadata `json:"metadata,omitempty"`
 	Schemas         *ServiceSchemas      `json:"schemas,omitempty"`
-	MaintenanceInfo MaintenanceInfo      `json:"maintenance_info,omitempty"`
+	MaintenanceInfo *MaintenanceInfo     `json:"maintenance_info,omitempty"`
 }
 
 type ServiceSchemas struct {
