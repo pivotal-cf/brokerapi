@@ -125,6 +125,7 @@ var _ = Describe("Catalog", func() {
 						Public: map[string]string{
 							"name": "foo",
 						},
+						Private: "someprivatehashedvalue",
 					},
 				}
 				jsonString := `{
@@ -140,7 +141,8 @@ var _ = Describe("Catalog", func() {
 					"maintenance_info": {
 						"public": {
 							"name": "foo"
-						}
+						},
+						"private": "someprivatehashedvalue"
 					}
 				}`
 
