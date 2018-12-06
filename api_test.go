@@ -830,6 +830,12 @@ var _ = Describe("Service Broker API", func() {
 					"context": map[string]interface{}{
 						"new-context": "new-context-value",
 					},
+					"maintenance_info": map[string]interface{}{
+						"public": map[string]string{
+							"k8s-version": "0.0.1-alpha2",
+						},
+						"private": "just a sha thing",
+					},
 				}
 				queryString = "?accept_incomplete=true"
 			})
@@ -888,6 +894,10 @@ var _ = Describe("Service Broker API", func() {
 						},
 						))
 						Expect(fakeServiceBroker.UpdateDetails.RawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
+						Expect(fakeServiceBroker.UpdateDetails.MaintenanceInfo).To(Equal(brokerapi.MaintenanceInfo{
+							Public:  map[string]string{"k8s-version": "0.0.1-alpha2"},
+							Private: "just a sha thing"},
+						))
 					})
 
 					It("calls update with details with raw parameters", func() {

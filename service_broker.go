@@ -132,11 +132,12 @@ type DeprovisionDetails struct {
 }
 
 type UpdateDetails struct {
-	ServiceID      string          `json:"service_id"`
-	PlanID         string          `json:"plan_id"`
-	RawParameters  json.RawMessage `json:"parameters,omitempty"`
-	PreviousValues PreviousValues  `json:"previous_values"`
-	RawContext     json.RawMessage `json:"context,omitempty"`
+	ServiceID       string          `json:"service_id"`
+	PlanID          string          `json:"plan_id"`
+	RawParameters   json.RawMessage `json:"parameters,omitempty"`
+	PreviousValues  PreviousValues  `json:"previous_values"`
+	RawContext      json.RawMessage `json:"context,omitempty"`
+	MaintenanceInfo MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type PreviousValues struct {
