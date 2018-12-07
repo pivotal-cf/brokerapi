@@ -62,6 +62,7 @@ const (
 	invalidServiceID              = "invalid-service-id"
 	invalidPlanID                 = "invalid-plan-id"
 	concurrentAccessKey           = "get-instance-during-update"
+	maintenanceInfoConflictKey    = "maintenance-info-conflict"
 )
 
 var (

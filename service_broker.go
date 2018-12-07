@@ -210,6 +210,7 @@ const (
 	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
 	appGuidMissingMsg           = "app_guid is a required field but was not provided"
 	concurrentInstanceAccessMsg = "instance is being updated and cannot be retrieved"
+	maintenanceInfoConflictMsg  = "passed maintenance_info does not match the catalog maintenance_info"
 )
 
 var (
@@ -259,4 +260,8 @@ var (
 	ErrConcurrentInstanceAccess = NewFailureResponseBuilder(
 		errors.New(concurrentInstanceAccessMsg), http.StatusUnprocessableEntity, concurrentAccessKey,
 	).WithErrorKey("ConcurrencyError")
+
+	ErrMaintenanceInfoConflict = NewFailureResponseBuilder(
+		errors.New(maintenanceInfoConflictMsg), http.StatusUnprocessableEntity, maintenanceInfoConflictKey,
+	).WithErrorKey("MaintenanceInfoConflict").Build()
 )
