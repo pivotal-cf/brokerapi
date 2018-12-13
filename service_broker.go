@@ -211,6 +211,7 @@ const (
 	appGuidMissingMsg           = "app_guid is a required field but was not provided"
 	concurrentInstanceAccessMsg = "instance is being updated and cannot be retrieved"
 	maintenanceInfoConflictMsg  = "passed maintenance_info does not match the catalog maintenance_info"
+	maintenanceInfoNilConflictMsg = "maintenance_info was passed, but the broker catalog contains no maintenance_info"
 )
 
 var (
@@ -263,5 +264,9 @@ var (
 
 	ErrMaintenanceInfoConflict = NewFailureResponseBuilder(
 		errors.New(maintenanceInfoConflictMsg), http.StatusUnprocessableEntity, maintenanceInfoConflictKey,
+	).WithErrorKey("MaintenanceInfoConflict").Build()
+
+	ErrMaintenanceInfoNilConflict = NewFailureResponseBuilder(
+		errors.New(maintenanceInfoNilConflictMsg), http.StatusUnprocessableEntity, maintenanceInfoConflictKey,
 	).WithErrorKey("MaintenanceInfoConflict").Build()
 )
