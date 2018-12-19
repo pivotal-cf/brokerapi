@@ -74,6 +74,7 @@ type ProvisionDetails struct {
 	SpaceGUID        string          `json:"space_guid"`
 	RawContext       json.RawMessage `json:"context,omitempty"`
 	RawParameters    json.RawMessage `json:"parameters,omitempty"`
+	MaintenanceInfo  MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type ProvisionedServiceSpec struct {
@@ -197,20 +198,20 @@ type SharedDevice struct {
 }
 
 const (
-	instanceExistsMsg           = "instance already exists"
-	instanceDoesntExistMsg      = "instance does not exist"
-	serviceLimitReachedMsg      = "instance limit for this service has been reached"
-	servicePlanQuotaExceededMsg = "The quota for this service plan has been exceeded. Please contact your Operator for help."
-	serviceQuotaExceededMsg     = "The quota for this service has been exceeded. Please contact your Operator for help."
-	bindingExistsMsg            = "binding already exists"
-	bindingDoesntExistMsg       = "binding does not exist"
-	bindingNotFoundMsg          = "binding cannot be fetched"
-	asyncRequiredMsg            = "This service plan requires client support for asynchronous service operations."
-	planChangeUnsupportedMsg    = "The requested plan migration cannot be performed"
-	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
-	appGuidMissingMsg           = "app_guid is a required field but was not provided"
-	concurrentInstanceAccessMsg = "instance is being updated and cannot be retrieved"
-	maintenanceInfoConflictMsg  = "passed maintenance_info does not match the catalog maintenance_info"
+	instanceExistsMsg             = "instance already exists"
+	instanceDoesntExistMsg        = "instance does not exist"
+	serviceLimitReachedMsg        = "instance limit for this service has been reached"
+	servicePlanQuotaExceededMsg   = "The quota for this service plan has been exceeded. Please contact your Operator for help."
+	serviceQuotaExceededMsg       = "The quota for this service has been exceeded. Please contact your Operator for help."
+	bindingExistsMsg              = "binding already exists"
+	bindingDoesntExistMsg         = "binding does not exist"
+	bindingNotFoundMsg            = "binding cannot be fetched"
+	asyncRequiredMsg              = "This service plan requires client support for asynchronous service operations."
+	planChangeUnsupportedMsg      = "The requested plan migration cannot be performed"
+	rawInvalidParamsMsg           = "The format of the parameters is not valid JSON"
+	appGuidMissingMsg             = "app_guid is a required field but was not provided"
+	concurrentInstanceAccessMsg   = "instance is being updated and cannot be retrieved"
+	maintenanceInfoConflictMsg    = "passed maintenance_info does not match the catalog maintenance_info"
 	maintenanceInfoNilConflictMsg = "maintenance_info was passed, but the broker catalog contains no maintenance_info"
 )
 

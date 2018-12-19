@@ -348,6 +348,12 @@ var _ = Describe("Service Broker API", func() {
 					"plan_id":           "plan-id",
 					"organization_guid": "organization-guid",
 					"space_guid":        "space-guid",
+					"maintenance_info": map[string]interface{}{
+						"public": map[string]string{
+							"k8s-version": "0.0.1-alpha2",
+						},
+						"private": "just a sha thing",
+					},
 				}
 			})
 
@@ -358,6 +364,12 @@ var _ = Describe("Service Broker API", func() {
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
 					SpaceGUID:        "space-guid",
+					MaintenanceInfo: brokerapi.MaintenanceInfo{
+						Public: map[string]string{
+							"k8s-version": "0.0.1-alpha2",
+						},
+						Private: "just a sha thing",
+					},
 				}))
 			})
 
@@ -630,6 +642,12 @@ var _ = Describe("Service Broker API", func() {
 							PlanID:           "plan-id",
 							OrganizationGUID: "organization-guid",
 							SpaceGUID:        "space-guid",
+							MaintenanceInfo: brokerapi.MaintenanceInfo{
+								Public: map[string]string{
+									"k8s-version": "0.0.1-alpha2",
+								},
+								Private: "just a sha thing",
+							},
 						}))
 
 						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
