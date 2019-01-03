@@ -16,10 +16,10 @@
 package brokerapi
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pivotal-cf/brokerapi/middlewares/originating_identity_header"
 	"net/http"
 	"strconv"
 
@@ -39,8 +39,6 @@ const (
 	lastOperationLogKey        = "lastOperation"
 	lastBindingOperationLogKey = "lastBindingOperation"
 	catalogLogKey              = "catalog"
-
-	originatingIdentityKey = "originatingIdentity"
 
 	instanceIDLogKey      = "instance-id"
 	instanceDetailsLogKey = "instance-details"
@@ -85,7 +83,9 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	AttachRoutes(router, serviceBroker, logger)
 
 	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
-	router.Use(authMiddleware, brokerApiOriginatingIdentityMiddleware)
+	router.Use(authMiddleware)
+	router.Use(originating_identity_header.AddToContext)
+
 	return router
 }
 
@@ -797,12 +797,4 @@ func checkBrokerAPIVersionHdr(req *http.Request) (brokerVersion, error) {
 		return version, errors.New("X-Broker-API-Version Header must be 2.x")
 	}
 	return version, nil
-}
-
-func brokerApiOriginatingIdentityMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		originatingIdentity := req.Header.Get("X-Broker-API-Originating-Identity")
-		newCtx := context.WithValue(req.Context(), originatingIdentityKey, originatingIdentity)
-		next.ServeHTTP(w, req.WithContext(newCtx))
-	})
 }

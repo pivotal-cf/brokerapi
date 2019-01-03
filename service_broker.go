@@ -22,6 +22,8 @@ import (
 	"net/http"
 )
 
+//go:generate counterfeiter -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
+
 type ServiceBroker interface {
 	Services(ctx context.Context) ([]Service, error)
 
