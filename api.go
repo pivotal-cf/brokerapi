@@ -16,6 +16,7 @@
 package brokerapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,6 +39,8 @@ const (
 	lastOperationLogKey        = "lastOperation"
 	lastBindingOperationLogKey = "lastBindingOperation"
 	catalogLogKey              = "catalog"
+
+	originatingIdentityKey = "originatingIdentity"
 
 	instanceIDLogKey      = "instance-id"
 	instanceDetailsLogKey = "instance-details"
@@ -80,7 +83,10 @@ type BrokerCredentials struct {
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
 	AttachRoutes(router, serviceBroker, logger)
-	return auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap(router)
+
+	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
+	router.Use(authMiddleware, brokerApiOriginatingIdentityMiddleware)
+	return router
 }
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
@@ -791,4 +797,12 @@ func checkBrokerAPIVersionHdr(req *http.Request) (brokerVersion, error) {
 		return version, errors.New("X-Broker-API-Version Header must be 2.x")
 	}
 	return version, nil
+}
+
+func brokerApiOriginatingIdentityMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		originatingIdentity := req.Header.Get("X-Broker-API-Originating-Identity")
+		newCtx := context.WithValue(req.Context(), originatingIdentityKey, originatingIdentity)
+		next.ServeHTTP(w, req.WithContext(newCtx))
+	})
 }
