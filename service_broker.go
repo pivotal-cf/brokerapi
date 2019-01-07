@@ -24,20 +24,51 @@ import (
 
 //go:generate counterfeiter -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
 
+//Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
+//
+//The specification is available here: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md
+//
+//The OpenAPI documentation is available here: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/openservicebrokerapi/servicebroker/v2.14/openapi.yaml
 type ServiceBroker interface {
+	// Services gets the catalog of services offered by the service broker
+	//   GET /v2/catalog
 	Services(ctx context.Context) ([]Service, error)
 
+	
+	// Provision creates a new service instance
+	//   PUT /v2/service_instances/{instance_id}
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
+
+	// Deprovision deletes an existing service instance
+	//  DELETE /v2/service_instances/{instance_id}
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+
+	// GetInstance fetches information about a service instance
+	//   GET /v2/service_instances/{instance_id}
 	GetInstance(ctx context.Context, instanceID string) (GetInstanceDetailsSpec, error)
 
-	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
-	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
-	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
-
+	// Update modifies an existing service instance
+	//  PATCH /v2/service_instances/{instance_id}
 	Update(ctx context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
+	// LastOperation fetches last operation state for a service instance
+	//   GET /v2/service_instances/{instance_id}/last_operation
 	LastOperation(ctx context.Context, instanceID string, details PollDetails) (LastOperation, error)
+
+	// Bind creates a new service binding
+	//   PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}
+	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
+
+	// Unbind deletes an existing service binding
+	//   DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}
+	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
+
+	// GetBinding fetches an existing service binding
+	//   GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}
+	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
+
+	// LastBindingOperation fetches last operation state for a service binding
+	//   GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation
 	LastBindingOperation(ctx context.Context, instanceID, bindingID string, details PollDetails) (LastOperation, error)
 }
 
