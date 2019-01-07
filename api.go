@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pivotal-cf/brokerapi/middlewares/originating_identity_header"
 	"net/http"
 	"strconv"
 
@@ -62,6 +63,7 @@ const (
 	invalidServiceID              = "invalid-service-id"
 	invalidPlanID                 = "invalid-plan-id"
 	concurrentAccessKey           = "get-instance-during-update"
+	maintenanceInfoConflictKey    = "maintenance-info-conflict"
 )
 
 var (
@@ -79,7 +81,12 @@ type BrokerCredentials struct {
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
 	AttachRoutes(router, serviceBroker, logger)
-	return auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap(router)
+
+	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
+	router.Use(authMiddleware)
+	router.Use(originating_identity_header.AddToContext)
+
+	return router
 }
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {

@@ -35,6 +35,7 @@ type FakeServiceBroker struct {
 	LastOperationError error
 	UpdateError        error
 	GetInstanceError   error
+	GetBindingError    error
 
 	BrokerCalled             bool
 	LastOperationState       brokerapi.LastOperationState
@@ -90,6 +91,11 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 					Metadata: &brokerapi.ServicePlanMetadata{
 						Bullets:     []string{},
 						DisplayName: "Cassandra",
+					},
+					MaintenanceInfo: &brokerapi.MaintenanceInfo{
+						Public: map[string]string{
+							"name": "foo",
+						},
 					},
 					Schemas: &brokerapi.ServiceSchemas{
 						Instance: brokerapi.ServiceInstanceSchema{
@@ -327,7 +333,7 @@ func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanc
 		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
 		RouteServiceURL: fakeBroker.RouteServiceURL,
 		VolumeMounts:    fakeBroker.VolumeMounts,
-	}, nil
+	}, fakeBroker.GetBindingError
 }
 
 func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
