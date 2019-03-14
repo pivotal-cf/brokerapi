@@ -19,9 +19,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pivotal-cf/brokerapi/middlewares/originating_identity_header"
 	"net/http"
 	"strconv"
+
+	"github.com/pivotal-cf/brokerapi/middlewares/originating_identity_header"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
@@ -183,6 +184,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	services, _ := h.serviceBroker.Services(req.Context())
 	for _, service := range services {
 		if service.ID == details.ServiceID {
+			req = req.WithContext(AddServiceToContext(req.Context(), &service))
 			valid = true
 			break
 		}
@@ -199,6 +201,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	for _, service := range services {
 		for _, plan := range service.Plans {
 			if plan.ID == details.PlanID {
+				req = req.WithContext(AddServicePlanToContext(req.Context(), &plan))
 				valid = true
 				break
 			}
