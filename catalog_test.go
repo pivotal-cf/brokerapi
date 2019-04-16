@@ -126,6 +126,7 @@ var _ = Describe("Catalog", func() {
 							"name": "foo",
 						},
 						Private: "someprivatehashedvalue",
+						Version: "8.1.0",
 					},
 				}
 				jsonString := `{
@@ -142,7 +143,8 @@ var _ = Describe("Catalog", func() {
 						"public": {
 							"name": "foo"
 						},
-						"private": "someprivatehashedvalue"
+						"private": "someprivatehashedvalue",
+						"version": "8.1.0"
 					}
 				}`
 
