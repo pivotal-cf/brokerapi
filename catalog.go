@@ -96,12 +96,6 @@ type ServiceMetadata struct {
 	AdditionalMetadata  map[string]interface{}
 }
 
-type MaintenanceInfo struct {
-	Public  map[string]string `json:"public,omitempty"`
-	Private string            `json:"private,omitempty"`
-	Version string            `json:"version,omitempty"`
-}
-
 func FreeValue(v bool) *bool {
 	return &v
 }
