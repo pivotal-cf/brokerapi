@@ -251,12 +251,12 @@ var _ = Describe("Service Broker API", func() {
 		})
 	})
 
-	Describe("OriginatingIdentityHeader", func(){
+	Describe("OriginatingIdentityHeader", func() {
 
 		var (
 			fakeServiceBroker *fakes.AutoFakeServiceBroker
-			req *http.Request
-			testServer *httptest.Server
+			req               *http.Request
+			testServer        *httptest.Server
 		)
 
 		BeforeEach(func() {
@@ -275,8 +275,8 @@ var _ = Describe("Service Broker API", func() {
 			testServer.Close()
 		})
 
-		When("X-Broker-API-Originating-Identity is passed", func(){
-			It("Adds it to the context", func(){
+		When("X-Broker-API-Originating-Identity is passed", func() {
+			It("Adds it to the context", func() {
 				originatingIdentity := "Originating Identity Name"
 				req.Header.Add("X-Broker-API-Originating-Identity", originatingIdentity)
 
@@ -289,8 +289,8 @@ var _ = Describe("Service Broker API", func() {
 
 			})
 		})
-		When("X-Broker-API-Originating-Identity is not passed", func(){
-			It("Adds empty originatingIdentity to the context", func(){
+		When("X-Broker-API-Originating-Identity is not passed", func() {
+			It("Adds empty originatingIdentity to the context", func() {
 				_, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -1204,6 +1204,23 @@ var _ = Describe("Service Broker API", func() {
 				It("contains service_id", func() {
 					makeInstanceDeprovisioningRequest(instanceID, "")
 					Expect(fakeServiceBroker.DeprovisionDetails.ServiceID).To(Equal("service-id"))
+				})
+
+				When("force query param", func() {
+					It("contains force as true when true is passed", func() {
+						makeInstanceDeprovisioningRequest(instanceID, "force=true")
+						Expect(fakeServiceBroker.DeprovisionDetails.Force).To(BeTrue())
+					})
+
+					It("contains force as false when false is passed", func() {
+						makeInstanceDeprovisioningRequest(instanceID, "force=false")
+						Expect(fakeServiceBroker.DeprovisionDetails.Force).To(BeFalse())
+					})
+
+					It("contains force as false when it is not passed", func() {
+						makeInstanceDeprovisioningRequest(instanceID, "")
+						Expect(fakeServiceBroker.DeprovisionDetails.Force).To(BeFalse())
+					})
 				})
 			})
 

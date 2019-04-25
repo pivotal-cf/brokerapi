@@ -327,6 +327,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	details := DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
+		Force:     req.FormValue("force") == "true",
 	}
 
 	if details.ServiceID == "" {

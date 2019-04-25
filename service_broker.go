@@ -34,7 +34,6 @@ type ServiceBroker interface {
 	//   GET /v2/catalog
 	Services(ctx context.Context) ([]Service, error)
 
-	
 	// Provision creates a new service instance
 	//   PUT /v2/service_instances/{instance_id}
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
@@ -163,6 +162,7 @@ type DeprovisionServiceSpec struct {
 type DeprovisionDetails struct {
 	PlanID    string `json:"plan_id"`
 	ServiceID string `json:"service_id"`
+	Force     bool   `json:"force"`
 }
 
 type UpdateDetails struct {
