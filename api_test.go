@@ -113,7 +113,7 @@ var _ = Describe("Service Broker API", func() {
 			response := makeRequest()
 
 			header := response.Header().Get("Content-Type")
-			Ω(header).Should(Equal("application/json"))
+			Expect(header).Should(Equal("application/json"))
 		})
 	})
 
@@ -338,14 +338,14 @@ var _ = Describe("Service Broker API", func() {
 			It("missing header X-Broker-API-Version", func() {
 				response := makeCatalogRequest("", false)
 				Expect(response.Code).To(Equal(412))
-				Expect(lastLogLine().Message).To(ContainSubstring(".catalog.broker-api-version-invalid"))
+				Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 			})
 
 			It("has wrong version of API", func() {
 				response := makeCatalogRequest("1.14", false)
 				Expect(response.Code).To(Equal(412))
-				Expect(lastLogLine().Message).To(ContainSubstring(".catalog.broker-api-version-invalid"))
+				Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 			})
 		})
@@ -806,7 +806,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = ""
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".provision.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
@@ -814,7 +814,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = "1.14"
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".provision.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
@@ -914,16 +914,18 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("the request is malformed", func() {
 				It("missing header X-Broker-API-Version", func() {
-					response := makeInstanceUpdateRequest("instance-id", details, queryString, "")
+					instanceID := "instance-id"
+					response := makeInstanceUpdateRequest(instanceID, details, queryString, "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".update.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
 				It("has wrong version of API", func() {
-					response := makeInstanceUpdateRequest("instance-id", details, queryString, "1.14")
+					instanceID := "instance-id"
+					response := makeInstanceUpdateRequest(instanceID, details, queryString, "1.14")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".update.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
@@ -1313,7 +1315,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = ""
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
@@ -1321,7 +1323,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = "1.1"
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".deprovision.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
@@ -1367,7 +1369,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = ""
 					response := makeGetInstanceRequest("instance-id")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
@@ -1375,7 +1377,7 @@ var _ = Describe("Service Broker API", func() {
 					apiVersion = "1.1"
 					response := makeGetInstanceRequest("instance-id")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
@@ -1384,7 +1386,7 @@ var _ = Describe("Service Broker API", func() {
 					response := makeGetInstanceRequest("instance-id")
 					Expect(response.StatusCode).To(Equal(412))
 
-					Expect(lastLogLine().Message).To(ContainSubstring(".getInstance.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getInstance.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("get instance endpoint only supported starting with OSB version 2.14"))
 				})
 
@@ -1505,14 +1507,14 @@ var _ = Describe("Service Broker API", func() {
 				It("missing header X-Broker-API-Version", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".bind.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
 				It("has wrong version of API", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".bind.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 
@@ -1919,14 +1921,14 @@ var _ = Describe("Service Broker API", func() {
 					It("missing header X-Broker-API-Version", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "")
 						Expect(response.StatusCode).To(Equal(412))
-						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.broker-api-version-invalid"))
+						Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 					})
 
 					It("has wrong version of API", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "1.1")
 						Expect(response.StatusCode).To(Equal(412))
-						Expect(lastLogLine().Message).To(ContainSubstring(".unbind.broker-api-version-invalid"))
+						Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 						Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 					})
 
@@ -2180,14 +2182,14 @@ var _ = Describe("Service Broker API", func() {
 				It("missing header X-Broker-API-Version", func() {
 					response := makeLastOperationRequest("instance-id", "", "")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".lastOperation.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
 				})
 
 				It("has wrong version of API", func() {
 					response := makeLastOperationRequest("instance-id", "", "1.2")
 					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring(".lastOperation.broker-api-version-invalid"))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
 				})
 			})

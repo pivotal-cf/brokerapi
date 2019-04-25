@@ -22,11 +22,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/pivotal-cf/brokerapi/middlewares/originating_identity_header"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/auth"
+	"github.com/pivotal-cf/brokerapi/middlewares"
 )
 
 const (
@@ -84,8 +83,11 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	AttachRoutes(router, serviceBroker, logger)
 
 	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
+	apiVersionMiddleware := middlewares.APIVersionMiddleware{LoggerFactory: logger}
+
 	router.Use(authMiddleware)
-	router.Use(originating_identity_header.AddToContext)
+	router.Use(middlewares.AddOriginatingIdentityToContext)
+	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
 
 	return router
 }
@@ -113,17 +115,6 @@ type serviceBrokerHandler struct {
 }
 
 func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
-	logger := h.logger.Session(catalogLogKey, lager.Data{})
-
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
-		logger.Error("Check failed", err)
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-
 	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {
 		h.respond(w, http.StatusInternalServerError, ErrorResponse{
@@ -146,14 +137,6 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	logger := h.logger.Session(provisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
-
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
 
 	var details ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
@@ -257,14 +240,6 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	})
 
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-
 	var details UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		h.logger.Error(invalidServiceDetailsErrorKey, err)
@@ -315,14 +290,6 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	logger := h.logger.Session(deprovisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
-
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
 
 	details := DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
@@ -378,16 +345,9 @@ func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Reque
 		instanceIDLogKey: instanceID,
 	})
 
-	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
-	if err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-	if versionCompatibility.Minor < 14 {
-		err = errors.New("get instance endpoint only supported starting with OSB version 2.14")
+	version := getAPIVersion(req)
+	if version.Minor < 14 {
+		err := errors.New("get instance endpoint only supported starting with OSB version 2.14")
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
 			Description: err.Error(),
 		})
@@ -428,17 +388,11 @@ func (h serviceBrokerHandler) getBinding(w http.ResponseWriter, req *http.Reques
 		bindingIDLogKey:  bindingID,
 	})
 
-	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
-	if err != nil {
+	version := getAPIVersion(req)
+	if version.Minor < 14 {
+		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
 			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-	if versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: "get binding endpoint only supported starting with OSB version 2.14",
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return
@@ -480,13 +434,10 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	})
 
-	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
-	if err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
+	version := getAPIVersion(req)
+	asyncAllowed := false
+	if version.Minor >= 14 {
+		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
 	var details BindDetails
@@ -512,11 +463,6 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 			Description: planIdError.Error(),
 		})
 		return
-	}
-
-	asyncAllowed := false
-	if versionCompatibility.Minor >= 14 {
-		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
 	binding, err := h.serviceBroker.Bind(req.Context(), instanceID, bindingID, details, asyncAllowed)
@@ -550,7 +496,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if versionCompatibility.Minor == 8 || versionCompatibility.Minor == 9 {
+	if version.Minor == 8 || version.Minor == 9 {
 		experimentalVols := []ExperimentalVolumeMount{}
 
 		for _, vol := range binding.VolumeMounts {
@@ -600,15 +546,16 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	})
 
-	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
-	if err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+	version := getAPIVersion(req)
+	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
+	if asyncAllowed && version.Minor < 14 {
+		err := errors.New("async unbinding only supported from OSB version 2.14 and up")
+		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return
 	}
-
 	details := UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
@@ -627,15 +574,6 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
-		return
-	}
-
-	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
-	if asyncAllowed && versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
-			Description: "async unbinding only supported from OSB version 2.14 and up",
-		})
-		logger.Error(apiVersionInvalidKey, err)
 		return
 	}
 
@@ -678,17 +616,11 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 		instanceIDLogKey: instanceID,
 	})
 
-	versionCompatibility, err := checkBrokerAPIVersionHdr(req)
-	if err != nil {
+	version := getAPIVersion(req)
+	if version.Minor < 14 {
+		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
 		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
 			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-	if versionCompatibility.Minor < 14 {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: "get binding endpoint only supported starting with OSB version 2.14",
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return
@@ -735,14 +667,6 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 		instanceIDLogKey: instanceID,
 	})
 
-	if _, err := checkBrokerAPIVersionHdr(req); err != nil {
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(apiVersionInvalidKey, err)
-		return
-	}
-
 	logger.Info("starting-check-for-operation")
 
 	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, pollDetails)
@@ -787,18 +711,11 @@ type brokerVersion struct {
 	Minor int
 }
 
-func checkBrokerAPIVersionHdr(req *http.Request) (brokerVersion, error) {
+func getAPIVersion(req *http.Request) brokerVersion {
 	var version brokerVersion
 	apiVersion := req.Header.Get("X-Broker-API-Version")
-	if apiVersion == "" {
-		return version, errors.New("X-Broker-API-Version Header not set")
-	}
-	if n, err := fmt.Sscanf(apiVersion, "%d.%d", &version.Major, &version.Minor); err != nil || n < 2 {
-		return version, errors.New("X-Broker-API-Version Header must contain a version")
-	}
 
-	if version.Major != 2 {
-		return version, errors.New("X-Broker-API-Version Header must be 2.x")
-	}
-	return version, nil
+	fmt.Sscanf(apiVersion, "%d.%d", &version.Major, &version.Minor)
+
+	return version
 }
