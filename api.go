@@ -25,6 +25,8 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/auth"
+	"github.com/pivotal-cf/brokerapi/domain"
+	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/middlewares"
 )
 
@@ -38,7 +40,6 @@ const (
 	updateLogKey               = "update"
 	lastOperationLogKey        = "lastOperation"
 	lastBindingOperationLogKey = "lastBindingOperation"
-	catalogLogKey              = "catalog"
 
 	instanceIDLogKey      = "instance-id"
 	instanceDetailsLogKey = "instance-details"
@@ -46,24 +47,12 @@ const (
 
 	invalidServiceDetailsErrorKey = "invalid-service-details"
 	invalidBindDetailsErrorKey    = "invalid-bind-details"
-	instanceLimitReachedErrorKey  = "instance-limit-reached"
-	instanceAlreadyExistsErrorKey = "instance-already-exists"
-	bindingAlreadyExistsErrorKey  = "binding-already-exists"
-	instanceMissingErrorKey       = "instance-missing"
-	bindingMissingErrorKey        = "binding-missing"
-	bindingNotFoundErrorKey       = "binding-not-found"
-	asyncRequiredKey              = "async-required"
-	planChangeNotSupportedKey     = "plan-change-not-supported"
 	unknownErrorKey               = "unknown-error"
-	invalidRawParamsKey           = "invalid-raw-params"
-	appGuidNotProvidedErrorKey    = "app-guid-not-provided"
 	apiVersionInvalidKey          = "broker-api-version-invalid"
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
 	invalidServiceID              = "invalid-service-id"
 	invalidPlanID                 = "invalid-plan-id"
-	concurrentAccessKey           = "get-instance-during-update"
-	maintenanceInfoConflictKey    = "maintenance-info-conflict"
 )
 
 var (
@@ -80,6 +69,7 @@ type BrokerCredentials struct {
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	router := mux.NewRouter()
+
 	AttachRoutes(router, serviceBroker, logger)
 
 	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
@@ -110,20 +100,20 @@ func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.
 }
 
 type serviceBrokerHandler struct {
-	serviceBroker ServiceBroker
+	serviceBroker domain.ServiceBroker
 	logger        lager.Logger
 }
 
 func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {
-		h.respond(w, http.StatusInternalServerError, ErrorResponse{
+		h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
 	}
 
-	catalog := CatalogResponse{
+	catalog := apiresponses.CatalogResponse{
 		Services: services,
 	}
 
@@ -138,10 +128,10 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 		instanceIDLogKey: instanceID,
 	})
 
-	var details ProvisionDetails
+	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -149,7 +139,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -157,7 +147,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 
 	if details.PlanID == "" {
 		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		return
@@ -174,7 +164,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	}
 	if !valid {
 		logger.Error(invalidServiceID, invalidServiceIDError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: invalidServiceIDError.Error(),
 		})
 		return
@@ -192,7 +182,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	}
 	if !valid {
 		logger.Error(invalidPlanID, invalidPlanIDError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: invalidPlanIDError.Error(),
 		})
 		return
@@ -213,7 +203,7 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -221,12 +211,12 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	}
 
 	if provisionResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, ProvisioningResponse{
+		h.respond(w, http.StatusAccepted, apiresponses.ProvisioningResponse{
 			DashboardURL:  provisionResponse.DashboardURL,
 			OperationData: provisionResponse.OperationData,
 		})
 	} else {
-		h.respond(w, http.StatusCreated, ProvisioningResponse{
+		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
 			DashboardURL: provisionResponse.DashboardURL,
 		})
 	}
@@ -240,10 +230,10 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	})
 
-	var details UpdateDetails
+	var details domain.UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		h.logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -251,7 +241,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -262,12 +252,12 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	updateServiceSpec, err := h.serviceBroker.Update(req.Context(), instanceID, details, acceptsIncompleteFlag)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			h.logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(h.logger), err.ErrorResponse())
 		default:
 			h.logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -278,7 +268,7 @@ func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, UpdateResponse{
+	h.respond(w, statusCode, apiresponses.UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
 		DashboardURL:  updateServiceSpec.DashboardURL,
 	})
@@ -291,14 +281,14 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 		instanceIDLogKey: instanceID,
 	})
 
-	details := DeprovisionDetails{
+	details := domain.DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
 		Force:     req.FormValue("force") == "true",
 	}
 
 	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		logger.Error(serviceIdMissingKey, serviceIdError)
@@ -306,7 +296,7 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 
 	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
@@ -318,12 +308,12 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	deprovisionSpec, err := h.serviceBroker.Deprovision(req.Context(), instanceID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -331,9 +321,9 @@ func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Reque
 	}
 
 	if deprovisionSpec.IsAsync {
-		h.respond(w, http.StatusAccepted, DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
+		h.respond(w, http.StatusAccepted, apiresponses.DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
 	} else {
-		h.respond(w, http.StatusOK, EmptyResponse{})
+		h.respond(w, http.StatusOK, apiresponses.EmptyResponse{})
 	}
 }
 
@@ -348,7 +338,7 @@ func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Reque
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get instance endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
@@ -358,19 +348,19 @@ func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Reque
 	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
 		return
 	}
 
-	h.respond(w, http.StatusOK, GetInstanceResponse{
+	h.respond(w, http.StatusOK, apiresponses.GetInstanceResponse{
 		ServiceID:    instanceDetails.ServiceID,
 		PlanID:       instanceDetails.PlanID,
 		DashboardURL: instanceDetails.DashboardURL,
@@ -391,7 +381,7 @@ func (h serviceBrokerHandler) getBinding(w http.ResponseWriter, req *http.Reques
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
@@ -401,20 +391,20 @@ func (h serviceBrokerHandler) getBinding(w http.ResponseWriter, req *http.Reques
 	binding, err := h.serviceBroker.GetBinding(req.Context(), instanceID, bindingID)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
 		return
 	}
 
-	h.respond(w, http.StatusOK, GetBindingResponse{
-		BindingResponse: BindingResponse{
+	h.respond(w, http.StatusOK, apiresponses.GetBindingResponse{
+		BindingResponse: apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			RouteServiceURL: binding.RouteServiceURL,
@@ -440,10 +430,10 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
-	var details BindDetails
+	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -451,7 +441,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -459,7 +449,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.PlanID == "" {
 		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		return
@@ -468,12 +458,12 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	binding, err := h.serviceBroker.Bind(req.Context(), instanceID, bindingID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			statusCode := err.ValidatedStatusCode(logger)
 			errorResponse := err.ErrorResponse()
-			if err == ErrInstanceDoesNotExist {
+			if err == apiresponses.ErrInstanceDoesNotExist {
 				// work around ErrInstanceDoesNotExist having different pre-refactor behaviour to other actions
-				errorResponse = ErrorResponse{
+				errorResponse = apiresponses.ErrorResponse{
 					Description: err.Error(),
 				}
 				statusCode = http.StatusNotFound
@@ -482,7 +472,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 			h.respond(w, statusCode, errorResponse)
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -490,27 +480,27 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if binding.IsAsync {
-		h.respond(w, http.StatusAccepted, AsyncBindResponse{
+		h.respond(w, http.StatusAccepted, apiresponses.AsyncBindResponse{
 			OperationData: binding.OperationData,
 		})
 		return
 	}
 
 	if version.Minor == 8 || version.Minor == 9 {
-		experimentalVols := []ExperimentalVolumeMount{}
+		experimentalVols := []domain.ExperimentalVolumeMount{}
 
 		for _, vol := range binding.VolumeMounts {
 			experimentalConfig, err := json.Marshal(vol.Device.MountConfig)
 			if err != nil {
 				logger.Error(unknownErrorKey, err)
-				h.respond(w, http.StatusInternalServerError, ErrorResponse{Description: err.Error()})
+				h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{Description: err.Error()})
 				return
 			}
 
-			experimentalVols = append(experimentalVols, ExperimentalVolumeMount{
+			experimentalVols = append(experimentalVols, domain.ExperimentalVolumeMount{
 				ContainerPath: vol.ContainerDir,
 				Mode:          vol.Mode,
-				Private: ExperimentalVolumeMountPrivate{
+				Private: domain.ExperimentalVolumeMountPrivate{
 					Driver:  vol.Driver,
 					GroupID: vol.Device.VolumeId,
 					Config:  string(experimentalConfig),
@@ -518,7 +508,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 			})
 		}
 
-		experimentalBinding := ExperimentalVolumeMountBindingResponse{
+		experimentalBinding := apiresponses.ExperimentalVolumeMountBindingResponse{
 			Credentials:     binding.Credentials,
 			RouteServiceURL: binding.RouteServiceURL,
 			SyslogDrainURL:  binding.SyslogDrainURL,
@@ -528,7 +518,7 @@ func (h serviceBrokerHandler) bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h.respond(w, http.StatusCreated, BindingResponse{
+	h.respond(w, http.StatusCreated, apiresponses.BindingResponse{
 		Credentials:     binding.Credentials,
 		SyslogDrainURL:  binding.SyslogDrainURL,
 		RouteServiceURL: binding.RouteServiceURL,
@@ -550,19 +540,19 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 	if asyncAllowed && version.Minor < 14 {
 		err := errors.New("async unbinding only supported from OSB version 2.14 and up")
-		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
 		return
 	}
-	details := UnbindDetails{
+	details := domain.UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
 	}
 
 	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		logger.Error(serviceIdMissingKey, serviceIdError)
@@ -570,7 +560,7 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, ErrorResponse{
+		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
@@ -580,12 +570,12 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	unbindResponse, err := h.serviceBroker.Unbind(req.Context(), instanceID, bindingID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -593,11 +583,11 @@ func (h serviceBrokerHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if unbindResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, UnbindResponse{
+		h.respond(w, http.StatusAccepted, apiresponses.UnbindResponse{
 			OperationData: unbindResponse.OperationData,
 		})
 	} else {
-		h.respond(w, http.StatusOK, EmptyResponse{})
+		h.respond(w, http.StatusOK, apiresponses.EmptyResponse{})
 	}
 
 }
@@ -606,7 +596,7 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
-	pollDetails := PollDetails{
+	pollDetails := domain.PollDetails{
 		PlanID:        req.FormValue("plan_id"),
 		ServiceID:     req.FormValue("service_id"),
 		OperationData: req.FormValue("operation"),
@@ -619,7 +609,7 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(apiVersionInvalidKey, err)
@@ -632,12 +622,12 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -646,18 +636,17 @@ func (h serviceBrokerHandler) lastBindingOperation(w http.ResponseWriter, req *h
 
 	logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-binding-operation")
 
-	lastOperationResponse := LastOperationResponse{
+	lastOperationResponse := apiresponses.LastOperationResponse{
 		State:       lastOperation.State,
 		Description: lastOperation.Description,
 	}
 	h.respond(w, http.StatusOK, lastOperationResponse)
-
 }
 
 func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
-	pollDetails := PollDetails{
+	pollDetails := domain.PollDetails{
 		PlanID:        req.FormValue("plan_id"),
 		ServiceID:     req.FormValue("service_id"),
 		OperationData: req.FormValue("operation"),
@@ -673,12 +662,12 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 
 	if err != nil {
 		switch err := err.(type) {
-		case *FailureResponse:
+		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
 			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -687,7 +676,7 @@ func (h serviceBrokerHandler) lastOperation(w http.ResponseWriter, req *http.Req
 
 	logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-operation")
 
-	lastOperationResponse := LastOperationResponse{
+	lastOperationResponse := apiresponses.LastOperationResponse{
 		State:       lastOperation.State,
 		Description: lastOperation.Description,
 	}

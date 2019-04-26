@@ -5,11 +5,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/pivotal-cf/brokerapi"
 	"github.com/pivotal-cf/brokerapi/domain"
 )
 
-type AutoFakeServiceBroker struct {
+type AutoFakeServiceBrokerNew struct {
 	BindStub        func(context.Context, string, string, domain.BindDetails, bool) (domain.Binding, error)
 	bindMutex       sync.RWMutex
 	bindArgsForCall []struct {
@@ -169,7 +168,7 @@ type AutoFakeServiceBroker struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *AutoFakeServiceBroker) Bind(arg1 context.Context, arg2 string, arg3 string, arg4 domain.BindDetails, arg5 bool) (domain.Binding, error) {
+func (fake *AutoFakeServiceBrokerNew) Bind(arg1 context.Context, arg2 string, arg3 string, arg4 domain.BindDetails, arg5 bool) (domain.Binding, error) {
 	fake.bindMutex.Lock()
 	ret, specificReturn := fake.bindReturnsOnCall[len(fake.bindArgsForCall)]
 	fake.bindArgsForCall = append(fake.bindArgsForCall, struct {
@@ -191,26 +190,26 @@ func (fake *AutoFakeServiceBroker) Bind(arg1 context.Context, arg2 string, arg3 
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) BindCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) BindCallCount() int {
 	fake.bindMutex.RLock()
 	defer fake.bindMutex.RUnlock()
 	return len(fake.bindArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) BindCalls(stub func(context.Context, string, string, domain.BindDetails, bool) (domain.Binding, error)) {
+func (fake *AutoFakeServiceBrokerNew) BindCalls(stub func(context.Context, string, string, domain.BindDetails, bool) (domain.Binding, error)) {
 	fake.bindMutex.Lock()
 	defer fake.bindMutex.Unlock()
 	fake.BindStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) BindArgsForCall(i int) (context.Context, string, string, domain.BindDetails, bool) {
+func (fake *AutoFakeServiceBrokerNew) BindArgsForCall(i int) (context.Context, string, string, domain.BindDetails, bool) {
 	fake.bindMutex.RLock()
 	defer fake.bindMutex.RUnlock()
 	argsForCall := fake.bindArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4, argsForCall.arg5
 }
 
-func (fake *AutoFakeServiceBroker) BindReturns(result1 domain.Binding, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) BindReturns(result1 domain.Binding, result2 error) {
 	fake.bindMutex.Lock()
 	defer fake.bindMutex.Unlock()
 	fake.BindStub = nil
@@ -220,7 +219,7 @@ func (fake *AutoFakeServiceBroker) BindReturns(result1 domain.Binding, result2 e
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) BindReturnsOnCall(i int, result1 domain.Binding, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) BindReturnsOnCall(i int, result1 domain.Binding, result2 error) {
 	fake.bindMutex.Lock()
 	defer fake.bindMutex.Unlock()
 	fake.BindStub = nil
@@ -236,7 +235,7 @@ func (fake *AutoFakeServiceBroker) BindReturnsOnCall(i int, result1 domain.Bindi
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Deprovision(arg1 context.Context, arg2 string, arg3 domain.DeprovisionDetails, arg4 bool) (domain.DeprovisionServiceSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) Deprovision(arg1 context.Context, arg2 string, arg3 domain.DeprovisionDetails, arg4 bool) (domain.DeprovisionServiceSpec, error) {
 	fake.deprovisionMutex.Lock()
 	ret, specificReturn := fake.deprovisionReturnsOnCall[len(fake.deprovisionArgsForCall)]
 	fake.deprovisionArgsForCall = append(fake.deprovisionArgsForCall, struct {
@@ -257,26 +256,26 @@ func (fake *AutoFakeServiceBroker) Deprovision(arg1 context.Context, arg2 string
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) DeprovisionCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) DeprovisionCallCount() int {
 	fake.deprovisionMutex.RLock()
 	defer fake.deprovisionMutex.RUnlock()
 	return len(fake.deprovisionArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) DeprovisionCalls(stub func(context.Context, string, domain.DeprovisionDetails, bool) (domain.DeprovisionServiceSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) DeprovisionCalls(stub func(context.Context, string, domain.DeprovisionDetails, bool) (domain.DeprovisionServiceSpec, error)) {
 	fake.deprovisionMutex.Lock()
 	defer fake.deprovisionMutex.Unlock()
 	fake.DeprovisionStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) DeprovisionArgsForCall(i int) (context.Context, string, domain.DeprovisionDetails, bool) {
+func (fake *AutoFakeServiceBrokerNew) DeprovisionArgsForCall(i int) (context.Context, string, domain.DeprovisionDetails, bool) {
 	fake.deprovisionMutex.RLock()
 	defer fake.deprovisionMutex.RUnlock()
 	argsForCall := fake.deprovisionArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *AutoFakeServiceBroker) DeprovisionReturns(result1 domain.DeprovisionServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) DeprovisionReturns(result1 domain.DeprovisionServiceSpec, result2 error) {
 	fake.deprovisionMutex.Lock()
 	defer fake.deprovisionMutex.Unlock()
 	fake.DeprovisionStub = nil
@@ -286,7 +285,7 @@ func (fake *AutoFakeServiceBroker) DeprovisionReturns(result1 domain.Deprovision
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) DeprovisionReturnsOnCall(i int, result1 domain.DeprovisionServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) DeprovisionReturnsOnCall(i int, result1 domain.DeprovisionServiceSpec, result2 error) {
 	fake.deprovisionMutex.Lock()
 	defer fake.deprovisionMutex.Unlock()
 	fake.DeprovisionStub = nil
@@ -302,7 +301,7 @@ func (fake *AutoFakeServiceBroker) DeprovisionReturnsOnCall(i int, result1 domai
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetBinding(arg1 context.Context, arg2 string, arg3 string) (domain.GetBindingSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) GetBinding(arg1 context.Context, arg2 string, arg3 string) (domain.GetBindingSpec, error) {
 	fake.getBindingMutex.Lock()
 	ret, specificReturn := fake.getBindingReturnsOnCall[len(fake.getBindingArgsForCall)]
 	fake.getBindingArgsForCall = append(fake.getBindingArgsForCall, struct {
@@ -322,26 +321,26 @@ func (fake *AutoFakeServiceBroker) GetBinding(arg1 context.Context, arg2 string,
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) GetBindingCallCount() int {
 	fake.getBindingMutex.RLock()
 	defer fake.getBindingMutex.RUnlock()
 	return len(fake.getBindingArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingCalls(stub func(context.Context, string, string) (domain.GetBindingSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) GetBindingCalls(stub func(context.Context, string, string) (domain.GetBindingSpec, error)) {
 	fake.getBindingMutex.Lock()
 	defer fake.getBindingMutex.Unlock()
 	fake.GetBindingStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingArgsForCall(i int) (context.Context, string, string) {
+func (fake *AutoFakeServiceBrokerNew) GetBindingArgsForCall(i int) (context.Context, string, string) {
 	fake.getBindingMutex.RLock()
 	defer fake.getBindingMutex.RUnlock()
 	argsForCall := fake.getBindingArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingReturns(result1 domain.GetBindingSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) GetBindingReturns(result1 domain.GetBindingSpec, result2 error) {
 	fake.getBindingMutex.Lock()
 	defer fake.getBindingMutex.Unlock()
 	fake.GetBindingStub = nil
@@ -351,7 +350,7 @@ func (fake *AutoFakeServiceBroker) GetBindingReturns(result1 domain.GetBindingSp
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingReturnsOnCall(i int, result1 domain.GetBindingSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) GetBindingReturnsOnCall(i int, result1 domain.GetBindingSpec, result2 error) {
 	fake.getBindingMutex.Lock()
 	defer fake.getBindingMutex.Unlock()
 	fake.GetBindingStub = nil
@@ -367,7 +366,7 @@ func (fake *AutoFakeServiceBroker) GetBindingReturnsOnCall(i int, result1 domain
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetInstance(arg1 context.Context, arg2 string) (domain.GetInstanceDetailsSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) GetInstance(arg1 context.Context, arg2 string) (domain.GetInstanceDetailsSpec, error) {
 	fake.getInstanceMutex.Lock()
 	ret, specificReturn := fake.getInstanceReturnsOnCall[len(fake.getInstanceArgsForCall)]
 	fake.getInstanceArgsForCall = append(fake.getInstanceArgsForCall, struct {
@@ -386,26 +385,26 @@ func (fake *AutoFakeServiceBroker) GetInstance(arg1 context.Context, arg2 string
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) GetInstanceCallCount() int {
 	fake.getInstanceMutex.RLock()
 	defer fake.getInstanceMutex.RUnlock()
 	return len(fake.getInstanceArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceCalls(stub func(context.Context, string) (domain.GetInstanceDetailsSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) GetInstanceCalls(stub func(context.Context, string) (domain.GetInstanceDetailsSpec, error)) {
 	fake.getInstanceMutex.Lock()
 	defer fake.getInstanceMutex.Unlock()
 	fake.GetInstanceStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceArgsForCall(i int) (context.Context, string) {
+func (fake *AutoFakeServiceBrokerNew) GetInstanceArgsForCall(i int) (context.Context, string) {
 	fake.getInstanceMutex.RLock()
 	defer fake.getInstanceMutex.RUnlock()
 	argsForCall := fake.getInstanceArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceReturns(result1 domain.GetInstanceDetailsSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) GetInstanceReturns(result1 domain.GetInstanceDetailsSpec, result2 error) {
 	fake.getInstanceMutex.Lock()
 	defer fake.getInstanceMutex.Unlock()
 	fake.GetInstanceStub = nil
@@ -415,7 +414,7 @@ func (fake *AutoFakeServiceBroker) GetInstanceReturns(result1 domain.GetInstance
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceReturnsOnCall(i int, result1 domain.GetInstanceDetailsSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) GetInstanceReturnsOnCall(i int, result1 domain.GetInstanceDetailsSpec, result2 error) {
 	fake.getInstanceMutex.Lock()
 	defer fake.getInstanceMutex.Unlock()
 	fake.GetInstanceStub = nil
@@ -431,7 +430,7 @@ func (fake *AutoFakeServiceBroker) GetInstanceReturnsOnCall(i int, result1 domai
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperation(arg1 context.Context, arg2 string, arg3 string, arg4 domain.PollDetails) (domain.LastOperation, error) {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperation(arg1 context.Context, arg2 string, arg3 string, arg4 domain.PollDetails) (domain.LastOperation, error) {
 	fake.lastBindingOperationMutex.Lock()
 	ret, specificReturn := fake.lastBindingOperationReturnsOnCall[len(fake.lastBindingOperationArgsForCall)]
 	fake.lastBindingOperationArgsForCall = append(fake.lastBindingOperationArgsForCall, struct {
@@ -452,26 +451,26 @@ func (fake *AutoFakeServiceBroker) LastBindingOperation(arg1 context.Context, ar
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperationCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperationCallCount() int {
 	fake.lastBindingOperationMutex.RLock()
 	defer fake.lastBindingOperationMutex.RUnlock()
 	return len(fake.lastBindingOperationArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperationCalls(stub func(context.Context, string, string, domain.PollDetails) (domain.LastOperation, error)) {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperationCalls(stub func(context.Context, string, string, domain.PollDetails) (domain.LastOperation, error)) {
 	fake.lastBindingOperationMutex.Lock()
 	defer fake.lastBindingOperationMutex.Unlock()
 	fake.LastBindingOperationStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperationArgsForCall(i int) (context.Context, string, string, domain.PollDetails) {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperationArgsForCall(i int) (context.Context, string, string, domain.PollDetails) {
 	fake.lastBindingOperationMutex.RLock()
 	defer fake.lastBindingOperationMutex.RUnlock()
 	argsForCall := fake.lastBindingOperationArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperationReturns(result1 domain.LastOperation, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperationReturns(result1 domain.LastOperation, result2 error) {
 	fake.lastBindingOperationMutex.Lock()
 	defer fake.lastBindingOperationMutex.Unlock()
 	fake.LastBindingOperationStub = nil
@@ -481,7 +480,7 @@ func (fake *AutoFakeServiceBroker) LastBindingOperationReturns(result1 domain.La
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) LastBindingOperationReturnsOnCall(i int, result1 domain.LastOperation, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) LastBindingOperationReturnsOnCall(i int, result1 domain.LastOperation, result2 error) {
 	fake.lastBindingOperationMutex.Lock()
 	defer fake.lastBindingOperationMutex.Unlock()
 	fake.LastBindingOperationStub = nil
@@ -497,7 +496,7 @@ func (fake *AutoFakeServiceBroker) LastBindingOperationReturnsOnCall(i int, resu
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) LastOperation(arg1 context.Context, arg2 string, arg3 domain.PollDetails) (domain.LastOperation, error) {
+func (fake *AutoFakeServiceBrokerNew) LastOperation(arg1 context.Context, arg2 string, arg3 domain.PollDetails) (domain.LastOperation, error) {
 	fake.lastOperationMutex.Lock()
 	ret, specificReturn := fake.lastOperationReturnsOnCall[len(fake.lastOperationArgsForCall)]
 	fake.lastOperationArgsForCall = append(fake.lastOperationArgsForCall, struct {
@@ -517,26 +516,26 @@ func (fake *AutoFakeServiceBroker) LastOperation(arg1 context.Context, arg2 stri
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) LastOperationCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) LastOperationCallCount() int {
 	fake.lastOperationMutex.RLock()
 	defer fake.lastOperationMutex.RUnlock()
 	return len(fake.lastOperationArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) LastOperationCalls(stub func(context.Context, string, domain.PollDetails) (domain.LastOperation, error)) {
+func (fake *AutoFakeServiceBrokerNew) LastOperationCalls(stub func(context.Context, string, domain.PollDetails) (domain.LastOperation, error)) {
 	fake.lastOperationMutex.Lock()
 	defer fake.lastOperationMutex.Unlock()
 	fake.LastOperationStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) LastOperationArgsForCall(i int) (context.Context, string, domain.PollDetails) {
+func (fake *AutoFakeServiceBrokerNew) LastOperationArgsForCall(i int) (context.Context, string, domain.PollDetails) {
 	fake.lastOperationMutex.RLock()
 	defer fake.lastOperationMutex.RUnlock()
 	argsForCall := fake.lastOperationArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *AutoFakeServiceBroker) LastOperationReturns(result1 domain.LastOperation, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) LastOperationReturns(result1 domain.LastOperation, result2 error) {
 	fake.lastOperationMutex.Lock()
 	defer fake.lastOperationMutex.Unlock()
 	fake.LastOperationStub = nil
@@ -546,7 +545,7 @@ func (fake *AutoFakeServiceBroker) LastOperationReturns(result1 domain.LastOpera
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) LastOperationReturnsOnCall(i int, result1 domain.LastOperation, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) LastOperationReturnsOnCall(i int, result1 domain.LastOperation, result2 error) {
 	fake.lastOperationMutex.Lock()
 	defer fake.lastOperationMutex.Unlock()
 	fake.LastOperationStub = nil
@@ -562,7 +561,7 @@ func (fake *AutoFakeServiceBroker) LastOperationReturnsOnCall(i int, result1 dom
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Provision(arg1 context.Context, arg2 string, arg3 domain.ProvisionDetails, arg4 bool) (domain.ProvisionedServiceSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) Provision(arg1 context.Context, arg2 string, arg3 domain.ProvisionDetails, arg4 bool) (domain.ProvisionedServiceSpec, error) {
 	fake.provisionMutex.Lock()
 	ret, specificReturn := fake.provisionReturnsOnCall[len(fake.provisionArgsForCall)]
 	fake.provisionArgsForCall = append(fake.provisionArgsForCall, struct {
@@ -583,26 +582,26 @@ func (fake *AutoFakeServiceBroker) Provision(arg1 context.Context, arg2 string, 
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) ProvisionCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) ProvisionCallCount() int {
 	fake.provisionMutex.RLock()
 	defer fake.provisionMutex.RUnlock()
 	return len(fake.provisionArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) ProvisionCalls(stub func(context.Context, string, domain.ProvisionDetails, bool) (domain.ProvisionedServiceSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) ProvisionCalls(stub func(context.Context, string, domain.ProvisionDetails, bool) (domain.ProvisionedServiceSpec, error)) {
 	fake.provisionMutex.Lock()
 	defer fake.provisionMutex.Unlock()
 	fake.ProvisionStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) ProvisionArgsForCall(i int) (context.Context, string, domain.ProvisionDetails, bool) {
+func (fake *AutoFakeServiceBrokerNew) ProvisionArgsForCall(i int) (context.Context, string, domain.ProvisionDetails, bool) {
 	fake.provisionMutex.RLock()
 	defer fake.provisionMutex.RUnlock()
 	argsForCall := fake.provisionArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *AutoFakeServiceBroker) ProvisionReturns(result1 domain.ProvisionedServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) ProvisionReturns(result1 domain.ProvisionedServiceSpec, result2 error) {
 	fake.provisionMutex.Lock()
 	defer fake.provisionMutex.Unlock()
 	fake.ProvisionStub = nil
@@ -612,7 +611,7 @@ func (fake *AutoFakeServiceBroker) ProvisionReturns(result1 domain.ProvisionedSe
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) ProvisionReturnsOnCall(i int, result1 domain.ProvisionedServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) ProvisionReturnsOnCall(i int, result1 domain.ProvisionedServiceSpec, result2 error) {
 	fake.provisionMutex.Lock()
 	defer fake.provisionMutex.Unlock()
 	fake.ProvisionStub = nil
@@ -628,7 +627,7 @@ func (fake *AutoFakeServiceBroker) ProvisionReturnsOnCall(i int, result1 domain.
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Services(arg1 context.Context) ([]domain.Service, error) {
+func (fake *AutoFakeServiceBrokerNew) Services(arg1 context.Context) ([]domain.Service, error) {
 	fake.servicesMutex.Lock()
 	ret, specificReturn := fake.servicesReturnsOnCall[len(fake.servicesArgsForCall)]
 	fake.servicesArgsForCall = append(fake.servicesArgsForCall, struct {
@@ -646,26 +645,26 @@ func (fake *AutoFakeServiceBroker) Services(arg1 context.Context) ([]domain.Serv
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) ServicesCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) ServicesCallCount() int {
 	fake.servicesMutex.RLock()
 	defer fake.servicesMutex.RUnlock()
 	return len(fake.servicesArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) ServicesCalls(stub func(context.Context) ([]domain.Service, error)) {
+func (fake *AutoFakeServiceBrokerNew) ServicesCalls(stub func(context.Context) ([]domain.Service, error)) {
 	fake.servicesMutex.Lock()
 	defer fake.servicesMutex.Unlock()
 	fake.ServicesStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) ServicesArgsForCall(i int) context.Context {
+func (fake *AutoFakeServiceBrokerNew) ServicesArgsForCall(i int) context.Context {
 	fake.servicesMutex.RLock()
 	defer fake.servicesMutex.RUnlock()
 	argsForCall := fake.servicesArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *AutoFakeServiceBroker) ServicesReturns(result1 []domain.Service, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) ServicesReturns(result1 []domain.Service, result2 error) {
 	fake.servicesMutex.Lock()
 	defer fake.servicesMutex.Unlock()
 	fake.ServicesStub = nil
@@ -675,7 +674,7 @@ func (fake *AutoFakeServiceBroker) ServicesReturns(result1 []domain.Service, res
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) ServicesReturnsOnCall(i int, result1 []domain.Service, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) ServicesReturnsOnCall(i int, result1 []domain.Service, result2 error) {
 	fake.servicesMutex.Lock()
 	defer fake.servicesMutex.Unlock()
 	fake.ServicesStub = nil
@@ -691,7 +690,7 @@ func (fake *AutoFakeServiceBroker) ServicesReturnsOnCall(i int, result1 []domain
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Unbind(arg1 context.Context, arg2 string, arg3 string, arg4 domain.UnbindDetails, arg5 bool) (domain.UnbindSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) Unbind(arg1 context.Context, arg2 string, arg3 string, arg4 domain.UnbindDetails, arg5 bool) (domain.UnbindSpec, error) {
 	fake.unbindMutex.Lock()
 	ret, specificReturn := fake.unbindReturnsOnCall[len(fake.unbindArgsForCall)]
 	fake.unbindArgsForCall = append(fake.unbindArgsForCall, struct {
@@ -713,26 +712,26 @@ func (fake *AutoFakeServiceBroker) Unbind(arg1 context.Context, arg2 string, arg
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) UnbindCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) UnbindCallCount() int {
 	fake.unbindMutex.RLock()
 	defer fake.unbindMutex.RUnlock()
 	return len(fake.unbindArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) UnbindCalls(stub func(context.Context, string, string, domain.UnbindDetails, bool) (domain.UnbindSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) UnbindCalls(stub func(context.Context, string, string, domain.UnbindDetails, bool) (domain.UnbindSpec, error)) {
 	fake.unbindMutex.Lock()
 	defer fake.unbindMutex.Unlock()
 	fake.UnbindStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) UnbindArgsForCall(i int) (context.Context, string, string, domain.UnbindDetails, bool) {
+func (fake *AutoFakeServiceBrokerNew) UnbindArgsForCall(i int) (context.Context, string, string, domain.UnbindDetails, bool) {
 	fake.unbindMutex.RLock()
 	defer fake.unbindMutex.RUnlock()
 	argsForCall := fake.unbindArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4, argsForCall.arg5
 }
 
-func (fake *AutoFakeServiceBroker) UnbindReturns(result1 domain.UnbindSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) UnbindReturns(result1 domain.UnbindSpec, result2 error) {
 	fake.unbindMutex.Lock()
 	defer fake.unbindMutex.Unlock()
 	fake.UnbindStub = nil
@@ -742,7 +741,7 @@ func (fake *AutoFakeServiceBroker) UnbindReturns(result1 domain.UnbindSpec, resu
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) UnbindReturnsOnCall(i int, result1 domain.UnbindSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) UnbindReturnsOnCall(i int, result1 domain.UnbindSpec, result2 error) {
 	fake.unbindMutex.Lock()
 	defer fake.unbindMutex.Unlock()
 	fake.UnbindStub = nil
@@ -758,7 +757,7 @@ func (fake *AutoFakeServiceBroker) UnbindReturnsOnCall(i int, result1 domain.Unb
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Update(arg1 context.Context, arg2 string, arg3 domain.UpdateDetails, arg4 bool) (domain.UpdateServiceSpec, error) {
+func (fake *AutoFakeServiceBrokerNew) Update(arg1 context.Context, arg2 string, arg3 domain.UpdateDetails, arg4 bool) (domain.UpdateServiceSpec, error) {
 	fake.updateMutex.Lock()
 	ret, specificReturn := fake.updateReturnsOnCall[len(fake.updateArgsForCall)]
 	fake.updateArgsForCall = append(fake.updateArgsForCall, struct {
@@ -779,26 +778,26 @@ func (fake *AutoFakeServiceBroker) Update(arg1 context.Context, arg2 string, arg
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *AutoFakeServiceBroker) UpdateCallCount() int {
+func (fake *AutoFakeServiceBrokerNew) UpdateCallCount() int {
 	fake.updateMutex.RLock()
 	defer fake.updateMutex.RUnlock()
 	return len(fake.updateArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) UpdateCalls(stub func(context.Context, string, domain.UpdateDetails, bool) (domain.UpdateServiceSpec, error)) {
+func (fake *AutoFakeServiceBrokerNew) UpdateCalls(stub func(context.Context, string, domain.UpdateDetails, bool) (domain.UpdateServiceSpec, error)) {
 	fake.updateMutex.Lock()
 	defer fake.updateMutex.Unlock()
 	fake.UpdateStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) UpdateArgsForCall(i int) (context.Context, string, domain.UpdateDetails, bool) {
+func (fake *AutoFakeServiceBrokerNew) UpdateArgsForCall(i int) (context.Context, string, domain.UpdateDetails, bool) {
 	fake.updateMutex.RLock()
 	defer fake.updateMutex.RUnlock()
 	argsForCall := fake.updateArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *AutoFakeServiceBroker) UpdateReturns(result1 domain.UpdateServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) UpdateReturns(result1 domain.UpdateServiceSpec, result2 error) {
 	fake.updateMutex.Lock()
 	defer fake.updateMutex.Unlock()
 	fake.UpdateStub = nil
@@ -808,7 +807,7 @@ func (fake *AutoFakeServiceBroker) UpdateReturns(result1 domain.UpdateServiceSpe
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) UpdateReturnsOnCall(i int, result1 domain.UpdateServiceSpec, result2 error) {
+func (fake *AutoFakeServiceBrokerNew) UpdateReturnsOnCall(i int, result1 domain.UpdateServiceSpec, result2 error) {
 	fake.updateMutex.Lock()
 	defer fake.updateMutex.Unlock()
 	fake.UpdateStub = nil
@@ -824,7 +823,7 @@ func (fake *AutoFakeServiceBroker) UpdateReturnsOnCall(i int, result1 domain.Upd
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) Invocations() map[string][][]interface{} {
+func (fake *AutoFakeServiceBrokerNew) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.bindMutex.RLock()
@@ -854,7 +853,7 @@ func (fake *AutoFakeServiceBroker) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *AutoFakeServiceBroker) recordInvocation(key string, args []interface{}) {
+func (fake *AutoFakeServiceBrokerNew) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -866,4 +865,4 @@ func (fake *AutoFakeServiceBroker) recordInvocation(key string, args []interface
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ brokerapi.ServiceBroker = new(AutoFakeServiceBroker)
+var _ domain.ServiceBroker = new(AutoFakeServiceBrokerNew)

@@ -254,13 +254,13 @@ var _ = Describe("Service Broker API", func() {
 	Describe("OriginatingIdentityHeader", func() {
 
 		var (
-			fakeServiceBroker *fakes.AutoFakeServiceBroker
+			fakeServiceBroker *fakes.AutoFakeServiceBrokerNew
 			req               *http.Request
 			testServer        *httptest.Server
 		)
 
 		BeforeEach(func() {
-			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
+			fakeServiceBroker = new(fakes.AutoFakeServiceBrokerNew)
 			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
