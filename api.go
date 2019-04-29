@@ -20,13 +20,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/auth"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/handlers"
 	"github.com/pivotal-cf/brokerapi/middlewares"
 )
 
@@ -84,13 +84,15 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
 	handler := serviceBrokerHandler{serviceBroker: serviceBroker, logger: logger}
-	router.HandleFunc("/v2/catalog", handler.catalog).Methods("GET")
+
+	apiHandler := handlers.APIHandler{serviceBroker, logger}
+	router.HandleFunc("/v2/catalog", apiHandler.Catalog).Methods("GET")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}", handler.getInstance).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", handler.provision).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}", handler.deprovision).Methods("DELETE")
+	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Provision).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Deprovision).Methods("DELETE")
 	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", handler.lastOperation).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", handler.update).Methods("PATCH")
+	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Update).Methods("PATCH")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.getBinding).Methods("GET")
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.bind).Methods("PUT")
@@ -102,229 +104,6 @@ func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.
 type serviceBrokerHandler struct {
 	serviceBroker domain.ServiceBroker
 	logger        lager.Logger
-}
-
-func (h serviceBrokerHandler) catalog(w http.ResponseWriter, req *http.Request) {
-	services, err := h.serviceBroker.Services(req.Context())
-	if err != nil {
-		h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
-			Description: err.Error(),
-		})
-		return
-	}
-
-	catalog := apiresponses.CatalogResponse{
-		Services: services,
-	}
-
-	h.respond(w, http.StatusOK, catalog)
-}
-
-func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	instanceID := vars["instance_id"]
-
-	logger := h.logger.Session(provisionLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	})
-
-	var details domain.ProvisionDetails
-	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
-		logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
-			Description: err.Error(),
-		})
-		return
-	}
-
-	if details.ServiceID == "" {
-		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: serviceIdError.Error(),
-		})
-		return
-	}
-
-	if details.PlanID == "" {
-		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: planIdError.Error(),
-		})
-		return
-	}
-
-	valid := false
-	services, _ := h.serviceBroker.Services(req.Context())
-	for _, service := range services {
-		if service.ID == details.ServiceID {
-			req = req.WithContext(AddServiceToContext(req.Context(), &service))
-			valid = true
-			break
-		}
-	}
-	if !valid {
-		logger.Error(invalidServiceID, invalidServiceIDError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: invalidServiceIDError.Error(),
-		})
-		return
-	}
-
-	valid = false
-	for _, service := range services {
-		for _, plan := range service.Plans {
-			if plan.ID == details.PlanID {
-				req = req.WithContext(AddServicePlanToContext(req.Context(), &plan))
-				valid = true
-				break
-			}
-		}
-	}
-	if !valid {
-		logger.Error(invalidPlanID, invalidPlanIDError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: invalidPlanIDError.Error(),
-		})
-		return
-	}
-
-	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
-
-	logger = logger.WithData(lager.Data{
-		instanceDetailsLogKey: details,
-	})
-
-	provisionResponse, err := h.serviceBroker.Provision(req.Context(), instanceID, details, asyncAllowed)
-
-	if err != nil {
-		switch err := err.(type) {
-		case *FailureResponse:
-			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
-		default:
-			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
-				Description: err.Error(),
-			})
-		}
-		return
-	}
-
-	if provisionResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.ProvisioningResponse{
-			DashboardURL:  provisionResponse.DashboardURL,
-			OperationData: provisionResponse.OperationData,
-		})
-	} else {
-		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
-			DashboardURL: provisionResponse.DashboardURL,
-		})
-	}
-}
-
-func (h serviceBrokerHandler) update(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	instanceID := vars["instance_id"]
-
-	logger := h.logger.Session(updateLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	})
-
-	var details domain.UpdateDetails
-	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
-		h.logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
-			Description: err.Error(),
-		})
-		return
-	}
-
-	if details.ServiceID == "" {
-		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: serviceIdError.Error(),
-		})
-		return
-	}
-
-	acceptsIncompleteFlag, _ := strconv.ParseBool(req.URL.Query().Get("accepts_incomplete"))
-
-	updateServiceSpec, err := h.serviceBroker.Update(req.Context(), instanceID, details, acceptsIncompleteFlag)
-	if err != nil {
-		switch err := err.(type) {
-		case *apiresponses.FailureResponse:
-			h.logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(h.logger), err.ErrorResponse())
-		default:
-			h.logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
-				Description: err.Error(),
-			})
-		}
-		return
-	}
-
-	statusCode := http.StatusOK
-	if updateServiceSpec.IsAsync {
-		statusCode = http.StatusAccepted
-	}
-	h.respond(w, statusCode, apiresponses.UpdateResponse{
-		OperationData: updateServiceSpec.OperationData,
-		DashboardURL:  updateServiceSpec.DashboardURL,
-	})
-}
-
-func (h serviceBrokerHandler) deprovision(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	instanceID := vars["instance_id"]
-	logger := h.logger.Session(deprovisionLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	})
-
-	details := domain.DeprovisionDetails{
-		PlanID:    req.FormValue("plan_id"),
-		ServiceID: req.FormValue("service_id"),
-		Force:     req.FormValue("force") == "true",
-	}
-
-	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: serviceIdError.Error(),
-		})
-		logger.Error(serviceIdMissingKey, serviceIdError)
-		return
-	}
-
-	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
-			Description: planIdError.Error(),
-		})
-		logger.Error(planIdMissingKey, planIdError)
-		return
-	}
-
-	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
-
-	deprovisionSpec, err := h.serviceBroker.Deprovision(req.Context(), instanceID, details, asyncAllowed)
-	if err != nil {
-		switch err := err.(type) {
-		case *apiresponses.FailureResponse:
-			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
-		default:
-			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
-				Description: err.Error(),
-			})
-		}
-		return
-	}
-
-	if deprovisionSpec.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
-	} else {
-		h.respond(w, http.StatusOK, apiresponses.EmptyResponse{})
-	}
 }
 
 func (h serviceBrokerHandler) getInstance(w http.ResponseWriter, req *http.Request) {
