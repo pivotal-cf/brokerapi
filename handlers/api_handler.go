@@ -18,8 +18,6 @@ const (
 	unknownErrorKey               = "unknown-error"
 	apiVersionInvalidKey          = "broker-api-version-invalid"
 
-	bindLogKey = "bind"
-
 	bindingIDLogKey = "binding-id"
 
 	unbindLogKey               = "unbind"
