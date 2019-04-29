@@ -19,8 +19,6 @@ const (
 	apiVersionInvalidKey          = "broker-api-version-invalid"
 
 	bindingIDLogKey = "binding-id"
-
-	lastOperationLogKey = "lastOperation"
 )
 
 var (
