@@ -29,8 +29,12 @@ var (
 )
 
 type APIHandler struct {
-	ServiceBroker domain.ServiceBroker
-	Logger        lager.Logger
+	serviceBroker domain.ServiceBroker
+	logger        lager.Logger
+}
+
+func NewApiHandler(broker domain.ServiceBroker, logger lager.Logger) APIHandler {
+	return APIHandler{broker, logger}
 }
 
 func (h APIHandler) respond(w http.ResponseWriter, status int, response interface{}) {
@@ -40,7 +44,7 @@ func (h APIHandler) respond(w http.ResponseWriter, status int, response interfac
 	encoder := json.NewEncoder(w)
 	err := encoder.Encode(response)
 	if err != nil {
-		h.Logger.Error("encoding response", err, lager.Data{"status": status, "response": response})
+		h.logger.Error("encoding response", err, lager.Data{"status": status, "response": response})
 	}
 }
 

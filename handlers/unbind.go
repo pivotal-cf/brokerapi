@@ -17,7 +17,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
 
-	logger := h.Logger.Session(unbindLogKey, lager.Data{
+	logger := h.logger.Session(unbindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
 	})
@@ -53,7 +53,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	unbindResponse, err := h.ServiceBroker.Unbind(req.Context(), instanceID, bindingID, details, asyncAllowed)
+	unbindResponse, err := h.serviceBroker.Unbind(req.Context(), instanceID, bindingID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:

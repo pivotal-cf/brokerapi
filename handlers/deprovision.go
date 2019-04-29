@@ -14,7 +14,7 @@ const deprovisionLogKey = "deprovision"
 func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
-	logger := h.Logger.Session(deprovisionLogKey, lager.Data{
+	logger := h.logger.Session(deprovisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
@@ -42,7 +42,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 
-	deprovisionSpec, err := h.ServiceBroker.Deprovision(req.Context(), instanceID, details, asyncAllowed)
+	deprovisionSpec, err := h.serviceBroker.Deprovision(req.Context(), instanceID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:

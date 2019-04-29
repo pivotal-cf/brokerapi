@@ -20,13 +20,13 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.Logger.Session(lastOperationLogKey, lager.Data{
+	logger := h.logger.Session(lastOperationLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
 	logger.Info("starting-check-for-operation")
 
-	lastOperation, err := h.ServiceBroker.LastOperation(req.Context(), instanceID, pollDetails)
+	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, pollDetails)
 
 	if err != nil {
 		switch err := err.(type) {

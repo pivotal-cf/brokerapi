@@ -22,7 +22,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.Logger.Session(lastBindingOperationLogKey, lager.Data{
+	logger := h.logger.Session(lastBindingOperationLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
@@ -38,7 +38,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 
 	logger.Info("starting-check-for-binding-operation")
 
-	lastOperation, err := h.ServiceBroker.LastBindingOperation(req.Context(), instanceID, bindingID, pollDetails)
+	lastOperation, err := h.serviceBroker.LastBindingOperation(req.Context(), instanceID, bindingID, pollDetails)
 
 	if err != nil {
 		switch err := err.(type) {

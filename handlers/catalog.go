@@ -8,7 +8,7 @@ import (
 
 func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
 
-	services, err := h.ServiceBroker.Services(req.Context())
+	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {
 		h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
 			Description: err.Error(),

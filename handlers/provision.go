@@ -24,7 +24,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
-	logger := h.Logger.Session(provisionLogKey, lager.Data{
+	logger := h.logger.Session(provisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
@@ -54,7 +54,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	valid := false
-	services, _ := h.ServiceBroker.Services(req.Context())
+	services, _ := h.serviceBroker.Services(req.Context())
 	for _, service := range services {
 		if service.ID == details.ServiceID {
 			req = req.WithContext(utils.AddServiceToContext(req.Context(), &service))
@@ -94,7 +94,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		instanceDetailsLogKey: details,
 	})
 
-	provisionResponse, err := h.ServiceBroker.Provision(req.Context(), instanceID, details, asyncAllowed)
+	provisionResponse, err := h.serviceBroker.Provision(req.Context(), instanceID, details, asyncAllowed)
 
 	if err != nil {
 		switch err := err.(type) {

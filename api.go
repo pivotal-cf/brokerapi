@@ -46,7 +46,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 }
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
-	apiHandler := handlers.APIHandler{serviceBroker, logger}
+	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	router.HandleFunc("/v2/catalog", apiHandler.Catalog).Methods("GET")
 
 	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.GetInstance).Methods("GET")

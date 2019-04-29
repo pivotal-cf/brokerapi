@@ -16,7 +16,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
 
-	logger := h.Logger.Session(getBindLogKey, lager.Data{
+	logger := h.logger.Session(getBindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
 	})
@@ -31,7 +31,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	binding, err := h.ServiceBroker.GetBinding(req.Context(), instanceID, bindingID)
+	binding, err := h.serviceBroker.GetBinding(req.Context(), instanceID, bindingID)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:

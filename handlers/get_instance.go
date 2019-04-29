@@ -15,7 +15,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
-	logger := h.Logger.Session(getInstanceLogKey, lager.Data{
+	logger := h.logger.Session(getInstanceLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 	})
 
@@ -29,7 +29,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instanceDetails, err := h.ServiceBroker.GetInstance(req.Context(), instanceID)
+	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
