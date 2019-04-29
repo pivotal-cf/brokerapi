@@ -20,8 +20,7 @@ const (
 
 	bindingIDLogKey = "binding-id"
 
-	lastOperationLogKey        = "lastOperation"
-	lastBindingOperationLogKey = "lastBindingOperation"
+	lastOperationLogKey = "lastOperation"
 )
 
 var (
