@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -15,10 +16,11 @@ const (
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
 	unknownErrorKey               = "unknown-error"
+	apiVersionInvalidKey          = "broker-api-version-invalid"
 
-	bindLogKey                 = "bind"
-	getBindLogKey              = "getBinding"
-	getInstanceLogKey          = "getInstance"
+	bindLogKey    = "bind"
+	getBindLogKey = "getBinding"
+
 	unbindLogKey               = "unbind"
 	lastOperationLogKey        = "lastOperation"
 	lastBindingOperationLogKey = "lastBindingOperation"
@@ -45,4 +47,18 @@ func (h APIHandler) respond(w http.ResponseWriter, status int, response interfac
 	if err != nil {
 		h.Logger.Error("encoding response", err, lager.Data{"status": status, "response": response})
 	}
+}
+
+type brokerVersion struct {
+	Major int
+	Minor int
+}
+
+func getAPIVersion(req *http.Request) brokerVersion {
+	var version brokerVersion
+	apiVersion := req.Header.Get("X-Broker-API-Version")
+
+	fmt.Sscanf(apiVersion, "%d.%d", &version.Major, &version.Minor)
+
+	return version
 }
