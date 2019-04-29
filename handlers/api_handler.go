@@ -20,7 +20,6 @@ const (
 
 	bindingIDLogKey = "binding-id"
 
-	unbindLogKey               = "unbind"
 	lastOperationLogKey        = "lastOperation"
 	lastBindingOperationLogKey = "lastBindingOperation"
 )
