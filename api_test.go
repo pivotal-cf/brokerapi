@@ -254,13 +254,13 @@ var _ = Describe("Service Broker API", func() {
 	Describe("OriginatingIdentityHeader", func() {
 
 		var (
-			fakeServiceBroker *fakes.AutoFakeServiceBrokerNew
+			fakeServiceBroker *fakes.AutoFakeServiceBroker
 			req               *http.Request
 			testServer        *httptest.Server
 		)
 
 		BeforeEach(func() {
-			fakeServiceBroker = new(fakes.AutoFakeServiceBrokerNew)
+			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
 			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
@@ -1400,7 +1400,7 @@ var _ = Describe("Service Broker API", func() {
 
 	Describe("binding lifecycle endpoint", func() {
 
-		makeLastBindingOperationRequestWithSpecificAPIVersion := func(instanceID, bindingID string, apiVersion string) *testflight.Response {
+		makeLastBindingOperationRequest := func(instanceID, bindingID string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s/last_operation", instanceID, bindingID)
@@ -1411,9 +1411,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				if apiVersion != "" {
-					request.Header.Add("X-Broker-Api-Version", apiVersion)
-				}
+				request.Header.Add("X-Broker-Api-Version", "2.14")
 				request.Header.Add("Content-Type", "application/json")
 				request.SetBasicAuth("username", "password")
 
@@ -1836,14 +1834,6 @@ var _ = Describe("Service Broker API", func() {
 						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
 					})
 
-					It("fails for LastBindingOperation request", func() {
-						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
-						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-						response = makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
-						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
-						Expect(response.Body).To(MatchJSON(`{"description":"get binding endpoint only supported starting with OSB version 2.14"}`))
-					})
-
 					It("fails for GetBinding request", func() {
 						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
 						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
@@ -1862,7 +1852,7 @@ var _ = Describe("Service Broker API", func() {
 					It("can be polled with lastBindingOperation", func() {
 						fakeAsyncServiceBroker.LastOperationState = "succeeded"
 						fakeAsyncServiceBroker.LastOperationDescription = "some description"
-						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+						response := makeLastBindingOperationRequest(instanceID, bindingID)
 						Expect(response.StatusCode).To(Equal(http.StatusOK))
 						Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
 					})
@@ -1871,23 +1861,6 @@ var _ = Describe("Service Broker API", func() {
 						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
 						Expect(response.StatusCode).To(Equal(http.StatusOK))
 						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
-					})
-
-					It("returns 500 when lastBindingOperation returns an unknown error", func() {
-						fakeAsyncServiceBroker.LastBindingOperationError = errors.New("unknown error")
-
-						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
-						Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
-					})
-
-					It("returns the appropriate when lastBindingOperation returns a known error", func() {
-						fakeAsyncServiceBroker.LastBindingOperationError = brokerapi.NewFailureResponse(
-							errors.New("I failed in unique and interesting ways"),
-							http.StatusTeapot,
-							"interesting-failure",
-						)
-						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
-						Expect(response.StatusCode).To(Equal(http.StatusTeapot))
 					})
 				})
 			})

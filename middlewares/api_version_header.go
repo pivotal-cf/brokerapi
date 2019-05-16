@@ -35,7 +35,6 @@ type ErrorResponse struct {
 }
 
 func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Handler {
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		logger := m.LoggerFactory.Session("version-header-check", lager.Data{})
 
