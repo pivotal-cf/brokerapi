@@ -82,7 +82,7 @@ var (
 
 	ErrConcurrentInstanceAccess = NewFailureResponseBuilder(
 		errors.New(concurrentInstanceAccessMsg), http.StatusUnprocessableEntity, concurrentAccessKey,
-	).WithErrorKey("ConcurrencyError")
+	).WithErrorKey("ConcurrencyError").Build()
 
 	ErrMaintenanceInfoConflict = NewFailureResponseBuilder(
 		errors.New(maintenanceInfoConflictMsg), http.StatusUnprocessableEntity, maintenanceInfoConflictKey,
