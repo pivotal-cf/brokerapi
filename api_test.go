@@ -1841,6 +1841,7 @@ var _ = Describe("Service Broker API", func() {
 						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
 						response = makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.13")
 						Expect(response.StatusCode).To(Equal(http.StatusPreconditionFailed))
+						Expect(response.Body).To(MatchJSON(`{"description":"get binding endpoint only supported starting with OSB version 2.14"}`))
 					})
 
 					It("fails for GetBinding request", func() {
@@ -1870,6 +1871,23 @@ var _ = Describe("Service Broker API", func() {
 						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
 						Expect(response.StatusCode).To(Equal(http.StatusOK))
 						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+					})
+
+					It("returns 500 when lastBindingOperation returns an unknown error", func() {
+						fakeAsyncServiceBroker.LastBindingOperationError = errors.New("unknown error")
+
+						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+						Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+					})
+
+					It("returns the appropriate when lastBindingOperation returns a known error", func() {
+						fakeAsyncServiceBroker.LastBindingOperationError = brokerapi.NewFailureResponse(
+							errors.New("I failed in unique and interesting ways"),
+							http.StatusTeapot,
+							"interesting-failure",
+						)
+						response := makeLastBindingOperationRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
+						Expect(response.StatusCode).To(Equal(http.StatusTeapot))
 					})
 				})
 			})
