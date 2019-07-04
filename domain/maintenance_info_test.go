@@ -97,35 +97,4 @@ var _ = Describe("MaintenanceInfo", func() {
 				nil),
 		)
 	})
-
-	Describe("NilOrEmpty", func() {
-		It("return true when maintenance_info is nil", func() {
-			var m *domain.MaintenanceInfo = nil
-
-			Expect(m.NilOrEmpty()).To(BeTrue())
-		})
-
-		It("return true when maintenance_info is empty", func() {
-			var m = &domain.MaintenanceInfo{
-				Public:  nil,
-				Private: "",
-				Version: "",
-			}
-
-			Expect(m.NilOrEmpty()).To(BeTrue())
-		})
-
-		It("return false when maintenance_info has properties", func() {
-			m := &domain.MaintenanceInfo{
-				Public: map[string]string{
-					"test": "foo",
-				},
-				Private: "test-again",
-				Version: "1.2.3",
-			}
-
-			Expect(m.NilOrEmpty()).To(BeFalse())
-		})
-	})
-
 })

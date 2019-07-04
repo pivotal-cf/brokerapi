@@ -55,7 +55,7 @@ type ServiceBroker interface {
 
 type LastOperation struct {
 	State       LastOperationState `json:"state"`
-	Description string `json:"description"`
+	Description string             `json:"description"`
 }
 
 type LastOperationState string
@@ -80,13 +80,13 @@ type SharedDevice struct {
 }
 
 type ProvisionDetails struct {
-	ServiceID        string          `json:"service_id"`
-	PlanID           string          `json:"plan_id"`
-	OrganizationGUID string          `json:"organization_guid"`
-	SpaceGUID        string          `json:"space_guid"`
-	RawContext       json.RawMessage `json:"context,omitempty"`
-	RawParameters    json.RawMessage `json:"parameters,omitempty"`
-	MaintenanceInfo  MaintenanceInfo `json:"maintenance_info,omitempty"`
+	ServiceID        string           `json:"service_id"`
+	PlanID           string           `json:"plan_id"`
+	OrganizationGUID string           `json:"organization_guid"`
+	SpaceGUID        string           `json:"space_guid"`
+	RawContext       json.RawMessage  `json:"context,omitempty"`
+	RawParameters    json.RawMessage  `json:"parameters,omitempty"`
+	MaintenanceInfo  *MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type ProvisionedServiceSpec struct {
@@ -114,12 +114,12 @@ type GetInstanceDetailsSpec struct {
 }
 
 type UpdateDetails struct {
-	ServiceID       string          `json:"service_id"`
-	PlanID          string          `json:"plan_id"`
-	RawParameters   json.RawMessage `json:"parameters,omitempty"`
-	PreviousValues  PreviousValues  `json:"previous_values"`
-	RawContext      json.RawMessage `json:"context,omitempty"`
-	MaintenanceInfo MaintenanceInfo `json:"maintenance_info,omitempty"`
+	ServiceID       string           `json:"service_id"`
+	PlanID          string           `json:"plan_id"`
+	RawParameters   json.RawMessage  `json:"parameters,omitempty"`
+	PreviousValues  PreviousValues   `json:"previous_values"`
+	RawContext      json.RawMessage  `json:"context,omitempty"`
+	MaintenanceInfo *MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type PreviousValues struct {

@@ -11,7 +11,3 @@ type MaintenanceInfo struct {
 func (m *MaintenanceInfo) Equals(input MaintenanceInfo) bool {
 	return reflect.DeepEqual(*m, input)
 }
-
-func (m *MaintenanceInfo) NilOrEmpty() bool {
-	return m == nil || m.Equals(MaintenanceInfo{})
-}

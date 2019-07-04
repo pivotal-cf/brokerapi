@@ -414,7 +414,7 @@ var _ = Describe("Service Broker API", func() {
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
 					SpaceGUID:        "space-guid",
-					MaintenanceInfo: brokerapi.MaintenanceInfo{
+					MaintenanceInfo: &brokerapi.MaintenanceInfo{
 						Public: map[string]string{
 							"k8s-version": "0.0.1-alpha2",
 						},
@@ -692,7 +692,7 @@ var _ = Describe("Service Broker API", func() {
 							PlanID:           "plan-id",
 							OrganizationGUID: "organization-guid",
 							SpaceGUID:        "space-guid",
-							MaintenanceInfo: brokerapi.MaintenanceInfo{
+							MaintenanceInfo: &brokerapi.MaintenanceInfo{
 								Public: map[string]string{
 									"k8s-version": "0.0.1-alpha2",
 								},
@@ -964,7 +964,7 @@ var _ = Describe("Service Broker API", func() {
 						},
 						))
 						Expect(fakeServiceBroker.UpdateDetails.RawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
-						Expect(fakeServiceBroker.UpdateDetails.MaintenanceInfo).To(Equal(brokerapi.MaintenanceInfo{
+						Expect(*fakeServiceBroker.UpdateDetails.MaintenanceInfo).To(Equal(brokerapi.MaintenanceInfo{
 							Public:  map[string]string{"k8s-version": "0.0.1-alpha2"},
 							Private: "just a sha thing"},
 						))
