@@ -28,45 +28,52 @@ var _ = Describe("MaintenanceInfo", func() {
 			Entry(
 				"one extra property is added",
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Description: "test",
 				},
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test",
 				}),
 			Entry(
 				"one property is different",
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test-different",
 				},
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test-not-the-same",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test-not-the-same",
+					Version:     "1.2.3",
+					Description: "test",
 				}),
 			Entry(
 				"all properties are missing in one of the objects",
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test",
 				},
 				domain.MaintenanceInfo{}),
 			Entry(
 				"all properties are defined but different",
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test",
 				},
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"bar": "foo"},
-					Private: "test-not-the-same",
-					Version: "8.9.6-rc3",
+					Public:      map[string]string{"bar": "foo"},
+					Private:     "test-not-the-same",
+					Version:     "8.9.6-rc3",
+					Description: "test-different",
 				}),
 		)
 
@@ -78,14 +85,16 @@ var _ = Describe("MaintenanceInfo", func() {
 			Entry(
 				"all properties are the same",
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test",
 				},
 				domain.MaintenanceInfo{
-					Public:  map[string]string{"foo": "bar"},
-					Private: "test",
-					Version: "1.2.3",
+					Public:      map[string]string{"foo": "bar"},
+					Private:     "test",
+					Version:     "1.2.3",
+					Description: "test",
 				}),
 			Entry(
 				"all properties are empty",

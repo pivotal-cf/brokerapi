@@ -108,8 +108,9 @@ var _ = Describe("ServiceCatalog", func() {
 						Public: map[string]string{
 							"name": "foo",
 						},
-						Private: "someprivatehashedvalue",
-						Version: "8.1.0",
+						Private:     "someprivatehashedvalue",
+						Version:     "8.1.0",
+						Description: "test",
 					},
 				}
 				jsonString := `{
@@ -127,7 +128,8 @@ var _ = Describe("ServiceCatalog", func() {
 							"name": "foo"
 						},
 						"private": "someprivatehashedvalue",
-						"version": "8.1.0"
+						"version": "8.1.0",
+						"description": "test"
 					}
 				}`
 
