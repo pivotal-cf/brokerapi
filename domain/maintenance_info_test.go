@@ -38,20 +38,22 @@ var _ = Describe("MaintenanceInfo", func() {
 					Version:     "1.2.3",
 					Description: "test",
 				}),
-			Entry(
-				"one property is different",
-				domain.MaintenanceInfo{
-					Public:      map[string]string{"foo": "bar"},
-					Private:     "test",
-					Version:     "1.2.3",
-					Description: "test-different",
-				},
-				domain.MaintenanceInfo{
-					Public:      map[string]string{"foo": "bar"},
-					Private:     "test-not-the-same",
-					Version:     "1.2.3",
-					Description: "test",
-				}),
+			Entry("public field is different",
+				domain.MaintenanceInfo{Public: map[string]string{"foo": "bar"}},
+				domain.MaintenanceInfo{Public: map[string]string{"foo": "foo"}},
+			),
+			Entry("private field is different",
+				domain.MaintenanceInfo{Private: "foo"},
+				domain.MaintenanceInfo{Private: "bar"},
+			),
+			Entry("version field is different",
+				domain.MaintenanceInfo{Version: "1.2.0"},
+				domain.MaintenanceInfo{Version: "2.2.2"},
+			),
+			Entry("description field is different",
+				domain.MaintenanceInfo{Description: "amazing"},
+				domain.MaintenanceInfo{Description: "terrible"},
+			),
 			Entry(
 				"all properties are missing in one of the objects",
 				domain.MaintenanceInfo{
@@ -61,20 +63,6 @@ var _ = Describe("MaintenanceInfo", func() {
 					Description: "test",
 				},
 				domain.MaintenanceInfo{}),
-			Entry(
-				"all properties are defined but different",
-				domain.MaintenanceInfo{
-					Public:      map[string]string{"foo": "bar"},
-					Private:     "test",
-					Version:     "1.2.3",
-					Description: "test",
-				},
-				domain.MaintenanceInfo{
-					Public:      map[string]string{"bar": "foo"},
-					Private:     "test-not-the-same",
-					Version:     "8.9.6-rc3",
-					Description: "test-different",
-				}),
 		)
 
 		DescribeTable(
