@@ -50,10 +50,6 @@ var _ = Describe("MaintenanceInfo", func() {
 				domain.MaintenanceInfo{Version: "1.2.0"},
 				domain.MaintenanceInfo{Version: "2.2.2"},
 			),
-			Entry("description field is different",
-				domain.MaintenanceInfo{Description: "amazing"},
-				domain.MaintenanceInfo{Description: "terrible"},
-			),
 			Entry(
 				"all properties are missing in one of the objects",
 				domain.MaintenanceInfo{
@@ -92,6 +88,10 @@ var _ = Describe("MaintenanceInfo", func() {
 				"both struct's are nil",
 				nil,
 				nil),
+			Entry("description field is different",
+				domain.MaintenanceInfo{Description: "amazing"},
+				domain.MaintenanceInfo{Description: "terrible"},
+			),
 		)
 	})
 })

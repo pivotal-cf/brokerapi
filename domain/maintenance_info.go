@@ -10,5 +10,7 @@ type MaintenanceInfo struct {
 }
 
 func (m *MaintenanceInfo) Equals(input MaintenanceInfo) bool {
-	return reflect.DeepEqual(*m, input)
+	return m.Version == input.Version &&
+		m.Private == input.Private &&
+		reflect.DeepEqual(m.Public, input.Public)
 }
