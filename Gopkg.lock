@@ -81,7 +81,7 @@
   version = "v1.9.0"
 
 [[projects]]
-  digest = "1:fd4a6c768782f9e0cfd663eeb0bc8cf52c98fd23ead2aee6eb89a0eb4fb577b7"
+  digest = "1:f201278781bbc4a1c20265278c28b80712ef90123563cc0a391d836fc49e0da5"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -99,8 +99,8 @@
     "types",
   ]
   pruneopts = ""
-  revision = "27d50ea6455b212cf516609fa58b2b5dce1abc81"
-  version = "v1.6.0"
+  revision = "bdebf9e0ece900259084cfa4121b97ce1a540939"
+  version = "v1.7.0"
 
 [[projects]]
   branch = "master"
