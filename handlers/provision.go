@@ -115,9 +115,16 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 			DashboardURL:  provisionResponse.DashboardURL,
 			OperationData: provisionResponse.OperationData,
 		})
-	} else {
-		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
-			DashboardURL: provisionResponse.DashboardURL,
-		})
+		return
 	}
+
+	var statusCode int
+	if provisionResponse.AlreadyExists {
+		statusCode = http.StatusOK
+	} else {
+		statusCode = http.StatusCreated
+	}
+	h.respond(w, statusCode, apiresponses.ProvisioningResponse{
+		DashboardURL: provisionResponse.DashboardURL,
+	})
 }

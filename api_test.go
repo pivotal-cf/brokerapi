@@ -81,9 +81,7 @@ var _ = Describe("Service Broker API", func() {
 	lastLogLine := func() lager.LogFormat {
 		noOfLogLines := len(brokerLogger.Logs())
 		if noOfLogLines == 0 {
-			// better way to raise error?
-			err := errors.New("expected some log lines but there were none")
-			Expect(err).NotTo(HaveOccurred())
+			Fail("expected some log lines but there were none")
 		}
 
 		return brokerLogger.Logs()[noOfLogLines-1]
@@ -92,9 +90,11 @@ var _ = Describe("Service Broker API", func() {
 	BeforeEach(func() {
 		apiVersion = "2.14"
 		fakeServiceBroker = &fakes.FakeServiceBroker{
-			InstanceLimit: 3,
-			ServiceID:     "0A789746-596F-4CEA-BFAC-A0795DA056E3",
-			PlanID:        "plan-id",
+			ProvisionedInstances: map[string]brokerapi.ProvisionDetails{},
+			BoundBindings:        map[string]brokerapi.BindDetails{},
+			InstanceLimit:        3,
+			ServiceID:            "0A789746-596F-4CEA-BFAC-A0795DA056E3",
+			PlanID:               "plan-id",
 		}
 		brokerLogger = lagertest.NewTestLogger("broker-api")
 		brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
@@ -409,7 +409,7 @@ var _ = Describe("Service Broker API", func() {
 
 			It("calls Provision on the service broker with all params", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
+				Expect(fakeServiceBroker.ProvisionedInstances[instanceID]).To(Equal(brokerapi.ProvisionDetails{
 					ServiceID:        fakeServiceBroker.ServiceID,
 					PlanID:           "plan-id",
 					OrganizationGUID: "organization-guid",
@@ -425,12 +425,14 @@ var _ = Describe("Service Broker API", func() {
 
 			It("calls Provision on the service broker with the instance id", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+				_, ok := fakeServiceBroker.ProvisionedInstances[instanceID]
+				Expect(ok).To(BeTrue())
 			})
 
 			It("calls GetInstance on the service broker with the instance id", func() {
 				makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+				_, ok := fakeServiceBroker.ProvisionedInstances[instanceID]
+				Expect(ok).To(BeTrue())
 				fakeServiceBroker.DashboardURL = "https://example.com/dashboard/some-instance"
 				resp := makeGetInstanceRequest(instanceID)
 				Expect(fakeServiceBroker.GetInstanceIDs).To(ContainElement(instanceID))
@@ -440,6 +442,8 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the broker returns some operation data", func() {
 				BeforeEach(func() {
 					fakeServiceBroker = &fakes.FakeServiceBroker{
+						ProvisionedInstances:  map[string]brokerapi.ProvisionDetails{},
+						BoundBindings:         map[string]brokerapi.BindDetails{},
 						InstanceLimit:         3,
 						OperationDataToReturn: "some-operation-data",
 						ServiceID:             fakeServiceBroker.ServiceID,
@@ -491,19 +495,19 @@ var _ = Describe("Service Broker API", func() {
 
 				It("calls Provision on the service broker with all params", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(string(fakeServiceBroker.ProvisionDetails.RawParameters)).To(MatchJSON(rawParams))
+					Expect(string(fakeServiceBroker.ProvisionedInstances[instanceID].RawParameters)).To(MatchJSON(rawParams))
 				})
 
 				It("calls Provision with details with raw parameters", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.ProvisionDetails)
+					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.ProvisionedInstances[instanceID])
 					rawParameters := detailsWithRawParameters.GetRawParameters()
 					Expect(string(rawParameters)).To(MatchJSON(rawParams))
 				})
 
 				It("calls Provision with details with raw context", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.ProvisionDetails)
+					detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.ProvisionedInstances[instanceID])
 					rawContext := detailsWithRawContext.GetRawContext()
 					Expect(string(rawContext)).To(MatchJSON(rawCtx))
 				})
@@ -665,9 +669,20 @@ var _ = Describe("Service Broker API", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
 
-				It("returns a 409", func() {
+				It("returns a StatusOK", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.StatusCode).To(Equal(409))
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+
+				It("returns a StatusConflict", func() {
+					By("Service Instance with the same id already exists and is being provisioned but with different attributes")
+					provisionDetails["space_guid"] = "fake-space_guid"
+					defer func() {
+						By("Return default value")
+						provisionDetails["space_guid"] = "space_guid"
+					}()
+					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(response.StatusCode).To(Equal(http.StatusConflict))
 				})
 
 				It("returns an empty JSON object", func() {
@@ -675,7 +690,13 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.Body).To(MatchJSON(`{}`))
 				})
 
-				It("logs an appropriate error", func() {
+				It("logs an appropriate error when respond with statusConflict", func() {
+					By("Service Instance with the same id already exists and is being provisioned but with different attributes")
+					provisionDetails["space_guid"] = "fake-space_guid"
+					defer func() {
+						By("Return default value")
+						provisionDetails["space_guid"] = "space_guid"
+					}()
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 					Expect(lastLogLine().Message).To(ContainSubstring(".provision.instance-already-exists"))
 					Expect(lastLogLine().Data["error"]).To(ContainSubstring("instance already exists"))
@@ -687,7 +708,7 @@ var _ = Describe("Service Broker API", func() {
 					It("calls ProvisionAsync on the service broker", func() {
 						acceptsIncomplete := true
 						makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-						Expect(fakeServiceBroker.ProvisionDetails).To(Equal(brokerapi.ProvisionDetails{
+						Expect(fakeServiceBroker.ProvisionedInstances[instanceID]).To(Equal(brokerapi.ProvisionDetails{
 							ServiceID:        fakeServiceBroker.ServiceID,
 							PlanID:           "plan-id",
 							OrganizationGUID: "organization-guid",
@@ -700,15 +721,18 @@ var _ = Describe("Service Broker API", func() {
 							},
 						}))
 
-						Expect(fakeServiceBroker.ProvisionedInstanceIDs).To(ContainElement(instanceID))
+						_, ok := fakeServiceBroker.ProvisionedInstances[instanceID]
+						Expect(ok).To(BeTrue())
 					})
 
 					Context("when the broker chooses to provision asynchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								InstanceLimit: 3,
-								ServiceID:     fakeServiceBroker.ServiceID,
-								PlanID:        fakeServiceBroker.PlanID,
+								ProvisionedInstances: map[string]brokerapi.ProvisionDetails{},
+								BoundBindings:        map[string]brokerapi.BindDetails{},
+								InstanceLimit:        3,
+								ServiceID:            fakeServiceBroker.ServiceID,
+								PlanID:               fakeServiceBroker.PlanID,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
 								FakeServiceBroker:    *fakeServiceBroker,
@@ -726,9 +750,11 @@ var _ = Describe("Service Broker API", func() {
 					Context("when the broker chooses to provision synchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								InstanceLimit: 3,
-								ServiceID:     fakeServiceBroker.ServiceID,
-								PlanID:        fakeServiceBroker.PlanID,
+								ProvisionedInstances: map[string]brokerapi.ProvisionDetails{},
+								BoundBindings:        map[string]brokerapi.BindDetails{},
+								InstanceLimit:        3,
+								ServiceID:            fakeServiceBroker.ServiceID,
+								PlanID:               fakeServiceBroker.PlanID,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
 								FakeServiceBroker:    *fakeServiceBroker,
@@ -753,9 +779,11 @@ var _ = Describe("Service Broker API", func() {
 					Context("when broker can only respond asynchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								InstanceLimit: 3,
-								ServiceID:     fakeServiceBroker.ServiceID,
-								PlanID:        fakeServiceBroker.PlanID,
+								ProvisionedInstances: map[string]brokerapi.ProvisionDetails{},
+								BoundBindings:        map[string]brokerapi.BindDetails{},
+								InstanceLimit:        3,
+								ServiceID:            fakeServiceBroker.ServiceID,
+								PlanID:               fakeServiceBroker.PlanID,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 								FakeServiceBroker: *fakeServiceBroker,
@@ -781,9 +809,11 @@ var _ = Describe("Service Broker API", func() {
 					Context("when broker can only respond asynchronously", func() {
 						BeforeEach(func() {
 							fakeServiceBroker = &fakes.FakeServiceBroker{
-								InstanceLimit: 3,
-								ServiceID:     fakeServiceBroker.ServiceID,
-								PlanID:        fakeServiceBroker.PlanID,
+								ProvisionedInstances: map[string]brokerapi.ProvisionDetails{},
+								BoundBindings:        map[string]brokerapi.BindDetails{},
+								InstanceLimit:        3,
+								ServiceID:            fakeServiceBroker.ServiceID,
+								PlanID:               fakeServiceBroker.PlanID,
 							}
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 								FakeServiceBroker: *fakeServiceBroker,
@@ -1535,8 +1565,9 @@ var _ = Describe("Service Broker API", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
 					makeBindingRequest(instanceID, bindingID, details)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
-					Expect(fakeServiceBroker.BoundBindingIDs).To(ContainElement(bindingID))
-					Expect(fakeServiceBroker.BoundBindingDetails).To(Equal(brokerapi.BindDetails{
+					_, ok := fakeServiceBroker.BoundBindings[bindingID]
+					Expect(ok).To(BeTrue())
+					Expect(fakeServiceBroker.BoundBindings[bindingID]).To(Equal(brokerapi.BindDetails{
 						AppGUID:       "app_guid",
 						PlanID:        "plan_id",
 						ServiceID:     "service_id",
@@ -1546,7 +1577,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("calls bind with details with raw parameters", func() {
 					makeBindingRequest(instanceID, bindingID, details)
-					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.BoundBindingDetails)
+					detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.BoundBindings[bindingID])
 					rawParameters := detailsWithRawParameters.GetRawParameters()
 					Expect(rawParameters).To(Equal(json.RawMessage(`{"new-param":"new-param-value"}`)))
 				})
@@ -1663,19 +1694,19 @@ var _ = Describe("Service Broker API", func() {
 
 					It("calls Bind on the service broker with all params", func() {
 						makeBindingRequest(instanceID, bindingID, details)
-						Expect(string(fakeServiceBroker.BoundBindingDetails.RawParameters)).To(MatchJSON(rawParams))
+						Expect(string(fakeServiceBroker.BoundBindings[bindingID].RawParameters)).To(MatchJSON(rawParams))
 					})
 
 					It("calls Bind with details with raw parameters", func() {
 						makeBindingRequest(instanceID, bindingID, details)
-						detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.BoundBindingDetails)
+						detailsWithRawParameters := brokerapi.DetailsWithRawParameters(fakeServiceBroker.BoundBindings[bindingID])
 						rawParameters := detailsWithRawParameters.GetRawParameters()
 						Expect(string(rawParameters)).To(MatchJSON(rawParams))
 					})
 
 					It("calls Bind with details with raw context", func() {
 						makeBindingRequest(instanceID, bindingID, details)
-						detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.BoundBindingDetails)
+						detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.BoundBindings[bindingID])
 						rawContext := detailsWithRawContext.GetRawContext()
 						Expect(string(rawContext)).To(MatchJSON(rawCtx))
 					})
@@ -1693,11 +1724,11 @@ var _ = Describe("Service Broker API", func() {
 						}
 
 						makeBindingRequest(instanceID, bindingID, details)
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(Equal("a-guid"))
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.SpaceGuid).To(Equal("a-space-guid"))
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(Equal("route.cf-apps.com"))
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.CredentialClientID).To(Equal("some-credentials"))
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource).NotTo(BeNil())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.AppGuid).To(Equal("a-guid"))
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.SpaceGuid).To(Equal("a-space-guid"))
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.Route).To(Equal("route.cf-apps.com"))
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.CredentialClientID).To(Equal("some-credentials"))
 					})
 				})
 
@@ -1708,11 +1739,11 @@ var _ = Describe("Service Broker API", func() {
 						details["bind_resource"] = map[string]interface{}{}
 
 						makeBindingRequest(instanceID, bindingID, details)
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource).NotTo(BeNil())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.AppGuid).To(BeEmpty())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.SpaceGuid).To(BeEmpty())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.Route).To(BeEmpty())
-						Expect(fakeServiceBroker.BoundBindingDetails.BindResource.CredentialClientID).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource).NotTo(BeNil())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.AppGuid).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.SpaceGuid).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.Route).To(BeEmpty())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.CredentialClientID).To(BeEmpty())
 					})
 				})
 
@@ -1750,9 +1781,20 @@ var _ = Describe("Service Broker API", func() {
 					fakeServiceBroker.BindError = brokerapi.ErrBindingAlreadyExists
 				})
 
-				It("returns a 409", func() {
+				It("returns a statusOK", func() {
+					instanceID := uniqueInstanceID()
+					bindingID := uniqueBindingID()
+
+					fakeServiceBroker.BindError = nil
+					makeBindingRequest(instanceID, bindingID, details)
+					response := makeBindingRequest(instanceID, bindingID, details)
+
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+
+				It("returns a statusConflict", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.StatusCode).To(Equal(409))
+					Expect(response.StatusCode).To(Equal(http.StatusConflict))
 				})
 
 				It("returns an error JSON object", func() {
