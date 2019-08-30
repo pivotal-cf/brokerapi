@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/onsi/ginkgo"
-  version = "^1.9.0"
+  version = "^1.10.0"
 
 [[constraint]]
   name = "github.com/onsi/gomega"
