@@ -669,9 +669,22 @@ var _ = Describe("Service Broker API", func() {
 					makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				})
 
-				It("returns a StatusOK", func() {
-					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Context("returns a StatusOK on", func() {
+					It("sync broker response", func() {
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+					})
+
+					It("async broker response", func() {
+						fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+							FakeServiceBroker:    *fakeServiceBroker,
+							ShouldProvisionAsync: true,
+						}
+						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+
+						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+					})
 				})
 
 				It("returns a StatusConflict", func() {
@@ -1775,21 +1788,36 @@ var _ = Describe("Service Broker API", func() {
 			})
 
 			Context("when the requested binding already exists", func() {
-				var instanceID string
+				var instanceID, bindingID string
 
 				BeforeEach(func() {
 					fakeServiceBroker.BindError = brokerapi.ErrBindingAlreadyExists
 				})
 
-				It("returns a statusOK", func() {
-					instanceID := uniqueInstanceID()
-					bindingID := uniqueBindingID()
+				Context("returns a statusOK", func() {
+					BeforeEach(func() {
+						fakeServiceBroker.BindError = nil
 
-					fakeServiceBroker.BindError = nil
-					makeBindingRequest(instanceID, bindingID, details)
-					response := makeBindingRequest(instanceID, bindingID, details)
+						instanceID = uniqueInstanceID()
+						bindingID = uniqueBindingID()
 
-					Expect(response.StatusCode).To(Equal(http.StatusOK))
+						makeBindingRequest(instanceID, bindingID, details)
+					})
+
+					It("sync broker response", func() {
+						response := makeBindingRequest(instanceID, bindingID, details)
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+					})
+
+					It("async broker response", func() {
+						fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
+							FakeServiceBroker: *fakeServiceBroker,
+						}
+						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+
+						response := makeAsyncBindingRequest(instanceID, bindingID, details)
+						Expect(response.StatusCode).To(Equal(http.StatusOK))
+					})
 				})
 
 				It("returns a statusConflict", func() {

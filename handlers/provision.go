@@ -110,21 +110,18 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if provisionResponse.IsAsync {
+	if provisionResponse.AlreadyExists {
+		h.respond(w, http.StatusOK, apiresponses.ProvisioningResponse{
+			DashboardURL: provisionResponse.DashboardURL,
+		})
+	} else if provisionResponse.IsAsync {
 		h.respond(w, http.StatusAccepted, apiresponses.ProvisioningResponse{
 			DashboardURL:  provisionResponse.DashboardURL,
 			OperationData: provisionResponse.OperationData,
 		})
-		return
-	}
-
-	var statusCode int
-	if provisionResponse.AlreadyExists {
-		statusCode = http.StatusOK
 	} else {
-		statusCode = http.StatusCreated
+		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
+			DashboardURL: provisionResponse.DashboardURL,
+		})
 	}
-	h.respond(w, statusCode, apiresponses.ProvisioningResponse{
-		DashboardURL: provisionResponse.DashboardURL,
-	})
 }

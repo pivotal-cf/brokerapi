@@ -352,15 +352,19 @@ func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instance
 	fakeBroker.BrokerCalled = true
 
 	if asyncAllowed {
+		if _, ok := fakeBroker.BoundBindings[bindingID]; ok {
+			return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, true)
+		}
+
 		fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
 		fakeBroker.BoundBindings[bindingID] = details
 		return brokerapi.Binding{
 			IsAsync:       true,
 			OperationData: "0xDEADBEEF",
 		}, nil
-	} else {
-		return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, false)
 	}
+
+	return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, false)
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
