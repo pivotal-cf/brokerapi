@@ -80,6 +80,16 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if binding.AlreadyExists {
+		h.respond(w, http.StatusOK, apiresponses.BindingResponse{
+			Credentials:     binding.Credentials,
+			SyslogDrainURL:  binding.SyslogDrainURL,
+			RouteServiceURL: binding.RouteServiceURL,
+			VolumeMounts:    binding.VolumeMounts,
+		})
+		return
+	}
+
 	if binding.IsAsync {
 		h.respond(w, http.StatusAccepted, apiresponses.AsyncBindResponse{
 			OperationData: binding.OperationData,

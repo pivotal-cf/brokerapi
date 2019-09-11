@@ -3,40 +3,42 @@ package fakes
 import (
 	"context"
 	"errors"
+	"reflect"
+
+	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 
 	"github.com/pivotal-cf/brokerapi"
 )
 
 type FakeServiceBroker struct {
-	ProvisionDetails   brokerapi.ProvisionDetails
+	ProvisionedInstances map[string]brokerapi.ProvisionDetails
+
 	UpdateDetails      brokerapi.UpdateDetails
 	DeprovisionDetails brokerapi.DeprovisionDetails
 
-	ProvisionedInstanceIDs   []string
 	DeprovisionedInstanceIDs []string
 	UpdatedInstanceIDs       []string
 	GetInstanceIDs           []string
 
-	BoundInstanceIDs    []string
-	BoundBindingIDs     []string
-	BoundBindingDetails brokerapi.BindDetails
-	SyslogDrainURL      string
-	RouteServiceURL     string
-	VolumeMounts        []brokerapi.VolumeMount
+	BoundInstanceIDs []string
+	BoundBindings    map[string]brokerapi.BindDetails
+	SyslogDrainURL   string
+	RouteServiceURL  string
+	VolumeMounts     []brokerapi.VolumeMount
 
 	UnbindingDetails brokerapi.UnbindDetails
 
 	InstanceLimit int
 
-	ProvisionError     error
-	BindError          error
-	UnbindError        error
-	DeprovisionError   error
-	LastOperationError error
+	ProvisionError            error
+	BindError                 error
+	UnbindError               error
+	DeprovisionError          error
+	LastOperationError        error
 	LastBindingOperationError error
-	UpdateError        error
-	GetInstanceError   error
-	GetBindingError    error
+	UpdateError               error
+	GetInstanceError          error
+	GetBindingError           error
 
 	BrokerCalled             bool
 	LastOperationState       brokerapi.LastOperationState
@@ -167,17 +169,20 @@ func (fakeBroker *FakeServiceBroker) Provision(context context.Context, instance
 		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+	if len(fakeBroker.ProvisionedInstances) >= fakeBroker.InstanceLimit {
 		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; !ok {
+		fakeBroker.ProvisionedInstances[instanceID] = details
+		return brokerapi.ProvisionedServiceSpec{DashboardURL: fakeBroker.DashboardURL}, nil
 	}
 
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return brokerapi.ProvisionedServiceSpec{DashboardURL: fakeBroker.DashboardURL}, nil
+	if reflect.DeepEqual(fakeBroker.ProvisionedInstances[instanceID], details) {
+		return brokerapi.ProvisionedServiceSpec{AlreadyExists: true, DashboardURL: fakeBroker.DashboardURL}, nil
+	}
+
+	return brokerapi.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 }
 
 func (fakeBroker *FakeAsyncServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
@@ -187,17 +192,20 @@ func (fakeBroker *FakeAsyncServiceBroker) Provision(context context.Context, ins
 		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+	if len(fakeBroker.ProvisionedInstances) >= fakeBroker.InstanceLimit {
 		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; !ok {
+		fakeBroker.ProvisionedInstances[instanceID] = details
+		return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, DashboardURL: fakeBroker.DashboardURL, OperationData: fakeBroker.OperationDataToReturn}, nil
 	}
 
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
-	return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, DashboardURL: fakeBroker.DashboardURL, OperationData: fakeBroker.OperationDataToReturn}, nil
+	if reflect.DeepEqual(fakeBroker.ProvisionedInstances[instanceID], details) {
+		return brokerapi.ProvisionedServiceSpec{IsAsync: fakeBroker.ShouldProvisionAsync, AlreadyExists: true, DashboardURL: fakeBroker.DashboardURL, OperationData: fakeBroker.OperationDataToReturn}, nil
+	}
+
+	return brokerapi.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 }
 
 func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
@@ -207,20 +215,23 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(context context.Context,
 		return brokerapi.ProvisionedServiceSpec{}, fakeBroker.ProvisionError
 	}
 
-	if len(fakeBroker.ProvisionedInstanceIDs) >= fakeBroker.InstanceLimit {
+	if len(fakeBroker.ProvisionedInstances) >= fakeBroker.InstanceLimit {
 		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceLimitMet
 	}
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrInstanceAlreadyExists
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; ok {
+		if reflect.DeepEqual(fakeBroker.ProvisionedInstances[instanceID], details) {
+			return brokerapi.ProvisionedServiceSpec{IsAsync: asyncAllowed, AlreadyExists: true, DashboardURL: fakeBroker.DashboardURL}, nil
+		}
+
+		return brokerapi.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 	}
 
 	if !asyncAllowed {
 		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrAsyncRequired
 	}
 
-	fakeBroker.ProvisionDetails = details
-	fakeBroker.ProvisionedInstanceIDs = append(fakeBroker.ProvisionedInstanceIDs, instanceID)
+	fakeBroker.ProvisionedInstances[instanceID] = details
 	return brokerapi.ProvisionedServiceSpec{IsAsync: true, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
@@ -273,7 +284,7 @@ func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instan
 	fakeBroker.DeprovisionDetails = details
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; ok {
 		return brokerapi.DeprovisionServiceSpec{}, nil
 	}
 	return brokerapi.DeprovisionServiceSpec{IsAsync: false}, brokerapi.ErrInstanceDoesNotExist
@@ -293,7 +304,7 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Deprovision(context context.Contex
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 	fakeBroker.DeprovisionDetails = details
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; ok {
 		return brokerapi.DeprovisionServiceSpec{IsAsync: true, OperationData: fakeBroker.OperationDataToReturn}, nil
 	}
 
@@ -310,7 +321,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 	fakeBroker.DeprovisionedInstanceIDs = append(fakeBroker.DeprovisionedInstanceIDs, instanceID)
 	fakeBroker.DeprovisionDetails = details
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; ok {
 		return brokerapi.DeprovisionServiceSpec{IsAsync: asyncAllowed, OperationData: fakeBroker.OperationDataToReturn}, nil
 	}
 
@@ -340,19 +351,20 @@ func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanc
 func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
 	fakeBroker.BrokerCalled = true
 
-	fakeBroker.BoundBindingDetails = details
-
-	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
-	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)
-
 	if asyncAllowed {
+		if _, ok := fakeBroker.BoundBindings[bindingID]; ok {
+			return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, true)
+		}
+
+		fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
+		fakeBroker.BoundBindings[bindingID] = details
 		return brokerapi.Binding{
 			IsAsync:       true,
 			OperationData: "0xDEADBEEF",
 		}, nil
-	} else {
-		return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, false)
 	}
+
+	return fakeBroker.FakeServiceBroker.Bind(context, instanceID, bindingID, details, false)
 }
 
 func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
@@ -362,16 +374,7 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 		fakeBroker.ReceivedContext = val
 	}
 
-	if fakeBroker.BindError != nil {
-		return brokerapi.Binding{}, fakeBroker.BindError
-	}
-
-	fakeBroker.BoundBindingDetails = details
-
-	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
-	fakeBroker.BoundBindingIDs = append(fakeBroker.BoundBindingIDs, bindingID)
-
-	return brokerapi.Binding{
+	binding := brokerapi.Binding{
 		Credentials: FakeCredentials{
 			Host:     "127.0.0.1",
 			Port:     3000,
@@ -381,7 +384,23 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
 		RouteServiceURL: fakeBroker.RouteServiceURL,
 		VolumeMounts:    fakeBroker.VolumeMounts,
-	}, nil
+	}
+
+	if _, ok := fakeBroker.BoundBindings[bindingID]; ok {
+		if reflect.DeepEqual(fakeBroker.BoundBindings[bindingID], details) {
+			binding.AlreadyExists = true
+			return binding, nil
+		}
+	}
+
+	if fakeBroker.BindError != nil {
+		return brokerapi.Binding{}, fakeBroker.BindError
+	}
+
+	fakeBroker.BoundInstanceIDs = append(fakeBroker.BoundInstanceIDs, instanceID)
+	fakeBroker.BoundBindings[bindingID] = details
+
+	return binding, nil
 }
 
 func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails, asyncAllowed bool) (brokerapi.UnbindSpec, error) {
@@ -397,8 +416,8 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 
 	fakeBroker.UnbindingDetails = details
 
-	if sliceContains(instanceID, fakeBroker.ProvisionedInstanceIDs) {
-		if sliceContains(bindingID, fakeBroker.BoundBindingIDs) {
+	if _, ok := fakeBroker.ProvisionedInstances[instanceID]; ok {
+		if _, ok := fakeBroker.BoundBindings[bindingID]; ok {
 			return brokerapi.UnbindSpec{}, nil
 		}
 		return brokerapi.UnbindSpec{}, brokerapi.ErrBindingDoesNotExist

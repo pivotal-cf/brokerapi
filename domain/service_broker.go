@@ -91,6 +91,7 @@ type ProvisionDetails struct {
 
 type ProvisionedServiceSpec struct {
 	IsAsync       bool
+	AlreadyExists bool
 	DashboardURL  string
 	OperationData string
 }
@@ -169,6 +170,7 @@ type UnbindSpec struct {
 
 type Binding struct {
 	IsAsync         bool          `json:"is_async"`
+	AlreadyExists   bool          `json:"already_exists"`
 	OperationData   string        `json:"operation_data"`
 	Credentials     interface{}   `json:"credentials"`
 	SyslogDrainURL  string        `json:"syslog_drain_url"`
