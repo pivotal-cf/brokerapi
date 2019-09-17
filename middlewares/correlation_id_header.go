@@ -1,0 +1,47 @@
+package middlewares
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/gofrs/uuid"
+)
+
+const CorrelationIDKey = "correlation-id"
+
+var correlationIDHeaders = []string{"X-Correlation-ID", "X-CorrelationID", "X-ForRequest-ID", "X-Request-ID", "X-Vcap-Request-Id"}
+
+func AddCorrelationIDToContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var correlationID, headerName string
+		var found bool
+
+		for _, header := range correlationIDHeaders {
+			headerValue := req.Header.Get(header)
+			if headerValue != "" {
+				correlationID = headerValue
+				headerName = header
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			correlationID = generateCorrelationID()
+			headerName = correlationIDHeaders[0]
+		}
+
+		w.Header().Set(headerName, correlationID)
+		newCtx := context.WithValue(req.Context(), CorrelationIDKey, correlationID)
+		next.ServeHTTP(w, req.WithContext(newCtx))
+	})
+}
+
+func generateCorrelationID() string {
+	uuids, err := uuid.NewV4()
+	if err != nil {
+		return ""
+	}
+
+	return uuids.String()
+}

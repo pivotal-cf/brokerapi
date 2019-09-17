@@ -26,6 +26,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/pivotal-cf/brokerapi/middlewares"
+
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
@@ -108,6 +110,13 @@ var _ = Describe("Service Broker API", func() {
 			brokerAPI.ServeHTTP(recorder, request)
 			return recorder
 		}
+
+		It("has a X-Correlation-ID header", func() {
+			response := makeRequest()
+
+			header := response.Header().Get("X-Correlation-ID")
+			Expect(header).Should(Not(BeNil()))
+		})
 
 		It("has a Content-Type header", func() {
 			response := makeRequest()
@@ -2323,6 +2332,56 @@ var _ = Describe("Service Broker API", func() {
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("infoLocation")).To(Equal(""))
+			})
+		})
+	})
+
+	Describe("CorrelationIDHeader", func() {
+
+		var (
+			fakeServiceBroker *fakes.AutoFakeServiceBroker
+			req               *http.Request
+			testServer        *httptest.Server
+		)
+
+		BeforeEach(func() {
+			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+
+			testServer = httptest.NewServer(brokerAPI)
+			var err error
+			req, err = http.NewRequest("GET", testServer.URL+"/v2/catalog", nil)
+			Expect(err).NotTo(HaveOccurred())
+			req.Header.Add("X-Broker-API-Version", "2.14")
+			req.SetBasicAuth(credentials.Username, credentials.Password)
+		})
+
+		AfterEach(func() {
+			testServer.Close()
+		})
+
+		When("X-Correlation-ID is passed", func() {
+			It("Adds correlation id to the context", func() {
+				const correlationID = "fake-correlation-id"
+				req.Header.Add("X-Correlation-ID", correlationID)
+
+				_, err := http.DefaultClient.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
+				ctx := fakeServiceBroker.ServicesArgsForCall(0)
+				Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
+
+			})
+		})
+		When("X-Correlation-ID is not passed", func() {
+			It("Generates correlation id and adds it to the context", func() {
+				_, err := http.DefaultClient.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
+				ctx := fakeServiceBroker.ServicesArgsForCall(0)
+				Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Not(BeNil()))
 			})
 		})
 	})

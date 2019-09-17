@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/pivotal-cf/brokerapi/middlewares"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
@@ -15,8 +17,11 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
+	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
+
 	logger := h.logger.Session(getInstanceLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
+		instanceIDLogKey:             instanceID,
+		middlewares.CorrelationIDKey: correlationID,
 	})
 
 	version := getAPIVersion(req)
@@ -25,7 +30,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
-		logger.Error(apiVersionInvalidKey, err)
+		logger.Error(middlewares.ApiVersionInvalidKey, err)
 		return
 	}
 
