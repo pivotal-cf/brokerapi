@@ -24,7 +24,7 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
-const apiVersionInvalidKey = "broker-api-version-invalid"
+const ApiVersionInvalidKey = "broker-api-version-invalid"
 
 type APIVersionMiddleware struct {
 	LoggerFactory lager.Logger
@@ -40,7 +40,7 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 
 		err := checkBrokerAPIVersionHdr(req)
 		if err != nil {
-			logger.Error(apiVersionInvalidKey, err)
+			logger.Error(ApiVersionInvalidKey, err)
 
 			w.Header().Set("Content-type", "application/json")
 

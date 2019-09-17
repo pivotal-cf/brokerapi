@@ -1,9 +1,15 @@
 package handlers_test
 
 import (
-	"code.cloudfoundry.org/lager"
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+
+	"github.com/pivotal-cf/brokerapi/middlewares"
+
+	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,8 +19,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/handlers"
 	"github.com/pivotal-cf/brokerapi/handlers/fakes"
 	"github.com/pkg/errors"
-	"net/http"
-	"net/url"
 )
 
 var _ = Describe("LastBindingOperation", func() {
@@ -135,5 +139,7 @@ func newRequest(instanceID, bindingID, planID, serviceID, operation string) *htt
 	request.Form.Add("service_id", serviceID)
 	request.Form.Add("operation", operation)
 
+	newCtx := context.WithValue(request.Context(), middlewares.CorrelationIDKey, "fake-correlation-id")
+	request = request.WithContext(newCtx)
 	return request
 }

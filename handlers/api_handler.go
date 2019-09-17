@@ -16,7 +16,6 @@ const (
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
 	unknownErrorKey               = "unknown-error"
-	apiVersionInvalidKey          = "broker-api-version-invalid"
 
 	bindingIDLogKey = "binding-id"
 )
