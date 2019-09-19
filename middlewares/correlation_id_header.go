@@ -13,14 +13,13 @@ var correlationIDHeaders = []string{"X-Correlation-ID", "X-CorrelationID", "X-Fo
 
 func AddCorrelationIDToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var correlationID, headerName string
+		var correlationID string
 		var found bool
 
 		for _, header := range correlationIDHeaders {
 			headerValue := req.Header.Get(header)
 			if headerValue != "" {
 				correlationID = headerValue
-				headerName = header
 				found = true
 				break
 			}
@@ -28,10 +27,8 @@ func AddCorrelationIDToContext(next http.Handler) http.Handler {
 
 		if !found {
 			correlationID = generateCorrelationID()
-			headerName = correlationIDHeaders[0]
 		}
 
-		w.Header().Set(headerName, correlationID)
 		newCtx := context.WithValue(req.Context(), CorrelationIDKey, correlationID)
 		next.ServeHTTP(w, req.WithContext(newCtx))
 	})
