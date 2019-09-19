@@ -26,6 +26,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/onsi/ginkgo/extensions/table"
+
 	"github.com/pivotal-cf/brokerapi/middlewares"
 
 	"code.cloudfoundry.org/lager"
@@ -110,13 +112,6 @@ var _ = Describe("Service Broker API", func() {
 			brokerAPI.ServeHTTP(recorder, request)
 			return recorder
 		}
-
-		It("has a X-Correlation-ID header", func() {
-			response := makeRequest()
-
-			header := response.Header().Get("X-Correlation-ID")
-			Expect(header).Should(Not(BeNil()))
-		})
 
 		It("has a Content-Type header", func() {
 			response := makeRequest()
@@ -2337,6 +2332,11 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("CorrelationIDHeader", func() {
+		const correlationID = "fake-correlation-id"
+
+		type testCase struct {
+			correlationIDHeaderName string
+		}
 
 		var (
 			fakeServiceBroker *fakes.AutoFakeServiceBroker
@@ -2360,20 +2360,33 @@ var _ = Describe("Service Broker API", func() {
 			testServer.Close()
 		})
 
-		When("X-Correlation-ID is passed", func() {
-			It("Adds correlation id to the context", func() {
-				const correlationID = "fake-correlation-id"
-				req.Header.Add("X-Correlation-ID", correlationID)
+		table.DescribeTable("Adds correlation id to the context", func(tc testCase) {
+			req.Header.Add(tc.correlationIDHeaderName, correlationID)
 
-				_, err := http.DefaultClient.Do(req)
-				Expect(err).NotTo(HaveOccurred())
+			_, err := http.DefaultClient.Do(req)
+			Expect(err).NotTo(HaveOccurred())
 
-				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
-				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
+			Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
+			ctx := fakeServiceBroker.ServicesArgsForCall(0)
+			Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
+		},
+			table.Entry("X-Correlation-ID", testCase{
+				correlationIDHeaderName: "X-Correlation-ID",
+			}),
+			table.Entry("X-CorrelationID", testCase{
+				correlationIDHeaderName: "X-CorrelationID",
+			}),
+			table.Entry("X-ForRequest-ID", testCase{
+				correlationIDHeaderName: "X-ForRequest-ID",
+			}),
+			table.Entry("X-Request-ID", testCase{
+				correlationIDHeaderName: "X-Request-ID",
+			}),
+			table.Entry("X-Vcap-Request-Id", testCase{
+				correlationIDHeaderName: "X-Vcap-Request-Id",
+			}),
+		)
 
-			})
-		})
 		When("X-Correlation-ID is not passed", func() {
 			It("Generates correlation id and adds it to the context", func() {
 				_, err := http.DefaultClient.Do(req)
