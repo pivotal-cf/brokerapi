@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gofrs/uuid"
+	"github.com/pborman/uuid"
 )
 
 const CorrelationIDKey = "correlation-id"
@@ -26,19 +26,10 @@ func AddCorrelationIDToContext(next http.Handler) http.Handler {
 		}
 
 		if !found {
-			correlationID = generateCorrelationID()
+			correlationID = uuid.New()
 		}
 
 		newCtx := context.WithValue(req.Context(), CorrelationIDKey, correlationID)
 		next.ServeHTTP(w, req.WithContext(newCtx))
 	})
-}
-
-func generateCorrelationID() string {
-	uuids, err := uuid.NewV4()
-	if err != nil {
-		return ""
-	}
-
-	return uuids.String()
 }
