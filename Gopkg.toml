@@ -42,7 +42,7 @@
   version = "^1.6.0"
 
 [[constraint]]
-  branch = "master"
+  version = "^1.2.0"
   name = "github.com/pborman/uuid"
 
 [[constraint]]

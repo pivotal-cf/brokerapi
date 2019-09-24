@@ -103,12 +103,12 @@
   version = "v1.7.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a2692649163142c4dbe4ab102f8b012031e30a29021d523cb7b57f8d4e40913a"
+  digest = "1:a5484d4fa43127138ae6e7b2299a6a52ae006c7f803d98d717f60abf3e97192e"
   name = "github.com/pborman/uuid"
   packages = ["."]
   pruneopts = ""
-  revision = "8b1b92947f46224e3b97bb1a3a5b0382be00d31e"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
 
 [[projects]]
   digest = "1:1d7e1867c49a6dd9856598ef7c3123604ea3daabf5b83f303ff457bcbc410b1d"
