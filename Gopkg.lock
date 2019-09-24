@@ -23,14 +23,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:141cc9fc6279592458b304038bd16a05ef477d125c6dad281216345a11746fd7"
-  name = "github.com/gofrs/uuid"
-  packages = ["."]
-  pruneopts = ""
-  revision = "6b08a5c5172ba18946672b49749cde22873dd7c2"
-  version = "v3.2.0"
-
-[[projects]]
   digest = "1:a25a2c5ae694b01713fb6cd03c3b1ac1ccc1902b9f0a922680a88ec254f968e1"
   name = "github.com/google/uuid"
   packages = ["."]
@@ -202,7 +194,6 @@
     "code.cloudfoundry.org/lager",
     "code.cloudfoundry.org/lager/lagertest",
     "github.com/drewolson/testflight",
-    "github.com/gofrs/uuid",
     "github.com/gorilla/mux",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
