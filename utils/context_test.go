@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/domain"
+	"github.com/pivotal-cf/brokerapi/middlewares"
 	"github.com/pivotal-cf/brokerapi/utils"
 )
 
@@ -70,6 +71,27 @@ var _ = Describe("Context", func() {
 				Expect(ctx.Err()).To(BeZero())
 				Expect(ctx.Value(contextValidatorKey).(string)).To(Equal(contextValidatorValue))
 				Expect(utils.RetrieveServicePlanFromContext(ctx).ID).To(Equal(plan.ID))
+			})
+		})
+	})
+
+	Describe("Log data for context", func() {
+		Context("the provided key is present in the context", func() {
+			It("returns data containing the key", func() {
+				expectedValue := "123"
+				ctx = context.WithValue(ctx, middlewares.CorrelationIDKey, expectedValue)
+
+				data := utils.DataForContext(ctx, []string{middlewares.CorrelationIDKey})
+				correlationID, ok := data[middlewares.CorrelationIDKey]
+				Expect(ok).To(BeTrue())
+				Expect(correlationID).Should(Equal(expectedValue))
+			})
+		})
+		Context("the provided key is not in the context", func() {
+			It("returns data without the key", func() {
+				data := utils.DataForContext(ctx, []string{middlewares.CorrelationIDKey})
+				_, ok := data[middlewares.CorrelationIDKey]
+				Expect(ok).To(BeFalse())
 			})
 		})
 	})

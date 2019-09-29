@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/middlewares"
+	"github.com/pivotal-cf/brokerapi/utils"
 )
 
 const lastBindingOperationLogKey = "lastBindingOperation"
@@ -24,12 +24,9 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(lastBindingOperationLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
 
 	version := getAPIVersion(req)
 	if version.Minor < 14 {

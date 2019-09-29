@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/middlewares"
+	"github.com/pivotal-cf/brokerapi/utils"
 )
 
 const (
@@ -22,13 +22,10 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(bindLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		bindingIDLogKey:              bindingID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+		bindingIDLogKey:  bindingID,
+	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
 
 	version := getAPIVersion(req)
 	asyncAllowed := false

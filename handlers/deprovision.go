@@ -3,12 +3,12 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/middlewares"
+	"github.com/pivotal-cf/brokerapi/utils"
 )
 
 const deprovisionLogKey = "deprovision"
@@ -17,12 +17,9 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(deprovisionLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
 
 	details := domain.DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
