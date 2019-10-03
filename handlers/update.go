@@ -21,7 +21,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 
 	logger := h.logger.Session(updateLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	var details domain.UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {

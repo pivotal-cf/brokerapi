@@ -22,7 +22,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.Session(unbindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	version := getAPIVersion(req)
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"

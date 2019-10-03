@@ -42,11 +42,11 @@ func RetrieveServicePlanFromContext(ctx context.Context) *domain.ServicePlan {
 	return nil
 }
 
-func DataForContext(context context.Context, dataKeys []string) lager.Data {
+func DataForContext(context context.Context, dataKeys ...string) lager.Data {
 	data := lager.Data{}
 	for _, key := range dataKeys {
 		if value := context.Value(key); value != nil {
-			data[key] = value.(string)
+			data[key] = value
 		}
 	}
 

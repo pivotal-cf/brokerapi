@@ -26,7 +26,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 
 	logger := h.logger.Session(lastBindingOperationLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	version := getAPIVersion(req)
 	if version.Minor < 14 {

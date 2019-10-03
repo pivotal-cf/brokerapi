@@ -24,7 +24,7 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 
 	logger := h.logger.Session(lastOperationLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	logger.Info("starting-check-for-operation")
 

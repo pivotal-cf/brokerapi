@@ -25,7 +25,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.Session(bindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	version := getAPIVersion(req)
 	asyncAllowed := false

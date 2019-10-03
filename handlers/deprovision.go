@@ -19,7 +19,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 
 	logger := h.logger.Session(deprovisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	details := domain.DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),

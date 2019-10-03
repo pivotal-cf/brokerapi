@@ -27,7 +27,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 
 	logger := h.logger.Session(provisionLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), []string{middlewares.CorrelationIDKey}))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
