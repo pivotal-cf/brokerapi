@@ -9,6 +9,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/middlewares"
+	"github.com/pivotal-cf/brokerapi/utils"
 )
 
 const unbindLogKey = "unbind"
@@ -18,13 +19,10 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(unbindLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		bindingIDLogKey:              bindingID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+		bindingIDLogKey:  bindingID,
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	version := getAPIVersion(req)
 	asyncAllowed := req.FormValue("accepts_incomplete") == "true"

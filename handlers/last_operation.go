@@ -3,12 +3,12 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/middlewares"
+	"github.com/pivotal-cf/brokerapi/utils"
 )
 
 const lastOperationLogKey = "lastOperation"
@@ -22,12 +22,9 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 		OperationData: req.FormValue("operation"),
 	}
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(lastOperationLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	logger.Info("starting-check-for-operation")
 

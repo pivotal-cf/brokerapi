@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/domain"
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/middlewares"
 	"github.com/pivotal-cf/brokerapi/utils"
 )
 
@@ -26,12 +25,9 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
-	correlationID := req.Context().Value(middlewares.CorrelationIDKey).(string)
-
 	logger := h.logger.Session(provisionLogKey, lager.Data{
-		instanceIDLogKey:             instanceID,
-		middlewares.CorrelationIDKey: correlationID,
-	})
+		instanceIDLogKey: instanceID,
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
