@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:98a0a95c73a9b62d412530d393f5442bd2145c4bb9a100b6fcc02bbc55298e48"
+  digest = "1:a01c4450fedf9c73f27198e54aff1537c2fbced8f30976114b9317ccb8258521"
   name = "code.cloudfoundry.org/lager"
   packages = [
     ".",
@@ -12,7 +12,7 @@
     "lagertest",
   ]
   pruneopts = ""
-  revision = "54c4f2530ddeb742ce9c9ee26f5fa758d6c1b3b6"
+  revision = "a9afc05ee5be26ca4eb42d46e0208afb44ce2ee5"
 
 [[projects]]
   digest = "1:029f604c64cb13a3e2facee76fd1ae446d343df36fbb280b536bf36f9864ef1f"
