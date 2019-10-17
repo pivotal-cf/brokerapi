@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-//go:generate counterfeiter -o ../fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o ../fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
 
 //Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
 //The specification is available here: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md

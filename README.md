@@ -11,9 +11,9 @@ Brokers.
 
 ## Dependencies
 
-- Go 1.7+
+- Go 1.11+
 - [lager](https://github.com/cloudfoundry/lager)
-- [gorilla/mux v1.6.1+](https://github.com/gorilla/mux)
+- [gorilla/mux](https://github.com/gorilla/mux)
 
 We use [dep](https://github.com/golang/dep) to manager our dependencies. Use
 `dep ensure` in order to download the required packages.

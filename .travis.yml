@@ -8,8 +8,4 @@ go:
 env:
   - GO111MODULE=on
 
-install:
-  - go mod download
-  - go get github.com/onsi/ginkgo/ginkgo
-
-script: ginkgo -r
+script: go run github.com/onsi/ginkgo/ginkgo -r
