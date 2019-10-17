@@ -8,4 +8,6 @@ go:
 env:
   - GO111MODULE=on
 
-script: go run github.com/onsi/ginkgo/ginkgo -r
+script:
+- go run honnef.co/go/tools/cmd/staticcheck ./...
+- go run github.com/onsi/ginkgo/ginkgo -r

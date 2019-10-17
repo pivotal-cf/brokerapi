@@ -80,7 +80,7 @@ var _ = Describe("ServicePlanMetadata", func() {
 				Bullets:     []string{"hello", "its me"},
 				DisplayName: "name",
 				AdditionalMetadata: map[string]interface{}{
-					"foo": make(chan int, 0),
+					"foo": make(chan int),
 				},
 			}
 			_, err := json.Marshal(metadata)
