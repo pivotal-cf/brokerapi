@@ -1024,8 +1024,10 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("calls update with details with raw context", func() {
-						Expect(fakeServiceBroker.UpdateDetails.RawContext).To(
-							Equal(json.RawMessage(`{"new-context":"new-context-value"}`)),
+						detailsWithRawContext := brokerapi.DetailsWithRawContext(fakeServiceBroker.UpdateDetails)
+						rawContext := detailsWithRawContext.GetRawContext()
+						Expect(string(rawContext)).To(
+							MatchJSON(`{"new-context":"new-context-value"}`),
 						)
 					})
 
