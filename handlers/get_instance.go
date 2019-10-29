@@ -6,9 +6,9 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/middlewares"
-	"github.com/pivotal-cf/brokerapi/utils"
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v7/middlewares"
+	"github.com/pivotal-cf/brokerapi/v7/utils"
 )
 
 const getInstanceLogKey = "getInstance"

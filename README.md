@@ -15,9 +15,6 @@ Brokers.
 - [lager](https://github.com/cloudfoundry/lager)
 - [gorilla/mux](https://github.com/gorilla/mux)
 
-We use [dep](https://github.com/golang/dep) to manager our dependencies. Use
-`dep ensure` in order to download the required packages.
-
 ## Usage
 
 `brokerapi` defines a

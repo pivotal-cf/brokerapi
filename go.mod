@@ -1,4 +1,4 @@
-module github.com/pivotal-cf/brokerapi
+module github.com/pivotal-cf/brokerapi/v7
 
 require (
 	code.cloudfoundry.org/lager v1.1.1-0.20191008172124-a9afc05ee5be
