@@ -13,5 +13,3 @@ for f in $go_files ; do
     mkdir -p "$version/$(dirname $f)"
     cp $f $version/$(dirname $f)
 done
-cp go.mod "$version/"
-go mod edit -module github.com/pivotal-cf/brokerapi/"$version" "$version"/go.mod

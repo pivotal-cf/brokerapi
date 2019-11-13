@@ -124,10 +124,11 @@ type UpdateDetails struct {
 }
 
 type PreviousValues struct {
-	PlanID    string `json:"plan_id"`
-	ServiceID string `json:"service_id"`
-	OrgID     string `json:"organization_id"`
-	SpaceID   string `json:"space_id"`
+	PlanID          string           `json:"plan_id"`
+	ServiceID       string           `json:"service_id"`
+	OrgID           string           `json:"organization_id"`
+	SpaceID         string           `json:"space_id"`
+	MaintenanceInfo *MaintenanceInfo `json:"maintenance_info,omitempty"`
 }
 
 type UpdateServiceSpec struct {
