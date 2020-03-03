@@ -88,6 +88,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			RouteServiceURL: binding.RouteServiceURL,
 			VolumeMounts:    binding.VolumeMounts,
+			BackupAgentURL:  binding.BackupAgentURL,
 		})
 		return
 	}
@@ -126,6 +127,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			RouteServiceURL: binding.RouteServiceURL,
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			VolumeMounts:    experimentalVols,
+			BackupAgentURL:  binding.BackupAgentURL,
 		}
 		h.respond(w, http.StatusCreated, experimentalBinding)
 		return
@@ -136,5 +138,6 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		SyslogDrainURL:  binding.SyslogDrainURL,
 		RouteServiceURL: binding.RouteServiceURL,
 		VolumeMounts:    binding.VolumeMounts,
+		BackupAgentURL:  binding.BackupAgentURL,
 	})
 }

@@ -24,6 +24,7 @@ type FakeServiceBroker struct {
 	BoundBindings    map[string]brokerapi.BindDetails
 	SyslogDrainURL   string
 	RouteServiceURL  string
+	BackupAgentURL   string
 	VolumeMounts     []brokerapi.VolumeMount
 
 	UnbindingDetails brokerapi.UnbindDetails
@@ -384,6 +385,10 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 		SyslogDrainURL:  fakeBroker.SyslogDrainURL,
 		RouteServiceURL: fakeBroker.RouteServiceURL,
 		VolumeMounts:    fakeBroker.VolumeMounts,
+	}
+
+	if fakeBroker.BackupAgentURL != "" {
+		binding = brokerapi.Binding{BackupAgentURL: fakeBroker.BackupAgentURL}
 	}
 
 	if _, ok := fakeBroker.BoundBindings[bindingID]; ok {

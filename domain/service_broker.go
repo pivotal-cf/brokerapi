@@ -157,6 +157,7 @@ type BindResource struct {
 	SpaceGuid          string `json:"space_guid,omitempty"`
 	Route              string `json:"route,omitempty"`
 	CredentialClientID string `json:"credential_client_id,omitempty"`
+	BackupAgent        bool   `json:"backup_agent,omitempty"`
 }
 
 type UnbindDetails struct {
@@ -176,6 +177,7 @@ type Binding struct {
 	Credentials     interface{}   `json:"credentials"`
 	SyslogDrainURL  string        `json:"syslog_drain_url"`
 	RouteServiceURL string        `json:"route_service_url"`
+	BackupAgentURL  string        `json:"backup_agent_url,omitempty"`
 	VolumeMounts    []VolumeMount `json:"volume_mounts"`
 }
 

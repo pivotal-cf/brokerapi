@@ -1546,41 +1546,7 @@ var _ = Describe("Service Broker API", func() {
 				}
 			})
 
-			Context("the request is malformed", func() {
-				BeforeEach(func() {
-					bindingID = uniqueBindingID()
-				})
-
-				It("missing header X-Broker-API-Version", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
-					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
-				})
-
-				It("has wrong version of API", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
-					Expect(response.StatusCode).To(Equal(412))
-					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
-				})
-
-				It("missing service-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14", false)
-					Expect(response.StatusCode).To(Equal(400))
-					Expect(lastLogLine().Message).To(ContainSubstring(".bind.service-id-missing"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("service_id missing"))
-				})
-
-				It("missing plan-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14", false)
-					Expect(response.StatusCode).To(Equal(400))
-					Expect(lastLogLine().Message).To(ContainSubstring(".bind.plan-id-missing"))
-					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan_id missing"))
-				})
-			})
-
-			Context("when the associated instance exists", func() {
+			When("can bind", func() {
 				It("calls Bind on the service broker with the instance and binding ids", func() {
 					makeBindingRequest(instanceID, bindingID, details)
 					Expect(fakeServiceBroker.BoundInstanceIDs).To(ContainElement(instanceID))
@@ -1766,6 +1732,21 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 
+				When("backup_agent is requested", func() {
+					BeforeEach(func() {
+						details["bind_resource"] = map[string]interface{}{"backup_agent": true}
+						fakeServiceBroker.BackupAgentURL = "http://backup.example.com"
+					})
+
+					It("responds with the backup agent url", func() {
+						response := makeBindingRequest(instanceID, bindingID, details)
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource).NotTo(BeNil())
+						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.BackupAgent).To(BeTrue())
+
+						Expect(response.StatusCode).To(Equal(http.StatusCreated))
+						Expect(response.Body).To(MatchJSON(`{"backup_agent_url":"http://backup.example.com"}`))
+					})
+				})
 			})
 
 			Context("when the associated instance does not exist", func() {
@@ -1940,6 +1921,41 @@ var _ = Describe("Service Broker API", func() {
 					})
 				})
 			})
+
+			Context("the request is malformed", func() {
+				BeforeEach(func() {
+					bindingID = uniqueBindingID()
+				})
+
+				It("missing header X-Broker-API-Version", func() {
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header not set"))
+				})
+
+				It("has wrong version of API", func() {
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
+					Expect(response.StatusCode).To(Equal(412))
+					Expect(lastLogLine().Message).To(ContainSubstring("version-header-check.broker-api-version-invalid"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("X-Broker-API-Version Header must be 2.x"))
+				})
+
+				It("missing service-id", func() {
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14", false)
+					Expect(response.StatusCode).To(Equal(400))
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.service-id-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("service_id missing"))
+				})
+
+				It("missing plan-id", func() {
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14", false)
+					Expect(response.StatusCode).To(Equal(400))
+					Expect(lastLogLine().Message).To(ContainSubstring(".bind.plan-id-missing"))
+					Expect(lastLogLine().Data["error"]).To(ContainSubstring("plan_id missing"))
+				})
+			})
+
 		})
 
 		Describe("unbinding", func() {

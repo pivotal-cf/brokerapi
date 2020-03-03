@@ -70,17 +70,6 @@ var _ = Describe("Update Response", func() {
 	})
 })
 
-var _ = Describe("Binding Response", func() {
-	Describe("JSON encoding", func() {
-		It("has a credentials object", func() {
-			binding := apiresponses.BindingResponse{}
-			jsonString := `{"credentials":null}`
-
-			Expect(json.Marshal(binding)).To(MatchJSON(jsonString))
-		})
-	})
-})
-
 var _ = Describe("Error Response", func() {
 	Describe("JSON encoding", func() {
 		It("has a description field", func() {

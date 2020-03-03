@@ -59,10 +59,11 @@ type AsyncBindResponse struct {
 }
 
 type BindingResponse struct {
-	Credentials     interface{}          `json:"credentials"`
+	Credentials     interface{}          `json:"credentials,omitempty"`
 	SyslogDrainURL  string               `json:"syslog_drain_url,omitempty"`
 	RouteServiceURL string               `json:"route_service_url,omitempty"`
 	VolumeMounts    []domain.VolumeMount `json:"volume_mounts,omitempty"`
+	BackupAgentURL  string               `json:"backup_agent_url,omitempty"`
 }
 
 type GetBindingResponse struct {
@@ -75,8 +76,9 @@ type UnbindResponse struct {
 }
 
 type ExperimentalVolumeMountBindingResponse struct {
-	Credentials     interface{}                      `json:"credentials"`
+	Credentials     interface{}                      `json:"credentials,omitempty"`
 	SyslogDrainURL  string                           `json:"syslog_drain_url,omitempty"`
 	RouteServiceURL string                           `json:"route_service_url,omitempty"`
 	VolumeMounts    []domain.ExperimentalVolumeMount `json:"volume_mounts,omitempty"`
+	BackupAgentURL  string                           `json:"backup_agent_url,omitempty"`
 }
