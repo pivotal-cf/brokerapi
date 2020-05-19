@@ -22,14 +22,26 @@ import (
 )
 
 type Wrapper struct {
+	credentials []Credential
+}
+
+type Credential struct {
 	username []byte
 	password []byte
 }
 
+func NewWrapperMultiple(users map[string]string) *Wrapper {
+	var cs []Credential
+	for k, v := range users {
+		u := sha256.Sum256([]byte(k))
+		p := sha256.Sum256([]byte(v))
+		cs = append(cs, Credential{username: u[:], password: p[:]})
+	}
+	return &Wrapper{credentials: cs}
+}
+
 func NewWrapper(username, password string) *Wrapper {
-	u := sha256.Sum256([]byte(username))
-	p := sha256.Sum256([]byte(password))
-	return &Wrapper{username: u[:], password: p[:]}
+	return NewWrapperMultiple(map[string]string{username: password})
 }
 
 const notAuthorized = "Not Authorized"
@@ -58,9 +70,19 @@ func (wrapper *Wrapper) WrapFunc(handlerFunc http.HandlerFunc) http.HandlerFunc 
 
 func authorized(wrapper *Wrapper, r *http.Request) bool {
 	username, password, isOk := r.BasicAuth()
-	u := sha256.Sum256([]byte(username))
-	p := sha256.Sum256([]byte(password))
-	return isOk &&
-		subtle.ConstantTimeCompare(wrapper.username, u[:]) == 1 &&
-		subtle.ConstantTimeCompare(wrapper.password, p[:]) == 1
+	if isOk {
+		u := sha256.Sum256([]byte(username))
+		p := sha256.Sum256([]byte(password))
+		for _, c := range wrapper.credentials {
+			if c.isAuthorized(u, p) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (c Credential) isAuthorized(uChecksum [32]byte, pChecksum [32]byte) bool {
+	return subtle.ConstantTimeCompare(c.username, uChecksum[:]) == 1 &&
+		subtle.ConstantTimeCompare(c.password, pChecksum[:]) == 1
 }
