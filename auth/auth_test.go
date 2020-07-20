@@ -80,6 +80,57 @@ var _ = Describe("Auth Wrapper", func() {
 		})
 	})
 
+	Describe("wrapped multiple handler", func() {
+		var (
+			username2      string
+			password2      string
+			credentials    map[string]string
+			wrappedHandler http.Handler
+		)
+		BeforeEach(func() {
+			username2 = "username2"
+			password2 = "password2"
+			credentials = make(map[string]string)
+			credentials[username] = password
+			credentials[username2] = password2
+		})
+
+		BeforeEach(func() {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+			})
+			wrappedHandler = auth.NewWrapperMultiple(credentials).Wrap(handler)
+		})
+
+		It("works when the credentials are correct", func() {
+			request := newRequest(username, password)
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusCreated))
+
+			request = newRequest(username2, password2)
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusCreated))
+		})
+
+		It("fails when the username is empty", func() {
+			request := newRequest("", password)
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("fails when the password is empty", func() {
+			request := newRequest(username, "")
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("fails when the credentials are wrong", func() {
+			request := newRequest("thats", "apar")
+			wrappedHandler.ServeHTTP(httpRecorder, request)
+			Expect(httpRecorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+	})
+
 	Describe("wrapped handlerFunc", func() {
 		var wrappedHandlerFunc http.HandlerFunc
 
