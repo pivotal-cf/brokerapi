@@ -8,6 +8,8 @@ import (
 	"github.com/pivotal-cf/brokerapi/v7/domain"
 )
 
+var maximumPollingDuration = 3600
+
 var _ = Describe("ServiceCatalog", func() {
 	Describe("Service", func() {
 		Describe("JSON encoding", func() {
@@ -104,7 +106,7 @@ var _ = Describe("ServiceCatalog", func() {
 						Bullets:     []string{"hello", "its me"},
 						DisplayName: "name",
 					},
-					MaximumPollingDuration: 3600,
+					MaximumPollingDuration: &maximumPollingDuration,
 					MaintenanceInfo: &domain.MaintenanceInfo{
 						Public: map[string]string{
 							"name": "foo",
