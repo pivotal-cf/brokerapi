@@ -104,6 +104,7 @@ var _ = Describe("ServiceCatalog", func() {
 						Bullets:     []string{"hello", "its me"},
 						DisplayName: "name",
 					},
+					MaximumPollingDuration: 3600,
 					MaintenanceInfo: &domain.MaintenanceInfo{
 						Public: map[string]string{
 							"name": "foo",
@@ -123,6 +124,7 @@ var _ = Describe("ServiceCatalog", func() {
 						"bullets":["hello", "its me"],
 						"displayName":"name"
 					},
+					"maximum_polling_duration": 3600,
 					"maintenance_info": {
 						"public": {
 							"name": "foo"
