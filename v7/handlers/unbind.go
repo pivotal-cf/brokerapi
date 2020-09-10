@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -24,16 +23,6 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	version := getAPIVersion(req)
-	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
-	if asyncAllowed && version.Minor < 14 {
-		err := errors.New("async unbinding only supported from OSB version 2.14 and up")
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
-			Description: err.Error(),
-		})
-		logger.Error(middlewares.ApiVersionInvalidKey, err)
-		return
-	}
 	details := domain.UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
@@ -55,6 +44,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	asyncAllowed := req.FormValue("accepts_incomplete") == "true"
 	unbindResponse, err := h.serviceBroker.Unbind(req.Context(), instanceID, bindingID, details, asyncAllowed)
 	if err != nil {
 		switch err := err.(type) {
