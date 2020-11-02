@@ -471,11 +471,3 @@ type FakeCredentials struct {
 	Password string `json:"password"`
 }
 
-func sliceContains(needle string, haystack []string) bool {
-	for _, element := range haystack {
-		if element == needle {
-			return true
-		}
-	}
-	return false
-}
