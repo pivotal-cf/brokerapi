@@ -1,5 +1,7 @@
 module github.com/pivotal-cf/brokerapi/v7
 
+go 1.14
+
 require (
 	code.cloudfoundry.org/lager v1.1.1-0.20191008172124-a9afc05ee5be
 	github.com/drewolson/testflight v1.0.0

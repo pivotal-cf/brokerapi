@@ -16,8 +16,8 @@
 package brokerapi
 
 import (
-	"github.com/pivotal-cf/brokerapi/v7/domain"
-	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v7/v7/domain"
+	"github.com/pivotal-cf/brokerapi/v7/v7/domain/apiresponses"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
