@@ -111,18 +111,26 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var metadata interface{}
+	if !provisionResponse.Metadata.ISEmpty() {
+		metadata = provisionResponse.Metadata
+	}
+
 	if provisionResponse.AlreadyExists {
 		h.respond(w, http.StatusOK, apiresponses.ProvisioningResponse{
 			DashboardURL: provisionResponse.DashboardURL,
+			Metadata:     metadata,
 		})
 	} else if provisionResponse.IsAsync {
 		h.respond(w, http.StatusAccepted, apiresponses.ProvisioningResponse{
 			DashboardURL:  provisionResponse.DashboardURL,
 			OperationData: provisionResponse.OperationData,
+			Metadata:      metadata,
 		})
 	} else {
 		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
 			DashboardURL: provisionResponse.DashboardURL,
+			Metadata:     metadata,
 		})
 	}
 }
