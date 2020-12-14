@@ -112,7 +112,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var metadata interface{}
-	if !provisionResponse.Metadata.ISEmpty() {
+	if !provisionResponse.Metadata.IsEmpty() {
 		metadata = provisionResponse.Metadata
 	}
 

@@ -94,10 +94,10 @@ type ProvisionedServiceSpec struct {
 	AlreadyExists bool
 	DashboardURL  string
 	OperationData string
-	Metadata      Metadata
+	Metadata      InstanceMetadata
 }
 
-type Metadata struct {
+type InstanceMetadata struct {
 	Labels     map[string]string `json:"labels,omitempty"`
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
@@ -211,7 +211,7 @@ func (d BindDetails) GetRawParameters() json.RawMessage {
 	return d.RawParameters
 }
 
-func (m Metadata) ISEmpty() bool {
+func (m InstanceMetadata) IsEmpty() bool {
 	return len(m.Attributes) == 0 && len(m.Labels) == 0
 }
 

@@ -47,7 +47,7 @@ var _ = Describe("Provisioning Response", func() {
 		Context("when the metadata is present", func() {
 			It("returns it in the JSON", func() {
 				provisioningResponse := apiresponses.ProvisioningResponse{
-					Metadata: domain.Metadata{
+					Metadata: domain.InstanceMetadata{
 						Labels:     map[string]string{"key1": "value1"},
 						Attributes: map[string]string{"key1": "value1"},
 					},
