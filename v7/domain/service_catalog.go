@@ -21,6 +21,7 @@ type Service struct {
 	Requires             []RequiredPermission    `json:"requires,omitempty"`
 	Metadata             *ServiceMetadata        `json:"metadata,omitempty"`
 	DashboardClient      *ServiceDashboardClient `json:"dashboard_client,omitempty"`
+	AllowContextUpdates  bool                    `json:"allow_context_updates,omitempty"`
 }
 
 type ServicePlan struct {

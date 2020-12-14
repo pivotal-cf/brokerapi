@@ -28,6 +28,7 @@ var _ = Describe("ServiceCatalog", func() {
 						Secret:      "dashboardsecret",
 						RedirectURI: "the.dashboa.rd",
 					},
+					AllowContextUpdates: true,
 				}
 				jsonString := `{
 					"id":"ID-1",
@@ -37,6 +38,7 @@ var _ = Describe("ServiceCatalog", func() {
 					"plan_updateable":true,
 					"tags":["test"],
 					"plans":[],
+                    "allow_context_updates":true,
 					"dashboard_client":{
 						"id":"Dashboard ID",
 						"secret":"dashboardsecret",
