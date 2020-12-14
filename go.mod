@@ -12,5 +12,3 @@ require (
 	github.com/pkg/errors v0.9.1
 	honnef.co/go/tools v0.0.1-2020.1.5
 )
-
-go 1.13
