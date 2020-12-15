@@ -43,6 +43,20 @@ var _ = Describe("Provisioning Response", func() {
 				Expect(json.Marshal(provisioningResponse)).To(MatchJSON(jsonString))
 			})
 		})
+
+		Context("when the metadata is present", func() {
+			It("returns it in the JSON", func() {
+				provisioningResponse := apiresponses.ProvisioningResponse{
+					Metadata: domain.InstanceMetadata{
+						Labels:     map[string]string{"key1": "value1"},
+						Attributes: map[string]string{"key1": "value1"},
+					},
+				}
+				jsonString := `{"metadata":{"labels":{"key1":"value1"}, "attributes":{"key1":"value1"}}}`
+
+				Expect(json.Marshal(provisioningResponse)).To(MatchJSON(jsonString))
+			})
+		})
 	})
 })
 
