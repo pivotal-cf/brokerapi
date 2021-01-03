@@ -1,7 +1,10 @@
 module github.com/pivotal-cf/brokerapi/v7
 
+go 1.14
+
 require (
 	code.cloudfoundry.org/lager v1.1.1-0.20191008172124-a9afc05ee5be
+	github.com/NickyMateev/brokerapi v5.1.0+incompatible // indirect
 	github.com/drewolson/testflight v1.0.0
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.0
@@ -9,6 +12,7 @@ require (
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.4
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
+	github.com/pivotal-cf/brokerapi v6.4.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	honnef.co/go/tools v0.0.1-2020.1.5
 )

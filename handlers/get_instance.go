@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -31,7 +32,12 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID)
+	details := domain.FetchDetails{
+		ServiceID: req.URL.Query().Get("service_id"),
+		PlanID: req.URL.Query().Get("plan_id"),
+	}
+
+	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID, details)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
