@@ -32,6 +32,7 @@ type ServicePlan struct {
 	Bindable               *bool                `json:"bindable,omitempty"`
 	Metadata               *ServicePlanMetadata `json:"metadata,omitempty"`
 	Schemas                *ServiceSchemas      `json:"schemas,omitempty"`
+	PlanUpdatable          *bool                `json:"plan_updateable,omitempty"`
 	MaximumPollingDuration *int                 `json:"maximum_polling_duration,omitempty"`
 	MaintenanceInfo        *MaintenanceInfo     `json:"maintenance_info,omitempty"`
 }
