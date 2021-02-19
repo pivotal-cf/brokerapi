@@ -12,5 +12,5 @@ require (
 	github.com/onsi/gomega v1.10.5
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
 	github.com/pkg/errors v0.9.1
-	honnef.co/go/tools v0.0.1-2020.1.5
+	honnef.co/go/tools v0.2.0-0.dev
 )
