@@ -14,5 +14,4 @@ jobs:
       with:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v2
-    - run:  go run honnef.co/go/tools/cmd/staticcheck ./...
-    - run:  go run github.com/onsi/ginkgo/ginkgo -r
+    - run: make test

@@ -11,9 +11,8 @@ Brokers.
 
 ## Dependencies
 
-- Go 1.11+
-- [lager](https://github.com/cloudfoundry/lager)
-- [gorilla/mux](https://github.com/gorilla/mux)
+- Go
+- GNU Make 3.81
 
 ## Contributing	
 
