@@ -1,11 +1,8 @@
 # brokerapi
 
-[![Build
-Status](https://travis-ci.org/pivotal-cf/brokerapi.svg?branch=master)](https://travis-ci.org/pivotal-cf/brokerapi)
+[![test](https://github.com/pivotal-cf/brokerapi/workflows/test/badge.svg?branch=main)](https://github.com/pivotal-cf/brokerapi/actions?query=workflow%3Atest+branch%3Amain)
 
-A Go package for building [V2 Open Service Broker
-API](https://github.com/openservicebrokerapi/servicebroker/) compliant Service
-Brokers.
+A Go package for building [V2 Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker/) compliant Service Brokers.
 
 ## [Docs](https://godoc.org/github.com/pivotal-cf/brokerapi)
 
