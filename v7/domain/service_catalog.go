@@ -65,6 +65,10 @@ func BindableValue(v bool) *bool {
 	return &v
 }
 
+func PlanUpdatableValue(v bool) *bool {
+	return &v
+}
+
 type ServiceDashboardClient struct {
 	ID          string `json:"id"`
 	Secret      string `json:"secret"`
