@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -27,8 +28,11 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 		Force:     req.FormValue("force") == "true",
 	}
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		logger.Error(serviceIdMissingKey, serviceIdError)
@@ -36,7 +40,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
@@ -50,10 +54,10 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -61,8 +65,8 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if deprovisionSpec.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
+		h.respond(w, http.StatusAccepted, originatingIdentity, apiresponses.DeprovisionResponse{OperationData: deprovisionSpec.OperationData})
 	} else {
-		h.respond(w, http.StatusOK, apiresponses.EmptyResponse{})
+		h.respond(w, http.StatusOK, originatingIdentity, apiresponses.EmptyResponse{})
 	}
 }

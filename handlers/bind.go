@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -33,10 +34,13 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, originatingIdentity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -44,7 +48,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -52,7 +56,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.PlanID == "" {
 		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		return
@@ -72,10 +76,10 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 				statusCode = http.StatusNotFound
 			}
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, statusCode, errorResponse)
+			h.respond(w, statusCode, originatingIdentity, errorResponse)
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -83,7 +87,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if binding.AlreadyExists {
-		h.respond(w, http.StatusOK, apiresponses.BindingResponse{
+		h.respond(w, http.StatusOK, originatingIdentity, apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			RouteServiceURL: binding.RouteServiceURL,
@@ -94,7 +98,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if binding.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.AsyncBindResponse{
+		h.respond(w, http.StatusAccepted, originatingIdentity, apiresponses.AsyncBindResponse{
 			OperationData: binding.OperationData,
 		})
 		return
@@ -107,7 +111,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			experimentalConfig, err := json.Marshal(vol.Device.MountConfig)
 			if err != nil {
 				logger.Error(unknownErrorKey, err)
-				h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{Description: err.Error()})
+				h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{Description: err.Error()})
 				return
 			}
 
@@ -129,11 +133,11 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			VolumeMounts:    experimentalVols,
 			BackupAgentURL:  binding.BackupAgentURL,
 		}
-		h.respond(w, http.StatusCreated, experimentalBinding)
+		h.respond(w, http.StatusCreated, originatingIdentity, experimentalBinding)
 		return
 	}
 
-	h.respond(w, http.StatusCreated, apiresponses.BindingResponse{
+	h.respond(w, http.StatusCreated, originatingIdentity, apiresponses.BindingResponse{
 		Credentials:     binding.Credentials,
 		SyslogDrainURL:  binding.SyslogDrainURL,
 		RouteServiceURL: binding.RouteServiceURL,

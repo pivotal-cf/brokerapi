@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -21,10 +22,13 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get instance endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, originatingIdentity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(middlewares.ApiVersionInvalidKey, err)
@@ -36,17 +40,17 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
 		return
 	}
 
-	h.respond(w, http.StatusOK, apiresponses.GetInstanceResponse{
+	h.respond(w, http.StatusOK, originatingIdentity, apiresponses.GetInstanceResponse{
 		ServiceID:    instanceDetails.ServiceID,
 		PlanID:       instanceDetails.PlanID,
 		DashboardURL: instanceDetails.DashboardURL,

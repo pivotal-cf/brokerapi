@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,10 +24,13 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	var details domain.UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		h.logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, originatingIdentity, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -34,7 +38,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -47,10 +51,10 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			h.logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(h.logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(h.logger), originatingIdentity, err.ErrorResponse())
 		default:
 			h.logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -61,7 +65,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, apiresponses.UpdateResponse{
+	h.respond(w, statusCode, originatingIdentity, apiresponses.UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
 		DashboardURL:  updateServiceSpec.DashboardURL,
 	})

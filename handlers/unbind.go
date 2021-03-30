@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -28,8 +29,11 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		ServiceID: req.FormValue("service_id"),
 	}
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		logger.Error(serviceIdMissingKey, serviceIdError)
@@ -37,7 +41,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
@@ -50,10 +54,10 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -61,11 +65,11 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if unbindResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.UnbindResponse{
+		h.respond(w, http.StatusAccepted, originatingIdentity, apiresponses.UnbindResponse{
 			OperationData: unbindResponse.OperationData,
 		})
 	} else {
-		h.respond(w, http.StatusOK, apiresponses.EmptyResponse{})
+		h.respond(w, http.StatusOK, originatingIdentity, apiresponses.EmptyResponse{})
 	}
 
 }

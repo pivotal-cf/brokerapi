@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -30,14 +31,17 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 
 	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, pollDetails)
 
+	ctx := req.Context()
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -51,5 +55,5 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 		Description: lastOperation.Description,
 	}
 
-	h.respond(w, http.StatusOK, lastOperationResponse)
+	h.respond(w, http.StatusOK, originatingIdentity, lastOperationResponse)
 }
