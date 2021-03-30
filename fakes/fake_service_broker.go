@@ -13,7 +13,7 @@ import (
 type FakeServiceBroker struct {
 	ProvisionedInstances map[string]brokerapi.ProvisionDetails
 
-	InstanceFetchDetails domain.FetchDetails
+	InstanceFetchDetails domain.FetchInstanceDetails
 	UpdateDetails        brokerapi.UpdateDetails
 	DeprovisionDetails   brokerapi.DeprovisionDetails
 
@@ -28,7 +28,7 @@ type FakeServiceBroker struct {
 	BackupAgentURL   string
 	VolumeMounts     []brokerapi.VolumeMount
 
-	BindingFetchDetails domain.FetchDetails
+	BindingFetchDetails domain.FetchBindingDetails
 	UnbindingDetails    brokerapi.UnbindDetails
 
 	InstanceLimit int
@@ -255,7 +255,7 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string, details domain.FetchDetails) (brokerapi.GetInstanceDetailsSpec, error) {
+func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string, details domain.FetchInstanceDetails) (brokerapi.GetInstanceDetailsSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {
@@ -332,7 +332,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 	return brokerapi.DeprovisionServiceSpec{OperationData: fakeBroker.OperationDataToReturn, IsAsync: asyncAllowed}, brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string, details domain.FetchDetails) (brokerapi.GetBindingSpec, error) {
+func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string, details domain.FetchBindingDetails) (brokerapi.GetBindingSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {

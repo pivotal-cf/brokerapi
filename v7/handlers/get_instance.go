@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"errors"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v7/middlewares"
 	"github.com/pivotal-cf/brokerapi/v7/utils"
@@ -32,7 +32,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	details := domain.FetchDetails{
+	details := domain.FetchInstanceDetails{
 		ServiceID: req.URL.Query().Get("service_id"),
 		PlanID:    req.URL.Query().Get("plan_id"),
 	}

@@ -32,7 +32,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	details := domain.FetchDetails{
+	details := domain.FetchInstanceDetails{
 		ServiceID: req.URL.Query().Get("service_id"),
 		PlanID:    req.URL.Query().Get("plan_id"),
 	}

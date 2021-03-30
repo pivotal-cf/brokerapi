@@ -26,7 +26,7 @@ type ServiceBroker interface {
 
 	// GetInstance fetches information about a service instance
 	//   GET /v2/service_instances/{instance_id}
-	GetInstance(ctx context.Context, instanceID string, details FetchDetails) (GetInstanceDetailsSpec, error)
+	GetInstance(ctx context.Context, instanceID string, details FetchInstanceDetails) (GetInstanceDetailsSpec, error)
 
 	// Update modifies an existing service instance
 	//  PATCH /v2/service_instances/{instance_id}
@@ -46,7 +46,7 @@ type ServiceBroker interface {
 
 	// GetBinding fetches an existing service binding
 	//   GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}
-	GetBinding(ctx context.Context, instanceID, bindingID string, details FetchDetails) (GetBindingSpec, error)
+	GetBinding(ctx context.Context, instanceID, bindingID string, details FetchBindingDetails) (GetBindingSpec, error)
 
 	// LastBindingOperation fetches last operation state for a service binding
 	//   GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation
@@ -143,7 +143,12 @@ type UpdateServiceSpec struct {
 	OperationData string
 }
 
-type FetchDetails struct {
+type FetchInstanceDetails struct {
+	ServiceID string `json:"service_id"`
+	PlanID    string `json:"plan_id"`
+}
+
+type FetchBindingDetails struct {
 	ServiceID string `json:"service_id"`
 	PlanID    string `json:"plan_id"`
 }
