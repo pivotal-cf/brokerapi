@@ -5,14 +5,15 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
-
 	"github.com/pivotal-cf/brokerapi/v7"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 )
 
 type FakeServiceBroker struct {
 	ProvisionedInstances map[string]brokerapi.ProvisionDetails
 
+	InstanceFetchDetails domain.FetchDetails
 	UpdateDetails      brokerapi.UpdateDetails
 	DeprovisionDetails brokerapi.DeprovisionDetails
 
@@ -27,6 +28,7 @@ type FakeServiceBroker struct {
 	BackupAgentURL   string
 	VolumeMounts     []brokerapi.VolumeMount
 
+	BindingFetchDetails domain.FetchDetails
 	UnbindingDetails brokerapi.UnbindDetails
 
 	InstanceLimit int
@@ -253,13 +255,14 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 	return brokerapi.UpdateServiceSpec{IsAsync: fakeBroker.ShouldReturnAsync, OperationData: fakeBroker.OperationDataToReturn, DashboardURL: fakeBroker.DashboardURL}, nil
 }
 
-func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string) (brokerapi.GetInstanceDetailsSpec, error) {
+func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string, details domain.FetchDetails) (brokerapi.GetInstanceDetailsSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
+	fakeBroker.InstanceFetchDetails = details
 	fakeBroker.GetInstanceIDs = append(fakeBroker.GetInstanceIDs, instanceID)
 	return brokerapi.GetInstanceDetailsSpec{
 		ServiceID:    fakeBroker.ServiceID,
@@ -329,13 +332,14 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 	return brokerapi.DeprovisionServiceSpec{OperationData: fakeBroker.OperationDataToReturn, IsAsync: asyncAllowed}, brokerapi.ErrInstanceDoesNotExist
 }
 
-func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string) (brokerapi.GetBindingSpec, error) {
+func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string, details domain.FetchDetails) (brokerapi.GetBindingSpec, error) {
 	fakeBroker.BrokerCalled = true
 
 	if val, ok := context.Value("test_context").(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
+	fakeBroker.BindingFetchDetails = details
 	return brokerapi.GetBindingSpec{
 		Credentials: FakeCredentials{
 			Host:     "127.0.0.1",

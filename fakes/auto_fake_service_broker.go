@@ -5,6 +5,7 @@ import (
 	"context"
 	"sync"
 
+	brokerapi "github.com/pivotal-cf/brokerapi/v7"
 	"github.com/pivotal-cf/brokerapi/v7/domain"
 )
 
@@ -42,12 +43,13 @@ type AutoFakeServiceBroker struct {
 		result1 domain.DeprovisionServiceSpec
 		result2 error
 	}
-	GetBindingStub        func(context.Context, string, string) (domain.GetBindingSpec, error)
+	GetBindingStub        func(context.Context, string, string, domain.FetchDetails) (domain.GetBindingSpec, error)
 	getBindingMutex       sync.RWMutex
 	getBindingArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
+		arg4 domain.FetchDetails
 	}
 	getBindingReturns struct {
 		result1 domain.GetBindingSpec
@@ -57,11 +59,12 @@ type AutoFakeServiceBroker struct {
 		result1 domain.GetBindingSpec
 		result2 error
 	}
-	GetInstanceStub        func(context.Context, string) (domain.GetInstanceDetailsSpec, error)
+	GetInstanceStub        func(context.Context, string, domain.FetchDetails) (domain.GetInstanceDetailsSpec, error)
 	getInstanceMutex       sync.RWMutex
 	getInstanceArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
+		arg3 domain.FetchDetails
 	}
 	getInstanceReturns struct {
 		result1 domain.GetInstanceDetailsSpec
@@ -301,18 +304,19 @@ func (fake *AutoFakeServiceBroker) DeprovisionReturnsOnCall(i int, result1 domai
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetBinding(arg1 context.Context, arg2 string, arg3 string) (domain.GetBindingSpec, error) {
+func (fake *AutoFakeServiceBroker) GetBinding(arg1 context.Context, arg2 string, arg3 string, arg4 domain.FetchDetails) (domain.GetBindingSpec, error) {
 	fake.getBindingMutex.Lock()
 	ret, specificReturn := fake.getBindingReturnsOnCall[len(fake.getBindingArgsForCall)]
 	fake.getBindingArgsForCall = append(fake.getBindingArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("GetBinding", []interface{}{arg1, arg2, arg3})
+		arg4 domain.FetchDetails
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("GetBinding", []interface{}{arg1, arg2, arg3, arg4})
 	fake.getBindingMutex.Unlock()
 	if fake.GetBindingStub != nil {
-		return fake.GetBindingStub(arg1, arg2, arg3)
+		return fake.GetBindingStub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -327,17 +331,17 @@ func (fake *AutoFakeServiceBroker) GetBindingCallCount() int {
 	return len(fake.getBindingArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingCalls(stub func(context.Context, string, string) (domain.GetBindingSpec, error)) {
+func (fake *AutoFakeServiceBroker) GetBindingCalls(stub func(context.Context, string, string, domain.FetchDetails) (domain.GetBindingSpec, error)) {
 	fake.getBindingMutex.Lock()
 	defer fake.getBindingMutex.Unlock()
 	fake.GetBindingStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) GetBindingArgsForCall(i int) (context.Context, string, string) {
+func (fake *AutoFakeServiceBroker) GetBindingArgsForCall(i int) (context.Context, string, string, domain.FetchDetails) {
 	fake.getBindingMutex.RLock()
 	defer fake.getBindingMutex.RUnlock()
 	argsForCall := fake.getBindingArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *AutoFakeServiceBroker) GetBindingReturns(result1 domain.GetBindingSpec, result2 error) {
@@ -366,17 +370,18 @@ func (fake *AutoFakeServiceBroker) GetBindingReturnsOnCall(i int, result1 domain
 	}{result1, result2}
 }
 
-func (fake *AutoFakeServiceBroker) GetInstance(arg1 context.Context, arg2 string) (domain.GetInstanceDetailsSpec, error) {
+func (fake *AutoFakeServiceBroker) GetInstance(arg1 context.Context, arg2 string, arg3 domain.FetchDetails) (domain.GetInstanceDetailsSpec, error) {
 	fake.getInstanceMutex.Lock()
 	ret, specificReturn := fake.getInstanceReturnsOnCall[len(fake.getInstanceArgsForCall)]
 	fake.getInstanceArgsForCall = append(fake.getInstanceArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
-	}{arg1, arg2})
-	fake.recordInvocation("GetInstance", []interface{}{arg1, arg2})
+		arg3 domain.FetchDetails
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("GetInstance", []interface{}{arg1, arg2, arg3})
 	fake.getInstanceMutex.Unlock()
 	if fake.GetInstanceStub != nil {
-		return fake.GetInstanceStub(arg1, arg2)
+		return fake.GetInstanceStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -391,17 +396,17 @@ func (fake *AutoFakeServiceBroker) GetInstanceCallCount() int {
 	return len(fake.getInstanceArgsForCall)
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceCalls(stub func(context.Context, string) (domain.GetInstanceDetailsSpec, error)) {
+func (fake *AutoFakeServiceBroker) GetInstanceCalls(stub func(context.Context, string, domain.FetchDetails) (domain.GetInstanceDetailsSpec, error)) {
 	fake.getInstanceMutex.Lock()
 	defer fake.getInstanceMutex.Unlock()
 	fake.GetInstanceStub = stub
 }
 
-func (fake *AutoFakeServiceBroker) GetInstanceArgsForCall(i int) (context.Context, string) {
+func (fake *AutoFakeServiceBroker) GetInstanceArgsForCall(i int) (context.Context, string, domain.FetchDetails) {
 	fake.getInstanceMutex.RLock()
 	defer fake.getInstanceMutex.RUnlock()
 	argsForCall := fake.getInstanceArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *AutoFakeServiceBroker) GetInstanceReturns(result1 domain.GetInstanceDetailsSpec, result2 error) {
@@ -865,4 +870,4 @@ func (fake *AutoFakeServiceBroker) recordInvocation(key string, args []interface
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ domain.ServiceBroker = new(AutoFakeServiceBroker)
+var _ brokerapi.ServiceBroker = new(AutoFakeServiceBroker)
