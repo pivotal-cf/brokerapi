@@ -99,11 +99,12 @@ var _ = Describe("ServiceCatalog", func() {
 		Describe("JSON encoding", func() {
 			It("uses the correct keys", func() {
 				plan := domain.ServicePlan{
-					ID:          "ID-1",
-					Name:        "Cassandra",
-					Description: "A Cassandra Plan",
-					Bindable:    domain.BindableValue(true),
-					Free:        domain.FreeValue(true),
+					ID:            "ID-1",
+					Name:          "Cassandra",
+					Description:   "A Cassandra Plan",
+					Bindable:      domain.BindableValue(true),
+					Free:          domain.FreeValue(true),
+					PlanUpdatable: domain.PlanUpdatableValue(true),
 					Metadata: &domain.ServicePlanMetadata{
 						Bullets:     []string{"hello", "its me"},
 						DisplayName: "name",
@@ -128,6 +129,7 @@ var _ = Describe("ServiceCatalog", func() {
 						"bullets":["hello", "its me"],
 						"displayName":"name"
 					},
+					"plan_updateable": true,
 					"maximum_polling_duration": 3600,
 					"maintenance_info": {
 						"public": {
