@@ -34,7 +34,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 
 	details := domain.FetchDetails{
 		ServiceID: req.URL.Query().Get("service_id"),
-		PlanID: req.URL.Query().Get("plan_id"),
+		PlanID:    req.URL.Query().Get("plan_id"),
 	}
 
 	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID, details)

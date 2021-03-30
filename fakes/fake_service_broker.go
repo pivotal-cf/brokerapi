@@ -14,8 +14,8 @@ type FakeServiceBroker struct {
 	ProvisionedInstances map[string]brokerapi.ProvisionDetails
 
 	InstanceFetchDetails domain.FetchDetails
-	UpdateDetails      brokerapi.UpdateDetails
-	DeprovisionDetails brokerapi.DeprovisionDetails
+	UpdateDetails        brokerapi.UpdateDetails
+	DeprovisionDetails   brokerapi.DeprovisionDetails
 
 	DeprovisionedInstanceIDs []string
 	UpdatedInstanceIDs       []string
@@ -29,7 +29,7 @@ type FakeServiceBroker struct {
 	VolumeMounts     []brokerapi.VolumeMount
 
 	BindingFetchDetails domain.FetchDetails
-	UnbindingDetails brokerapi.UnbindDetails
+	UnbindingDetails    brokerapi.UnbindDetails
 
 	InstanceLimit int
 

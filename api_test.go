@@ -1466,7 +1466,7 @@ var _ = Describe("Service Broker API", func() {
 				It("returns 200 when service_id and plan_id are provided", func() {
 					params := map[string]string{
 						"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
-						"plan_id": "c6b2db23-60bf-4613-a91c-687372da42a5",
+						"plan_id":    "c6b2db23-60bf-4613-a91c-687372da42a5",
 					}
 
 					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
@@ -2391,7 +2391,7 @@ var _ = Describe("Service Broker API", func() {
 			It("returns 200 when service_id and plan_id are provided", func() {
 				params := map[string]string{
 					"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
-					"plan_id": "c6b2db23-60bf-4613-a91c-687372da42a5",
+					"plan_id":    "c6b2db23-60bf-4613-a91c-687372da42a5",
 				}
 
 				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)

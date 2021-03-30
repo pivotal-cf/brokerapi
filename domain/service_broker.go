@@ -144,8 +144,8 @@ type UpdateServiceSpec struct {
 }
 
 type FetchDetails struct {
-	ServiceID     string `json:"service_id"`
-	PlanID        string `json:"plan_id"`
+	ServiceID string `json:"service_id"`
+	PlanID    string `json:"plan_id"`
 }
 
 type PollDetails struct {
