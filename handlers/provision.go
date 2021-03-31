@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -29,10 +30,12 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -40,7 +43,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -48,7 +51,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 
 	if details.PlanID == "" {
 		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		return
@@ -65,7 +68,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 	if !valid {
 		logger.Error(invalidServiceID, invalidServiceIDError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: invalidServiceIDError.Error(),
 		})
 		return
@@ -83,7 +86,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 	if !valid {
 		logger.Error(invalidPlanID, invalidPlanIDError)
-		h.respond(w, http.StatusBadRequest, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: invalidPlanIDError.Error(),
 		})
 		return
@@ -101,10 +104,10 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -117,18 +120,18 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if provisionResponse.AlreadyExists {
-		h.respond(w, http.StatusOK, apiresponses.ProvisioningResponse{
+		h.respond(w, http.StatusOK, requestId, apiresponses.ProvisioningResponse{
 			DashboardURL: provisionResponse.DashboardURL,
 			Metadata:     metadata,
 		})
 	} else if provisionResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, apiresponses.ProvisioningResponse{
+		h.respond(w, http.StatusAccepted, requestId, apiresponses.ProvisioningResponse{
 			DashboardURL:  provisionResponse.DashboardURL,
 			OperationData: provisionResponse.OperationData,
 			Metadata:      metadata,
 		})
 	} else {
-		h.respond(w, http.StatusCreated, apiresponses.ProvisioningResponse{
+		h.respond(w, http.StatusCreated, requestId, apiresponses.ProvisioningResponse{
 			DashboardURL: provisionResponse.DashboardURL,
 			Metadata:     metadata,
 		})

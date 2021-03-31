@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -24,10 +25,12 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(middlewares.ApiVersionInvalidKey, err)
@@ -44,17 +47,17 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
 		return
 	}
 
-	h.respond(w, http.StatusOK, apiresponses.GetBindingResponse{
+	h.respond(w, http.StatusOK, requestId, apiresponses.GetBindingResponse{
 		BindingResponse: apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
 			SyslogDrainURL:  binding.SyslogDrainURL,

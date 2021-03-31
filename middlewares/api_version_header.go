@@ -43,6 +43,7 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 			logger.Error(ApiVersionInvalidKey, err)
 
 			w.Header().Set("Content-type", "application/json")
+			setBrokerRequestIdentityHeader(req, w)
 
 			statusResponse := http.StatusPreconditionFailed
 			w.WriteHeader(statusResponse)
@@ -59,6 +60,13 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 
 		next.ServeHTTP(w, req)
 	})
+}
+
+func setBrokerRequestIdentityHeader(req *http.Request, w http.ResponseWriter) {
+	requestID := req.Header.Get("X-Broker-API-Request-Identity")
+	if requestID != "" {
+		w.Header().Set("X-Broker-API-Request-Identity", requestID)
+	}
 }
 
 func checkBrokerAPIVersionHdr(req *http.Request) error {
