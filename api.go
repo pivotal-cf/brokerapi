@@ -43,6 +43,7 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	router.Use(middlewares.AddOriginatingIdentityToContext)
 	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
 	router.Use(middlewares.AddInfoLocationToContext)
+	router.Use(middlewares.AddRequestIdentityToContext)
 
 	return router
 }
