@@ -32,7 +32,7 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, pollDetails)
 
 	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
 
 	if err != nil {
 		switch err := err.(type) {

@@ -29,7 +29,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
 
 	if details.ServiceID == "" {
 		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{

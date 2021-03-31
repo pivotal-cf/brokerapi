@@ -9,7 +9,7 @@ import (
 
 func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
 
 	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {

@@ -35,7 +35,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
 
 	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {

@@ -280,33 +280,27 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		When("X-Broker-API-Originating-Identity is passed", func() {
-			It("Adds it to the context and returns in response", func() {
+			It("Adds it to the context", func() {
 				originatingIdentity := "Originating Identity Name"
 				req.Header.Add("X-Broker-API-Originating-Identity", originatingIdentity)
 
-				response, err := http.DefaultClient.Do(req)
+				_, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("originatingIdentity")).To(Equal(originatingIdentity))
-
-				header := response.Header.Get("X-Broker-API-Originating-Identity")
-				Expect(header).Should(Equal(originatingIdentity))
 			})
 		})
 
 		When("X-Broker-API-Originating-Identity is not passed", func() {
 			It("Adds empty originatingIdentity to the context", func() {
-				response, err := http.DefaultClient.Do(req)
+				_, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("originatingIdentity")).To(Equal(""))
-
-				header := response.Header.Get("X-Broker-API-Originating-Identity")
-				Expect(header).Should(Equal(""))
 			})
 		})
 	})
@@ -340,23 +334,29 @@ var _ = Describe("Service Broker API", func() {
 				const requestIdentity = "Request Identity Name"
 				req.Header.Add("X-Broker-API-Request-Identity", requestIdentity)
 
-				_, err := http.DefaultClient.Do(req)
+				response, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("requestIdentity")).To(Equal(requestIdentity))
 
+
+				header := response.Header.Get("X-Broker-API-Request-Identity")
+				Expect(header).Should(Equal(requestIdentity))
 			})
 		})
 		When("X-Broker-API-Request-Identity is not passed", func() {
 			It("Adds empty requestIdentity to the context", func() {
-				_, err := http.DefaultClient.Do(req)
+				response, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("requestIdentity")).To(Equal(""))
+
+				header := response.Header.Get("X-Broker-API-Request-Identity")
+				Expect(header).Should(Equal(""))
 			})
 		})
 	})

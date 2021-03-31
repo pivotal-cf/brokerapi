@@ -31,7 +31,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
 	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("originatingIdentity"))
+	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
 
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
