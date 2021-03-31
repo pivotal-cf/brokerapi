@@ -8,12 +8,11 @@ import (
 )
 
 func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
 
 	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {
-		h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -23,5 +22,5 @@ func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
 		Services: services,
 	}
 
-	h.respond(w, http.StatusOK, originatingIdentity, catalog)
+	h.respond(w, http.StatusOK, requestId, catalog)
 }

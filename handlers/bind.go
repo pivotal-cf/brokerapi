@@ -34,13 +34,12 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
 
 	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		logger.Error(invalidBindDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -48,7 +47,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -56,7 +55,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 
 	if details.PlanID == "" {
 		logger.Error(planIdMissingKey, planIdError)
-		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		return
@@ -76,10 +75,10 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 				statusCode = http.StatusNotFound
 			}
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, statusCode, originatingIdentity, errorResponse)
+			h.respond(w, statusCode, requestId, errorResponse)
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -87,7 +86,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if binding.AlreadyExists {
-		h.respond(w, http.StatusOK, originatingIdentity, apiresponses.BindingResponse{
+		h.respond(w, http.StatusOK, requestId, apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			RouteServiceURL: binding.RouteServiceURL,
@@ -98,7 +97,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if binding.IsAsync {
-		h.respond(w, http.StatusAccepted, originatingIdentity, apiresponses.AsyncBindResponse{
+		h.respond(w, http.StatusAccepted, requestId, apiresponses.AsyncBindResponse{
 			OperationData: binding.OperationData,
 		})
 		return
@@ -111,7 +110,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			experimentalConfig, err := json.Marshal(vol.Device.MountConfig)
 			if err != nil {
 				logger.Error(unknownErrorKey, err)
-				h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{Description: err.Error()})
+				h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{Description: err.Error()})
 				return
 			}
 
@@ -133,11 +132,11 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			VolumeMounts:    experimentalVols,
 			BackupAgentURL:  binding.BackupAgentURL,
 		}
-		h.respond(w, http.StatusCreated, originatingIdentity, experimentalBinding)
+		h.respond(w, http.StatusCreated, requestId, experimentalBinding)
 		return
 	}
 
-	h.respond(w, http.StatusCreated, originatingIdentity, apiresponses.BindingResponse{
+	h.respond(w, http.StatusCreated, requestId, apiresponses.BindingResponse{
 		Credentials:     binding.Credentials,
 		SyslogDrainURL:  binding.SyslogDrainURL,
 		RouteServiceURL: binding.RouteServiceURL,

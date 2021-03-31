@@ -24,13 +24,12 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
 
 	version := getAPIVersion(req)
 	if version.Minor < 14 {
 		err := errors.New("get binding endpoint only supported starting with OSB version 2.14")
-		h.respond(w, http.StatusPreconditionFailed, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusPreconditionFailed, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		logger.Error(middlewares.ApiVersionInvalidKey, err)
@@ -42,17 +41,17 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
 		return
 	}
 
-	h.respond(w, http.StatusOK, originatingIdentity, apiresponses.GetBindingResponse{
+	h.respond(w, http.StatusOK, requestId, apiresponses.GetBindingResponse{
 		BindingResponse: apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
 			SyslogDrainURL:  binding.SyslogDrainURL,

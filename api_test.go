@@ -341,7 +341,6 @@ var _ = Describe("Service Broker API", func() {
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
 				Expect(ctx.Value("requestIdentity")).To(Equal(requestIdentity))
 
-
 				header := response.Header.Get("X-Broker-API-Request-Identity")
 				Expect(header).Should(Equal(requestIdentity))
 			})

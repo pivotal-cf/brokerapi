@@ -24,13 +24,12 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
 
 	var details domain.UpdateDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
 		h.logger.Error(invalidServiceDetailsErrorKey, err)
-		h.respond(w, http.StatusUnprocessableEntity, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusUnprocessableEntity, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -38,7 +37,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 
 	if details.ServiceID == "" {
 		logger.Error(serviceIdMissingKey, serviceIdError)
-		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		return
@@ -51,10 +50,10 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			h.logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(h.logger), originatingIdentity, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(h.logger), requestId, err.ErrorResponse())
 		default:
 			h.logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -65,7 +64,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
 	}
-	h.respond(w, statusCode, originatingIdentity, apiresponses.UpdateResponse{
+	h.respond(w, statusCode, requestId, apiresponses.UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
 		DashboardURL:  updateServiceSpec.DashboardURL,
 	})

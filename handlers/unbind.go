@@ -24,16 +24,15 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+
 	details := domain.UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),
 		ServiceID: req.FormValue("service_id"),
 	}
 
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
-
 	if details.ServiceID == "" {
-		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
 		logger.Error(serviceIdMissingKey, serviceIdError)
@@ -41,7 +40,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		h.respond(w, http.StatusBadRequest, originatingIdentity, apiresponses.ErrorResponse{
+		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
 		logger.Error(planIdMissingKey, planIdError)
@@ -54,10 +53,10 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -65,11 +64,11 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if unbindResponse.IsAsync {
-		h.respond(w, http.StatusAccepted, originatingIdentity, apiresponses.UnbindResponse{
+		h.respond(w, http.StatusAccepted, requestId, apiresponses.UnbindResponse{
 			OperationData: unbindResponse.OperationData,
 		})
 	} else {
-		h.respond(w, http.StatusOK, originatingIdentity, apiresponses.EmptyResponse{})
+		h.respond(w, http.StatusOK, requestId, apiresponses.EmptyResponse{})
 	}
 
 }

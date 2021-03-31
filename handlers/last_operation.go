@@ -29,19 +29,17 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 
 	logger.Info("starting-check-for-operation")
 
+	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+
 	lastOperation, err := h.serviceBroker.LastOperation(req.Context(), instanceID, pollDetails)
-
-	ctx := req.Context()
-	originatingIdentity := fmt.Sprintf("%v", ctx.Value("requestIdentity"))
-
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), originatingIdentity, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
-			h.respond(w, http.StatusInternalServerError, originatingIdentity, apiresponses.ErrorResponse{
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
 		}
@@ -55,5 +53,5 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 		Description: lastOperation.Description,
 	}
 
-	h.respond(w, http.StatusOK, originatingIdentity, lastOperationResponse)
+	h.respond(w, http.StatusOK, requestId, lastOperationResponse)
 }
