@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"errors"
-	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"fmt"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
