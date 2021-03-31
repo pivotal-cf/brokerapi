@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pivotal-cf/brokerapi/v7/domain"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
@@ -34,7 +36,12 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID)
+	details := domain.FetchInstanceDetails{
+		ServiceID: req.URL.Query().Get("service_id"),
+		PlanID:    req.URL.Query().Get("plan_id"),
+	}
+
+	instanceDetails, err := h.serviceBroker.GetInstance(req.Context(), instanceID, details)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:

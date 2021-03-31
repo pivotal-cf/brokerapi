@@ -537,7 +537,7 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
-		makeGetInstanceRequest := func(instanceID string) *testflight.Response {
+		makeGetInstanceWithQueryParamsRequest := func(instanceID string, params map[string]string) *testflight.Response {
 			response := &testflight.Response{}
 			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
@@ -546,9 +546,18 @@ var _ = Describe("Service Broker API", func() {
 				request.Header.Add("X-Broker-API-Version", apiVersion)
 				request.Header.Add("X-Broker-API-Request-Identity", requestIdentity)
 				request.SetBasicAuth("username", "password")
+				q := request.URL.Query()
+				for query, value := range params {
+					q.Add(query, value)
+				}
+				request.URL.RawQuery = q.Encode()
 				response = r.Do(request)
 			})
 			return response
+		}
+
+		makeGetInstanceRequest := func(instanceID string) *testflight.Response {
+			return makeGetInstanceWithQueryParamsRequest(instanceID, map[string]string{})
 		}
 
 		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, queryString string) *testflight.Response {
@@ -1642,6 +1651,53 @@ var _ = Describe("Service Broker API", func() {
 					Expect(response.StatusCode).To(Equal(404))
 				})
 			})
+
+			Context("fetch details", func() {
+				It("returns 200 when service_id and plan_id are not provided", func() {
+					response := makeGetInstanceWithQueryParamsRequest("instance-id", map[string]string{})
+
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(""))
+					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(""))
+				})
+
+				It("returns 200 when service_id and plan_id are provided", func() {
+					params := map[string]string{
+						"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
+						"plan_id":    "c6b2db23-60bf-4613-a91c-687372da42a5",
+					}
+
+					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
+
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(params["service_id"]))
+					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(params["plan_id"]))
+				})
+
+				It("returns 200 when only service_id is provided", func() {
+					params := map[string]string{
+						"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
+					}
+
+					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
+
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(params["service_id"]))
+					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(""))
+				})
+
+				It("returns 200 when only plan_id is provided", func() {
+					params := map[string]string{
+						"plan_id": "c6b2db23-60bf-4613-a91c-687372da42a5",
+					}
+
+					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
+
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(""))
+					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(params["plan_id"]))
+				})
+			})
 		})
 	})
 
@@ -1664,6 +1720,31 @@ var _ = Describe("Service Broker API", func() {
 				request.SetBasicAuth("username", "password")
 				request.Header.Add("X-Broker-API-Request-Identity", bindingRequestIdentity)
 
+				response = r.Do(request)
+			})
+			return response
+		}
+
+		makeGetBindingWithQueryParamsRequest := func(instanceID, bindingID string, params map[string]string) *testflight.Response {
+			response := &testflight.Response{}
+			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s", instanceID, bindingID)
+
+				buffer := &bytes.Buffer{}
+
+				request, err := http.NewRequest("GET", path, buffer)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				request.Header.Add("X-Broker-Api-Version", "2.14")
+				request.Header.Add("Content-Type", "application/json")
+				request.SetBasicAuth("username", "password")
+
+				q := request.URL.Query()
+				for query, value := range params {
+					q.Add(query, value)
+				}
+				request.URL.RawQuery = q.Encode()
 				response = r.Do(request)
 			})
 			return response
@@ -2502,6 +2583,53 @@ var _ = Describe("Service Broker API", func() {
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 				Expect(lastLogLine().Message).To(ContainSubstring("broker-api.getBinding.fire"))
 				Expect(lastLogLine().Data["error"]).To(ContainSubstring("some error"))
+			})
+		})
+
+		Context("fetch details", func() {
+			It("returns 200 when service_id and plan_id are not provided", func() {
+				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", map[string]string{})
+
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(""))
+				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(""))
+			})
+
+			It("returns 200 when service_id and plan_id are provided", func() {
+				params := map[string]string{
+					"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
+					"plan_id":    "c6b2db23-60bf-4613-a91c-687372da42a5",
+				}
+
+				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
+
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(params["service_id"]))
+				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(params["plan_id"]))
+			})
+
+			It("returns 200 when only service_id is provided", func() {
+				params := map[string]string{
+					"service_id": "e1307a5f-c54d-4f5d-924e-e5618c52ac0a",
+				}
+
+				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
+
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(params["service_id"]))
+				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(""))
+			})
+
+			It("returns 200 when only plan_id is provided", func() {
+				params := map[string]string{
+					"plan_id": "c6b2db23-60bf-4613-a91c-687372da42a5",
+				}
+
+				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
+
+				Expect(response.StatusCode).To(Equal(http.StatusOK))
+				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(""))
+				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(params["plan_id"]))
 			})
 		})
 	})

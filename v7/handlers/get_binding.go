@@ -7,6 +7,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v7/middlewares"
 	"github.com/pivotal-cf/brokerapi/v7/utils"
@@ -36,7 +37,12 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	binding, err := h.serviceBroker.GetBinding(req.Context(), instanceID, bindingID)
+	details := domain.FetchBindingDetails{
+		ServiceID: req.URL.Query().Get("service_id"),
+		PlanID:    req.URL.Query().Get("plan_id"),
+	}
+
+	binding, err := h.serviceBroker.GetBinding(req.Context(), instanceID, bindingID, details)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
