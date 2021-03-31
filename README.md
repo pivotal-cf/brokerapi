@@ -75,9 +75,17 @@ func (sb *ServiceBrokerImplementation) Provision(ctx context.Context,
 
 The request context for every request contains the unparsed
 `X-Broker-API-Originating-Identity` header under the key
-`originatingIdentityKey`.  More details on how the Open Service Broker API
+`originatingIdentity`.  More details on how the Open Service Broker API
 manages request originating identity is available
 [here](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#originating-identity).
+
+## Request Identity
+
+The request context for every request contains the unparsed
+`X-Broker-API-Request-Identity` header under the key
+`requestIdentity`.  More details on how the Open Service Broker API
+manages request originating identity is available
+[here](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#request-identity).
 
 ## Example Service Broker
 
