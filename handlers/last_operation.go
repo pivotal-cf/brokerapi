@@ -6,10 +6,10 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v7/domain"
-	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/v7/middlewares"
-	"github.com/pivotal-cf/brokerapi/v7/utils"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v8/utils"
 )
 
 const lastOperationLogKey = "lastOperation"
