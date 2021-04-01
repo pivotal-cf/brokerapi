@@ -28,15 +28,15 @@ import (
 
 	"github.com/onsi/ginkgo/extensions/table"
 
-	"github.com/pivotal-cf/brokerapi/v7/middlewares"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v7"
-	"github.com/pivotal-cf/brokerapi/v7/fakes"
+	"github.com/pivotal-cf/brokerapi/v8"
+	"github.com/pivotal-cf/brokerapi/v8/fakes"
 )
 
 var _ = Describe("Service Broker API", func() {
