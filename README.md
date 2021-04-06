@@ -92,3 +92,8 @@ manages request originating identity is available
 You can see the
 [cf-redis](https://github.com/pivotal-cf/cf-redis-broker/blob/2f0e9a8ebb1012a9be74bbef2d411b0b3b60352f/broker/broker.go)
 service broker uses the BrokerAPI package to create a service broker for Redis.
+
+## Releasing
+
+Releasing steps can be found [here](https://github.com/pivotal-cf/brokerapi/wiki/Releasing-new-BrokerAPI-major-version)
+
