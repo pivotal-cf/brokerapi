@@ -5,6 +5,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 )
 
 type contextKey string
@@ -42,11 +43,11 @@ func RetrieveServicePlanFromContext(ctx context.Context) *domain.ServicePlan {
 	return nil
 }
 
-func DataForContext(context context.Context, dataKeys ...string) lager.Data {
+func DataForContext(context context.Context, dataKeys ...middlewares.ContextKey) lager.Data {
 	data := lager.Data{}
 	for _, key := range dataKeys {
 		if value := context.Value(key); value != nil {
-			data[key] = value
+			data[string(key)] = value
 		}
 	}
 

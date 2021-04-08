@@ -30,7 +30,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {

@@ -34,7 +34,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		asyncAllowed = req.FormValue("accepts_incomplete") == "true"
 	}
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {

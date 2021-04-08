@@ -24,7 +24,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	details := domain.UnbindDetails{
 		PlanID:    req.FormValue("plan_id"),

@@ -7,8 +7,6 @@ import (
 	"github.com/pborman/uuid"
 )
 
-const CorrelationIDKey = "correlation-id"
-
 var correlationIDHeaders = []string{"X-Correlation-ID", "X-CorrelationID", "X-ForRequest-ID", "X-Request-ID", "X-Vcap-Request-Id"}
 
 func AddCorrelationIDToContext(next http.Handler) http.Handler {

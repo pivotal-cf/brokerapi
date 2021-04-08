@@ -29,7 +29,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		instanceIDLogKey: instanceID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	version := getAPIVersion(req)
 	if version.Minor < 14 {

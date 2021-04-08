@@ -140,7 +140,7 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		BeforeEach(func() {
-			ctx = context.WithValue(context.Background(), "test_context", true)
+			ctx = context.WithValue(context.Background(), fakes.FakeBrokerContextDataKey, true)
 			reqBody = fmt.Sprintf(`{"service_id":"%s","plan_id":"456"}`, fakeServiceBroker.ServiceID)
 		})
 
@@ -291,7 +291,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("originatingIdentity")).To(Equal(originatingIdentity))
+				Expect(ctx.Value(middlewares.OriginatingIdentityKey)).To(Equal(originatingIdentity))
 			})
 		})
 
@@ -302,7 +302,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("originatingIdentity")).To(Equal(""))
+				Expect(ctx.Value(middlewares.OriginatingIdentityKey)).To(Equal(""))
 			})
 		})
 	})
@@ -340,7 +340,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("requestIdentity")).To(Equal(requestIdentity))
+				Expect(ctx.Value(middlewares.RequestIdentityKey)).To(Equal(requestIdentity))
 
 				header := response.Header.Get("X-Broker-API-Request-Identity")
 				Expect(header).To(Equal(requestIdentity))
@@ -354,7 +354,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("requestIdentity")).To(Equal(""))
+				Expect(ctx.Value(middlewares.RequestIdentityKey)).To(Equal(""))
 
 				header := response.Header.Get("X-Broker-API-Request-Identity")
 				Expect(header).To(Equal(""))
@@ -396,7 +396,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("infoLocation")).To(Equal(infoLocation))
+				Expect(ctx.Value(middlewares.InfoLocationKey)).To(Equal(infoLocation))
 
 			})
 		})
@@ -407,7 +407,7 @@ var _ = Describe("Service Broker API", func() {
 
 				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
 				ctx := fakeServiceBroker.ServicesArgsForCall(0)
-				Expect(ctx.Value("infoLocation")).To(Equal(""))
+				Expect(ctx.Value(middlewares.InfoLocationKey)).To(Equal(""))
 			})
 		})
 	})
@@ -492,7 +492,7 @@ var _ = Describe("Service Broker API", func() {
 			request.Header.Add("X-Broker-API-Request-Identity", requestIdentity)
 			ctx := context.Background()
 			if fail {
-				ctx = context.WithValue(ctx, "fails", true)
+				ctx = context.WithValue(ctx, fakes.FakeBrokerContextFailsKey, true)
 			}
 			request = request.WithContext(ctx)
 			brokerAPI.ServeHTTP(recorder, request)
