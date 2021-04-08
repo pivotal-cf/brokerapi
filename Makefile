@@ -21,11 +21,14 @@ vet: ## Run static code analysis
 ginkgo: ## Run tests using Ginkgo
 	go run github.com/onsi/ginkgo/ginkgo -r
 
-fmt: ## Checks that the code is formatted correcty
+fmt: ## Checks that the code is formatted correctly
 	@@if [ -n "$$(gofmt -s -e -l -d .)" ]; then                   \
 		echo "gofmt check failed: run 'gofmt -d -e -l -w .'"; \
 		exit 1;                                               \
 	fi
+
+generate: ## Generates the fakes using counterfeiter
+	go generate ./...
 
 version: ## Display the version of Go
 	@@go version

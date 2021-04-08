@@ -44,15 +44,16 @@ func (fake *FakeResponseWriter) Header() http.Header {
 	ret, specificReturn := fake.headerReturnsOnCall[len(fake.headerArgsForCall)]
 	fake.headerArgsForCall = append(fake.headerArgsForCall, struct {
 	}{})
+	stub := fake.HeaderStub
+	fakeReturns := fake.headerReturns
 	fake.recordInvocation("Header", []interface{}{})
 	fake.headerMutex.Unlock()
-	if fake.HeaderStub != nil {
-		return fake.HeaderStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.headerReturns
 	return fakeReturns.result1
 }
 
@@ -102,15 +103,16 @@ func (fake *FakeResponseWriter) Write(arg1 []byte) (int, error) {
 	fake.writeArgsForCall = append(fake.writeArgsForCall, struct {
 		arg1 []byte
 	}{arg1Copy})
+	stub := fake.WriteStub
+	fakeReturns := fake.writeReturns
 	fake.recordInvocation("Write", []interface{}{arg1Copy})
 	fake.writeMutex.Unlock()
-	if fake.WriteStub != nil {
-		return fake.WriteStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.writeReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -164,9 +166,10 @@ func (fake *FakeResponseWriter) WriteHeader(arg1 int) {
 	fake.writeHeaderArgsForCall = append(fake.writeHeaderArgsForCall, struct {
 		arg1 int
 	}{arg1})
+	stub := fake.WriteHeaderStub
 	fake.recordInvocation("WriteHeader", []interface{}{arg1})
 	fake.writeHeaderMutex.Unlock()
-	if fake.WriteHeaderStub != nil {
+	if stub != nil {
 		fake.WriteHeaderStub(arg1)
 	}
 }

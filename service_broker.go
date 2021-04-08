@@ -20,7 +20,8 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 )
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
 
 //Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 //Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
