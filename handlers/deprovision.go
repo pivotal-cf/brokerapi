@@ -28,7 +28,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 		Force:     req.FormValue("force") == "true",
 	}
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	if details.ServiceID == "" {
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{

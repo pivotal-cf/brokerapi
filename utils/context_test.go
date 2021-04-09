@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 	"github.com/pivotal-cf/brokerapi/v8/utils"
 )
 
@@ -75,7 +76,7 @@ var _ = Describe("Context", func() {
 	})
 
 	Describe("Log data for context", func() {
-		const testKey = "test-key"
+		const testKey middlewares.ContextKey = "test-key"
 
 		Context("the provided key is present in the context", func() {
 			It("returns data containing the key", func() {
@@ -83,10 +84,11 @@ var _ = Describe("Context", func() {
 				ctx = context.WithValue(ctx, testKey, expectedValue)
 
 				data := utils.DataForContext(ctx, testKey)
-				value, ok := data[testKey]
+				value, ok := data[string(testKey)]
 				Expect(ok).To(BeTrue())
 				Expect(value).Should(Equal(expectedValue))
 			})
+
 			Context("the key value is a struct", func() {
 				It("returns data containing the key", func() {
 					type testType struct{}
@@ -94,16 +96,17 @@ var _ = Describe("Context", func() {
 					ctx = context.WithValue(ctx, testKey, expectedValue)
 
 					data := utils.DataForContext(ctx, testKey)
-					value, ok := data[testKey]
+					value, ok := data[string(testKey)]
 					Expect(ok).To(BeTrue())
 					Expect(value).Should(Equal(expectedValue))
 				})
 			})
 		})
+
 		Context("the provided key is not in the context", func() {
 			It("returns data without the key", func() {
 				data := utils.DataForContext(ctx, testKey)
-				_, ok := data[testKey]
+				_, ok := data[string(testKey)]
 				Expect(ok).To(BeFalse())
 			})
 		})

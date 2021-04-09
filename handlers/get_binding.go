@@ -25,7 +25,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		bindingIDLogKey:  bindingID,
 	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
 
-	requestId := fmt.Sprintf("%v", req.Context().Value("requestIdentity"))
+	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	version := getAPIVersion(req)
 	if version.Minor < 14 {

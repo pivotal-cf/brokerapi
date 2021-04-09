@@ -20,14 +20,10 @@ import (
 	"net/http"
 )
 
-const (
-	infoLocationKey = "infoLocation"
-)
-
 func AddInfoLocationToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		infoLocation := req.Header.Get("X-Api-Info-Location")
-		newCtx := context.WithValue(req.Context(), infoLocationKey, infoLocation)
+		newCtx := context.WithValue(req.Context(), InfoLocationKey, infoLocation)
 		next.ServeHTTP(w, req.WithContext(newCtx))
 	})
 }

@@ -20,14 +20,10 @@ import (
 	"net/http"
 )
 
-const (
-	originatingIdentityKey = "originatingIdentity"
-)
-
 func AddOriginatingIdentityToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		originatingIdentity := req.Header.Get("X-Broker-API-Originating-Identity")
-		newCtx := context.WithValue(req.Context(), originatingIdentityKey, originatingIdentity)
+		newCtx := context.WithValue(req.Context(), OriginatingIdentityKey, originatingIdentity)
 		next.ServeHTTP(w, req.WithContext(newCtx))
 	})
 }

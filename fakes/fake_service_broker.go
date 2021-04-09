@@ -71,14 +71,21 @@ type FakeAsyncOnlyServiceBroker struct {
 	FakeServiceBroker
 }
 
+type FakeBrokerContextKeyType string
+
+const (
+	FakeBrokerContextDataKey  FakeBrokerContextKeyType = "test_context"
+	FakeBrokerContextFailsKey FakeBrokerContextKeyType = "fails"
+)
+
 func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.Service, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := ctx.Value("test_context").(bool); ok {
+	if val, ok := ctx.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
-	if val, ok := ctx.Value("fails").(bool); ok && val {
+	if val, ok := ctx.Value(FakeBrokerContextFailsKey).(bool); ok && val {
 		return []brokerapi.Service{}, errors.New("something went wrong!")
 	}
 
@@ -164,7 +171,7 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 func (fakeBroker *FakeServiceBroker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (brokerapi.ProvisionedServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -241,7 +248,7 @@ func (fakeBroker *FakeAsyncOnlyServiceBroker) Provision(context context.Context,
 func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -258,7 +265,7 @@ func (fakeBroker *FakeServiceBroker) Update(context context.Context, instanceID 
 func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instanceID string, details domain.FetchInstanceDetails) (brokerapi.GetInstanceDetailsSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -277,7 +284,7 @@ func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instan
 func (fakeBroker *FakeServiceBroker) Deprovision(context context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -335,7 +342,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Deprovision(context context.Context, i
 func (fakeBroker *FakeServiceBroker) GetBinding(context context.Context, instanceID, bindingID string, details domain.FetchBindingDetails) (brokerapi.GetBindingSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -375,7 +382,7 @@ func (fakeBroker *FakeAsyncServiceBroker) Bind(context context.Context, instance
 func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails, asyncAllowed bool) (brokerapi.Binding, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -415,7 +422,7 @@ func (fakeBroker *FakeServiceBroker) Bind(context context.Context, instanceID, b
 func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails, asyncAllowed bool) (brokerapi.UnbindSpec, error) {
 	fakeBroker.BrokerCalled = true
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -437,7 +444,7 @@ func (fakeBroker *FakeServiceBroker) Unbind(context context.Context, instanceID,
 
 func (fakeBroker *FakeServiceBroker) LastBindingOperation(context context.Context, instanceID, bindingID string, details brokerapi.PollDetails) (brokerapi.LastOperation, error) {
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
@@ -452,7 +459,7 @@ func (fakeBroker *FakeServiceBroker) LastOperation(context context.Context, inst
 	fakeBroker.LastOperationInstanceID = instanceID
 	fakeBroker.LastOperationData = details.OperationData
 
-	if val, ok := context.Value("test_context").(bool); ok {
+	if val, ok := context.Value(FakeBrokerContextDataKey).(bool); ok {
 		fakeBroker.ReceivedContext = val
 	}
 
