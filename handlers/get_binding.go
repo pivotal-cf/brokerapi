@@ -23,7 +23,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.Session(getBindLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
 		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 

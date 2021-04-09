@@ -22,7 +22,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 
 	logger := h.logger.Session(getInstanceLogKey, lager.Data{
 		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey))
+	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
