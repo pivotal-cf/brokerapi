@@ -15,9 +15,6 @@ A Go package for building [V2 Open Service Broker API](https://github.com/opense
 
 We appreciate and welcome open source contibution. We will try to review the changes as soon as we can.	
 
-Any changes should be made on the main folders and files and not in the v7 folder. 	
-We will review the changes and make sure they are included in the v7 folder as part of the merge process.
-
 ## Usage
 
 `brokerapi` defines a
