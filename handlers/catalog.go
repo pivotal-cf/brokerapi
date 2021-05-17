@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/pivotal-cf/brokerapi/v8/utils"
 	"net/http"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v8/utils"
 )
 
 const getCatalogLogKey = "getCatalog"
