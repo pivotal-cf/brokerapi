@@ -60,6 +60,11 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var metadata interface{}
+	if !updateServiceSpec.Metadata.IsEmpty() {
+		metadata = updateServiceSpec.Metadata
+	}
+
 	statusCode := http.StatusOK
 	if updateServiceSpec.IsAsync {
 		statusCode = http.StatusAccepted
@@ -67,5 +72,6 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 	h.respond(w, statusCode, requestId, apiresponses.UpdateResponse{
 		OperationData: updateServiceSpec.OperationData,
 		DashboardURL:  updateServiceSpec.DashboardURL,
+		Metadata:      metadata,
 	})
 }

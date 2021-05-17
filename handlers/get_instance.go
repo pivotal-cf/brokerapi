@@ -56,10 +56,16 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var metadata interface{}
+	if !instanceDetails.Metadata.IsEmpty() {
+		metadata = instanceDetails.Metadata
+	}
+
 	h.respond(w, http.StatusOK, requestId, apiresponses.GetInstanceResponse{
 		ServiceID:    instanceDetails.ServiceID,
 		PlanID:       instanceDetails.PlanID,
 		DashboardURL: instanceDetails.DashboardURL,
 		Parameters:   instanceDetails.Parameters,
+		Metadata:     metadata,
 	})
 }

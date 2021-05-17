@@ -39,11 +39,13 @@ type GetInstanceResponse struct {
 	PlanID       string      `json:"plan_id"`
 	DashboardURL string      `json:"dashboard_url,omitempty"`
 	Parameters   interface{} `json:"parameters,omitempty"`
+	Metadata     interface{} `json:"metadata,omitempty"`
 }
 
 type UpdateResponse struct {
-	DashboardURL  string `json:"dashboard_url,omitempty"`
-	OperationData string `json:"operation,omitempty"`
+	DashboardURL  string      `json:"dashboard_url,omitempty"`
+	OperationData string      `json:"operation,omitempty"`
+	Metadata      interface{} `json:"metadata,omitempty"`
 }
 
 type DeprovisionResponse struct {

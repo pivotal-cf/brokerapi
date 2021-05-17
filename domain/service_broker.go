@@ -119,6 +119,7 @@ type GetInstanceDetailsSpec struct {
 	PlanID       string      `json:"plan_id"`
 	DashboardURL string      `json:"dashboard_url"`
 	Parameters   interface{} `json:"parameters"`
+	Metadata     InstanceMetadata
 }
 
 type UpdateDetails struct {
@@ -142,6 +143,7 @@ type UpdateServiceSpec struct {
 	IsAsync       bool
 	DashboardURL  string
 	OperationData string
+	Metadata      InstanceMetadata
 }
 
 type FetchInstanceDetails struct {
