@@ -4,19 +4,30 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
-
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v8/utils"
 )
 
+const getCatalogLogKey = "getCatalog"
+
 func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
+	logger := h.logger.Session(getCatalogLogKey, nil,
+		utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	services, err := h.serviceBroker.Services(req.Context())
 	if err != nil {
-		h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
-			Description: err.Error(),
-		})
+		switch err := err.(type) {
+		case *apiresponses.FailureResponse:
+			logger.Error(err.LoggerAction(), err)
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+		default:
+			logger.Error(unknownErrorKey, err)
+			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
+				Description: err.Error(),
+			})
+		}
 		return
 	}
 
