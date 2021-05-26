@@ -3,7 +3,6 @@ name: Automerge Dependabot
 on:
   workflow_run:
     workflows: ["test"]
-    branches: [main]
     types: 
       - completed
       
