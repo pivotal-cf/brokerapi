@@ -7,10 +7,11 @@ require (
 	github.com/drewolson/testflight v1.0.0
 	github.com/google/uuid v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.12.0
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
 	github.com/pkg/errors v0.9.1
-	honnef.co/go/tools v0.2.0-0.dev
+	honnef.co/go/tools v0.3.0-0.dev
 )
