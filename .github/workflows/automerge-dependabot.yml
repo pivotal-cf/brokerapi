@@ -12,6 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' &&  github.event.workflow_run.conclusion == 'success'  }}
     steps:
+      - name: View context attributes
+        uses: actions/github-script@v4
+        with:
+          script: console.log(context)
+      - name: View github attributes
+        uses: actions/github-script@v4
+        with:
+          script: console.log(github)
+      - name: View workflow run attributes
+        uses: actions/github-script@v4
+        with:
+          script: console.log(github.event.workflow_run)
       - name: Merge
         uses: actions/github-script@v4
         with:
