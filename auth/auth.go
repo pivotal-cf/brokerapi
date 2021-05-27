@@ -58,14 +58,14 @@ func (wrapper *Wrapper) Wrap(handler http.Handler) http.Handler {
 }
 
 func (wrapper *Wrapper) WrapFunc(handlerFunc http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if !authorized(wrapper, r) {
 			http.Error(w, notAuthorized, http.StatusUnauthorized)
 			return
 		}
 
 		handlerFunc(w, r)
-	})
+	}
 }
 
 func authorized(wrapper *Wrapper, r *http.Request) bool {

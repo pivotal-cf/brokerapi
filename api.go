@@ -31,11 +31,15 @@ type BrokerCredentials struct {
 }
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
+	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
+	return NewWithCustomAuth(serviceBroker, logger, authMiddleware)
+}
+
+func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMiddleware mux.MiddlewareFunc) http.Handler {
 	router := mux.NewRouter()
 
 	AttachRoutes(router, serviceBroker, logger)
 
-	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
 	apiVersionMiddleware := middlewares.APIVersionMiddleware{LoggerFactory: logger}
 
 	router.Use(middlewares.AddCorrelationIDToContext)
