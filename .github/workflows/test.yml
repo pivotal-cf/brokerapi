@@ -17,8 +17,7 @@ jobs:
       with:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v2
-    - run: make --version
-    - run: make test --debug=verbose
+    - run: make test
   automerge:
     needs: build
     name: Merge Dependabot Pull Pequest
