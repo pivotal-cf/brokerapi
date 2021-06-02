@@ -19,7 +19,7 @@ jobs:
         ref: ${{ github.event.pull_request_target.head.sha }}
     - run: make test
   automerge:
-    needs: build
+    needs: test
     name: Merge Dependabot Pull Pequest
     runs-on: ubuntu-latest
     if: ${{ success() && github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
