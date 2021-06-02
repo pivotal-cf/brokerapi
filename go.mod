@@ -13,5 +13,7 @@ require (
 	github.com/onsi/gomega v1.13.0
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709
 	github.com/pkg/errors v0.9.1
+	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b // indirect
+	golang.org/x/tools v0.1.2 // indirect
 	honnef.co/go/tools v0.3.0-0.dev
 )

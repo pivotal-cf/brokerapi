@@ -71,7 +71,7 @@ var _ = Describe("MaintenanceInfo", func() {
 				domain.MaintenanceInfo{
 					Public:      map[string]string{"foo": "bar"},
 					Private:     "test",
-					Version:     "1.2.3",
+					Version:     "1.2.4",
 					Description: "test",
 				},
 				domain.MaintenanceInfo{
