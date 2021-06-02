@@ -1,19 +1,31 @@
 name: test-pr
 
 on: 
-  pull_request:
+  pull_request_target:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        version: [ '1.15', '1.16' ]
-    name: Go ${{ matrix.version }}
-    steps:
-    - uses: actions/setup-go@v2
+	@@ -15,23 +15,5 @@ jobs:
       with:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v2
+      with:
+        ref: $GITHUB_HEAD_REF
     - run: make test
- 
+  automerge:
+    needs: test
+    name: Merge Dependabot Pull Pequest
+    runs-on: ubuntu-latest
+    if: ${{ success() && github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: Merge
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              merge_method: 'squash'
+            })
