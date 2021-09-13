@@ -26,17 +26,16 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/onsi/ginkgo/extensions/table"
-
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
-
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/drewolson/testflight"
+	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v8"
 	"github.com/pivotal-cf/brokerapi/v8/fakes"
+	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -103,7 +102,7 @@ var _ = Describe("Service Broker API", func() {
 			PlanID:               "plan-id",
 		}
 		brokerLogger = lagertest.NewTestLogger("broker-api")
-		brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+		brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 	})
 
 	Describe("response headers", func() {
@@ -323,7 +322,7 @@ var _ = Describe("Service Broker API", func() {
 			}
 
 			BeforeEach(func() {
-				brokerAPI = brokerapi.NewWithCustomAuth(fakeServiceBroker, brokerLogger, authMiddleware)
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithCustomAuth(authMiddleware))
 			})
 
 			It("returns 401 when the authorization header has an incorrect bearer token", func() {
@@ -357,7 +356,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -406,7 +405,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -462,7 +461,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -517,7 +516,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
+			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -739,7 +738,7 @@ var _ = Describe("Service Broker API", func() {
 						FakeServiceBroker:    *fakeServiceBroker,
 						ShouldProvisionAsync: true,
 					}
-					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+					brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 				})
 
 				It("returns the operation data to the cloud controller", func() {
@@ -954,7 +953,7 @@ var _ = Describe("Service Broker API", func() {
 							FakeServiceBroker:    *fakeServiceBroker,
 							ShouldProvisionAsync: true,
 						}
-						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
@@ -1027,7 +1026,7 @@ var _ = Describe("Service Broker API", func() {
 								FakeServiceBroker:    *fakeServiceBroker,
 								ShouldProvisionAsync: true,
 							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+							brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 						})
 
 						It("returns a 202", func() {
@@ -1049,7 +1048,7 @@ var _ = Describe("Service Broker API", func() {
 								FakeServiceBroker:    *fakeServiceBroker,
 								ShouldProvisionAsync: false,
 							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+							brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 						})
 
 						It("returns a 201", func() {
@@ -1077,7 +1076,7 @@ var _ = Describe("Service Broker API", func() {
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 								FakeServiceBroker: *fakeServiceBroker,
 							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+							brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 						})
 
 						It("returns a 422", func() {
@@ -1107,7 +1106,7 @@ var _ = Describe("Service Broker API", func() {
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 								FakeServiceBroker: *fakeServiceBroker,
 							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+							brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 						})
 
 						It("returns a 422", func() {
@@ -1487,7 +1486,7 @@ var _ = Describe("Service Broker API", func() {
 						fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 							FakeServiceBroker: *fakeServiceBroker,
 						}
-						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 					})
 
 					Context("when the accepts_incomplete flag is not set", func() {
@@ -1510,7 +1509,7 @@ var _ = Describe("Service Broker API", func() {
 							fakeAsyncServiceBroker := &fakes.FakeAsyncOnlyServiceBroker{
 								FakeServiceBroker: *fakeServiceBroker,
 							}
-							brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+							brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 						})
 
 						itReturnsStatus(http.StatusAccepted, "accepts_incomplete=true")
@@ -1527,7 +1526,7 @@ var _ = Describe("Service Broker API", func() {
 						fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
 							FakeServiceBroker: *fakeServiceBroker,
 						}
-						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 					})
 
 					Context("when the accepts_incomplete flag is not set", func() {
@@ -2171,7 +2170,7 @@ var _ = Describe("Service Broker API", func() {
 						fakeAsyncServiceBroker := &fakes.FakeAsyncServiceBroker{
 							FakeServiceBroker: *fakeServiceBroker,
 						}
-						brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 						response := makeAsyncBindingRequest(instanceID, bindingID, details)
 						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
@@ -2252,7 +2251,7 @@ var _ = Describe("Service Broker API", func() {
 					fakeAsyncServiceBroker = &fakes.FakeAsyncServiceBroker{
 						FakeServiceBroker: *fakeServiceBroker,
 					}
-					brokerAPI = brokerapi.New(fakeAsyncServiceBroker, brokerLogger, credentials)
+					brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 				})
 
 				When("the api version is < 2.14", func() {
@@ -2720,6 +2719,37 @@ var _ = Describe("Service Broker API", func() {
 				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
 				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(""))
 				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(params["plan_id"]))
+			})
+		})
+	})
+
+	Describe("NewWithOptions()", func() {
+		var provisionDetails map[string]interface{}
+
+		BeforeEach(func() {
+			provisionDetails = map[string]interface{}{
+				"service_id":        fakeServiceBroker.ServiceID,
+				"plan_id":           "plan-id",
+				"organization_guid": "organization-guid",
+				"space_guid":        "space-guid",
+			}
+		})
+
+		Describe("WithRouter()", func() {
+			It("can take a supplied router", func() {
+				router := mux.NewRouter()
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(router))
+				Expect(router).To(Equal(brokerAPI))
+			})
+
+			It("does not attach middleware to the router", func() {
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(mux.NewRouter()))
+				apiVersion = "1.14" // Wrong version
+
+				instanceID := uniqueInstanceID()
+				response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(instanceID))
 			})
 		})
 	})
