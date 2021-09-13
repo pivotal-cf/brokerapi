@@ -2752,5 +2752,22 @@ var _ = Describe("Service Broker API", func() {
 				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(instanceID))
 			})
 		})
+
+		Describe("WithEncodedPath()", func() {
+			const encodedInstanceID = "foo%2Fbar"
+
+			It("does not accept URL-encoded paths by default", func() {
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+				response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
+				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusNotFound))
+			})
+
+			It("will accept URL-encoded paths when configured", func() {
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithEncodedPath(), brokerapi.WithBrokerCredentials(credentials))
+				response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
+				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(encodedInstanceID))
+			})
+		})
 	})
 })

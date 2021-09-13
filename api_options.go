@@ -54,6 +54,12 @@ func WithCustomAuth(authMiddleware mux.MiddlewareFunc) Option {
 	}
 }
 
+func WithEncodedPath() Option {
+	return func(c *config) {
+		c.router.UseEncodedPath()
+	}
+}
+
 func withDefaultMiddleware() Option {
 	return func(c *config) {
 		if !c.customRouter {
