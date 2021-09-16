@@ -37,7 +37,7 @@ func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMid
 }
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
-	NewWithOptions(serviceBroker, logger, WithRouter(router))
+	attachRoutes(router, serviceBroker, logger)
 }
 
 func attachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
