@@ -20,9 +20,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v8/auth"
 	"github.com/pivotal-cf/brokerapi/v8/handlers"
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 )
 
 type BrokerCredentials struct {
@@ -31,28 +29,18 @@ type BrokerCredentials struct {
 }
 
 func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
-	authMiddleware := auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap
-	return NewWithCustomAuth(serviceBroker, logger, authMiddleware)
+	return NewWithOptions(serviceBroker, logger, WithBrokerCredentials(brokerCredentials))
 }
 
 func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMiddleware mux.MiddlewareFunc) http.Handler {
-	router := mux.NewRouter()
-
-	AttachRoutes(router, serviceBroker, logger)
-
-	apiVersionMiddleware := middlewares.APIVersionMiddleware{LoggerFactory: logger}
-
-	router.Use(middlewares.AddCorrelationIDToContext)
-	router.Use(authMiddleware)
-	router.Use(middlewares.AddOriginatingIdentityToContext)
-	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
-	router.Use(middlewares.AddInfoLocationToContext)
-	router.Use(middlewares.AddRequestIdentityToContext)
-
-	return router
+	return NewWithOptions(serviceBroker, logger, WithCustomAuth(authMiddleware))
 }
 
 func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+	attachRoutes(router, serviceBroker, logger)
+}
+
+func attachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	router.HandleFunc("/v2/catalog", apiHandler.Catalog).Methods("GET")
 
