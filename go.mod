@@ -7,7 +7,7 @@ require (
 	github.com/drewolson/testflight v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
-	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
