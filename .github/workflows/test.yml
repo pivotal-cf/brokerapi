@@ -30,11 +30,11 @@ jobs:
     if: ${{ success() && github.actor == 'dependabot[bot]' }}
     steps:
       - name: Merge
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            github.pulls.merge({
+            github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
