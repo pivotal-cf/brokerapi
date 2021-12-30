@@ -39,9 +39,9 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	}
 
 	return ErrorResponse{
-		Description: f.error.Error(),
-		Error:       f.errorKey,
-		InstanceUsable: f.errorKeyBool,
+		Description:      f.error.Error(),
+		Error:            f.errorKey,
+		InstanceUsable:   f.errorKeyBool,
 		UpdateRepeatable: f.errorKeyBool,
 	}
 }
@@ -117,5 +117,6 @@ func (f *FailureResponseBuilder) Build() *FailureResponse {
 		loggerAction:  f.loggerAction,
 		emptyResponse: f.emptyResponse,
 		errorKey:      f.errorKey,
+		errorKeyBool:  f.errorKeyBool,
 	}
 }
