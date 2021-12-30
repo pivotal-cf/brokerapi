@@ -20,8 +20,10 @@ import "github.com/pivotal-cf/brokerapi/v8/domain"
 type EmptyResponse struct{}
 
 type ErrorResponse struct {
-	Error       string `json:"error,omitempty"`
-	Description string `json:"description"`
+	Error            string `json:"error,omitempty"`
+	Description      string `json:"description"`
+	InstanceUsable   bool   `json:"instance_usable"`
+	UpdateRepeatable bool   `json:"update_repeatable"`
 }
 
 type CatalogResponse struct {
