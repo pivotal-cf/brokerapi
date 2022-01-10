@@ -16,6 +16,7 @@ type FailureResponse struct {
 	loggerAction  string
 	emptyResponse bool
 	errorKey      string
+	errorKeyBool  bool // needed for instance_usable and update_repeatable
 }
 
 // NewFailureResponse returns a pointer to a new instance of FailureResponse.
@@ -40,6 +41,8 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	return ErrorResponse{
 		Description: f.error.Error(),
 		Error:       f.errorKey,
+		InstanceUsable: f.errorKeyBool,
+		UpdateRepeatable: f.errorKeyBool,
 	}
 }
 
@@ -78,6 +81,7 @@ type FailureResponseBuilder struct {
 	loggerAction  string
 	emptyResponse bool
 	errorKey      string
+	errorKeyBool  bool // needed for instance_usable and update_repeatable
 }
 
 // NewFailureResponseBuilder returns a pointer to a newly instantiated FailureResponseBuilder
