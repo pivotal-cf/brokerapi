@@ -22,8 +22,8 @@ type EmptyResponse struct{}
 type ErrorResponse struct {
 	Error            string `json:"error,omitempty"`
 	Description      string `json:"description"`
-	InstanceUsable   bool   `json:"instance_usable"`
-	UpdateRepeatable bool   `json:"update_repeatable"`
+	InstanceUsable   bool   `json:"instance_usable,omitempty"`
+	UpdateRepeatable bool   `json:"update_repeatable,omitempty"`
 }
 
 type CatalogResponse struct {
