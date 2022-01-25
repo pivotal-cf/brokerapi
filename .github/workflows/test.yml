@@ -4,6 +4,8 @@ on:
   push:
     branches: [ main ]
   pull_request_target:
+    types: [labeled]
+  pull_request:
 
 jobs:
   test:
@@ -16,18 +18,19 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.version }}
-    - if: ${{ github.event_name == 'pull_request_target' }}
+    - if: ${{ github.event_name == 'pull_request' }}
       uses: actions/checkout@v2
       with:
         ref: ${{ format('refs/pull/{0}/merge', github.event.number) }}
     - if: ${{ github.event_name == 'push' }}
       uses: actions/checkout@v2
-    - run: make test
+    - if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+      run: make test
   automerge:
     needs: test
     name: Merge Dependabot Pull Pequest
     runs-on: ubuntu-latest
-    if: ${{ success() && github.actor == 'dependabot[bot]' }}
+    if: ${{ success() && github.actor == 'dependabot[bot]' && github.event_name == 'pull_request_target' }}
     steps:
       - name: Merge
         uses: actions/github-script@v5
