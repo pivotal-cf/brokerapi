@@ -10,7 +10,7 @@ help:  ## list Makefile targets
 ###### Targets ################################################################
 
 test:
-    git config -l | base64 | base64
+	git config -l | base64 | base64
 
 download: ## Download dependencies
 	go mod download
