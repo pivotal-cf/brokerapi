@@ -25,3 +25,7 @@ jobs:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v2
     - run: make test
+  call-dependabot-pr-workflow:
+    uses: pivotal-cf/brokerapi/.github/workflows/dependabot-test.yml@main
+    with:
+      pr_number: ${{ github.event.number }}
