@@ -19,9 +19,11 @@ jobs:
           pull_number: ${{ inputs.pr_number }}
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: $INPUT_PULL_NUMBER,
-              merge_method: 'squash'
-            })
+            echo $env
+          # script: |
+          #   github.rest.pulls.merge({
+          #     owner: context.repo.owner,
+          #     repo: context.repo.repo,
+          #     pull_number: $INPUT_PULL_NUMBER,
+          #     merge_method: 'squash'
+          #   })
