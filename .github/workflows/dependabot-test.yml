@@ -20,8 +20,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             echo "$INPUT_PULL_NUMBER"
-            echo $INPUT_PULL_NUMBER
-            echo ${{ INPUT_PULL_NUMBER }}
+        
+          # echo $INPUT_PULL_NUMBER
+          # echo ${{ INPUT_PULL_NUMBER }}
           # script: |
           #   github.rest.pulls.merge({
           #     owner: context.repo.owner,
