@@ -16,10 +16,10 @@ jobs:
       - name: Merge
         uses: actions/github-script@v5
         with:
-          pull_number: ${{ inputs.pr_number }}
+          debug: true
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            var pr_number = ${{ env.INPUT_PULL_NUMBER }}
+            var pr_number = ${{ inputs.pr_number }}
             github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
