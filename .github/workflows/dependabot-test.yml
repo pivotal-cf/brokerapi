@@ -1,5 +1,12 @@
 name: dependabot-pr-merge
 on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: "The PR number"
+        default: ""
+        required: true
+        type: string
   workflow_run:
     workflows: ["run-tests"]
     types:
@@ -19,6 +26,6 @@ jobs:
             github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number,
+              pull_number: ${{ inputs.pr_number }},
               merge_method: 'squash'
             })
