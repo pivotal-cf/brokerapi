@@ -12,7 +12,8 @@ jobs:
   automerge:
     name: Merge Dependabot Pull Pequest
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
       - name: Merge
         uses: actions/github-script@v5
