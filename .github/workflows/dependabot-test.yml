@@ -1,29 +1,15 @@
-name: dependabot-test
-
-on: 
-  pull_request_target:
+name: dependabot-pr-merge
+on:
+  workflow_run:
+    workflows: ["run-tests"]
+    types:
+      - completed
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
-    strategy:
-      matrix:
-        version: [ '1.16', '1.17' ]
-    name: Dependabot Go ${{ matrix.version }}
-    steps:
-    - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.version }}
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ format('refs/pull/{0}/merge', github.event.number) }}
-    - run: make test
   automerge:
-    needs: test
     name: Merge Dependabot Pull Pequest
     runs-on: ubuntu-latest
-    if: ${{ success() }}
+    if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Merge
         uses: actions/github-script@v5
