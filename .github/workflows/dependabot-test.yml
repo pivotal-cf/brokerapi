@@ -19,14 +19,10 @@ jobs:
           pull_number: ${{ inputs.pr_number }}
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            echo "$INPUT_PULL_NUMBER"
-        
-          # echo $INPUT_PULL_NUMBER
-          # echo ${{ INPUT_PULL_NUMBER }}
-          # script: |
-          #   github.rest.pulls.merge({
-          #     owner: context.repo.owner,
-          #     repo: context.repo.repo,
-          #     pull_number: $INPUT_PULL_NUMBER,
-          #     merge_method: 'squash'
-          #   })
+            var pr-number = ${{ env.INPUT_PULL_NUMBER }}
+            github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr-number,
+              merge_method: 'squash'
+            })
