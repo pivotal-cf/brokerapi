@@ -27,7 +27,7 @@ jobs:
     - run: make test
   call-dependabot-pr-workflow:
     needs: test
-    # if: ${{ success() }}
+    if: ${{ success() && github.actor == 'dependabot[bot]' }}
     uses: pivotal-cf/brokerapi/.github/workflows/dependabot-test.yml@main
     with:
       pr_number: ${{ github.event.number }}

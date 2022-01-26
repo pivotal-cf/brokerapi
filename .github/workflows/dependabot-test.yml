@@ -4,19 +4,14 @@ on:
     inputs:
       pr_number:
         description: "The PR number"
-        default: "191"
+        default: ""
         required: true
         type: string
-  workflow_run:
-    workflows: ["run-tests"]
-    types:
-      - completed
 
 jobs:
   automerge:
     name: Merge Dependabot Pull Pequest
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Merge
         uses: actions/github-script@v5
