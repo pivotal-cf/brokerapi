@@ -26,6 +26,8 @@ jobs:
     - uses: actions/checkout@v2
     - run: make test
   call-dependabot-pr-workflow:
+    needs: test
+    if: ${{ success() }}
     uses: pivotal-cf/brokerapi/.github/workflows/dependabot-test.yml@main
     with:
       pr_number: ${{ github.event.number }}
