@@ -21,11 +21,12 @@ jobs:
       - name: Merge
         uses: actions/github-script@v5
         with:
+          pull_number: ${{ inputs.pr_number }}
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ inputs.pr_number }},
+              pull_number: ${{ pull_number }},
               merge_method: 'squash'
             })
