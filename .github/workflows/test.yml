@@ -3,11 +3,12 @@ name: test
 on: 
   push:
     branches: [ main ]
-  pull_request_target:
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
         version: [ '1.16', '1.17' ]
@@ -16,27 +17,11 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.version }}
-    - if: ${{ github.event_name == 'pull_request_target' }}
+    - if: ${{ github.event_name == 'pull_request' }}
       uses: actions/checkout@v2
       with:
         ref: ${{ format('refs/pull/{0}/merge', github.event.number) }}
     - if: ${{ github.event_name == 'push' }}
       uses: actions/checkout@v2
-    - run: make test
-  automerge:
-    needs: test
-    name: Merge Dependabot Pull Pequest
-    runs-on: ubuntu-latest
-    if: ${{ success() && github.actor == 'dependabot[bot]' }}
-    steps:
-      - name: Merge
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              merge_method: 'squash'
-            })
+    - if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+      run: make test
