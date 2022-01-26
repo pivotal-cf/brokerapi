@@ -19,7 +19,9 @@ jobs:
           pull_number: ${{ inputs.pr_number }}
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            echo $env
+            echo "$INPUT_PULL_NUMBER"
+            echo $INPUT_PULL_NUMBER
+            echo ${{ INPUT_PULL_NUMBER }}
           # script: |
           #   github.rest.pulls.merge({
           #     owner: context.repo.owner,
