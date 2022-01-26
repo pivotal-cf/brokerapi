@@ -4,7 +4,7 @@ on:
     inputs:
       pr_number:
         description: "The PR number"
-        default: ""
+        default: "191"
         required: true
         type: string
   workflow_run:
