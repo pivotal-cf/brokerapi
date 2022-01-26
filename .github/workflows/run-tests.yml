@@ -5,7 +5,7 @@ on:
     outputs:
       pr_number:
         description: "The PR number"
-        value: ${{ github.event.number }}
+        value: ${{ jobs.test.outputs.pr_number }}
   push:
     branches: [ main ]
   pull_request:
@@ -17,6 +17,8 @@ jobs:
       matrix:
         version: [ '1.16', '1.17' ]
     name: Go ${{ matrix.version }}
+    outputs:
+      pr_number: ${{ github.event.number }}
     steps:
     - uses: actions/setup-go@v2
       with:
