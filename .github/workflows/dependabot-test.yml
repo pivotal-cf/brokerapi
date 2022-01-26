@@ -4,7 +4,6 @@ on:
     inputs:
       pr_number:
         description: "The PR number"
-        default: ""
         required: true
         type: string
 
@@ -19,7 +18,6 @@ jobs:
       - name: Merge
         uses: actions/github-script@v5
         with:
-          debug: true
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             var pr_number = ${{ inputs.pr_number }}
