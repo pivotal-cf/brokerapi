@@ -1,6 +1,6 @@
 module github.com/pivotal-cf/brokerapi/v8
 
-go 1.18
+go 1.19
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible

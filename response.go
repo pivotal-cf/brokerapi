@@ -20,47 +20,47 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 )
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type EmptyResponse = apiresponses.EmptyResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type ErrorResponse = apiresponses.ErrorResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type CatalogResponse = apiresponses.CatalogResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type ProvisioningResponse = apiresponses.ProvisioningResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type GetInstanceResponse = apiresponses.GetInstanceResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type UpdateResponse = apiresponses.UpdateResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type DeprovisionResponse = apiresponses.DeprovisionResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type LastOperationResponse = apiresponses.LastOperationResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type AsyncBindResponse = apiresponses.AsyncBindResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type BindingResponse = apiresponses.BindingResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type GetBindingResponse = apiresponses.GetBindingResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type UnbindResponse = apiresponses.UnbindResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 type ExperimentalVolumeMountBindingResponse = apiresponses.ExperimentalVolumeMountBindingResponse
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ExperimentalVolumeMount = domain.ExperimentalVolumeMount
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ExperimentalVolumeMountPrivate = domain.ExperimentalVolumeMountPrivate

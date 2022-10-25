@@ -23,91 +23,91 @@ import (
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 //counterfeiter:generate -o fakes/auto_fake_service_broker.go -fake-name AutoFakeServiceBroker . ServiceBroker
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
-//Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Each method of the ServiceBroker interface maps to an individual endpoint of the Open Service Broker API.
 //
-//The specification is available here: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md
+// The specification is available here: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md
 //
-//The OpenAPI documentation is available here: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/openservicebrokerapi/servicebroker/v2.14/openapi.yaml
+// The OpenAPI documentation is available here: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/openservicebrokerapi/servicebroker/v2.14/openapi.yaml
 type ServiceBroker interface {
 	domain.ServiceBroker
 }
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type DetailsWithRawParameters interface {
 	domain.DetailsWithRawParameters
 }
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type DetailsWithRawContext interface {
 	domain.DetailsWithRawContext
 }
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ProvisionDetails = domain.ProvisionDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ProvisionedServiceSpec = domain.ProvisionedServiceSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type GetInstanceDetailsSpec = domain.GetInstanceDetailsSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type UnbindSpec = domain.UnbindSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type BindDetails = domain.BindDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type BindResource = domain.BindResource
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type UnbindDetails = domain.UnbindDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type UpdateServiceSpec = domain.UpdateServiceSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type DeprovisionServiceSpec = domain.DeprovisionServiceSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type DeprovisionDetails = domain.DeprovisionDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type UpdateDetails = domain.UpdateDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type PreviousValues = domain.PreviousValues
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type PollDetails = domain.PollDetails
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type LastOperation = domain.LastOperation
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type LastOperationState = domain.LastOperationState
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 const (
 	InProgress LastOperationState = "in progress"
 	Succeeded  LastOperationState = "succeeded"
 	Failed     LastOperationState = "failed"
 )
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type Binding = domain.Binding
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type GetBindingSpec = domain.GetBindingSpec
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type VolumeMount = domain.VolumeMount
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type SharedDevice = domain.SharedDevice
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
 var (
 	ErrInstanceAlreadyExists = apiresponses.ErrInstanceAlreadyExists
 

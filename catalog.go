@@ -21,57 +21,57 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type Service = domain.Service
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServiceDashboardClient = domain.ServiceDashboardClient
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServicePlan = domain.ServicePlan
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServiceSchemas = domain.ServiceSchemas
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServiceInstanceSchema = domain.ServiceInstanceSchema
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServiceBindingSchema = domain.ServiceBindingSchema
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type Schema = domain.Schema
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServicePlanMetadata = domain.ServicePlanMetadata
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServicePlanCost = domain.ServicePlanCost
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type ServiceMetadata = domain.ServiceMetadata
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 func FreeValue(v bool) *bool {
 	return domain.FreeValue(v)
 }
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 func BindableValue(v bool) *bool {
 	return domain.BindableValue(v)
 }
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 type RequiredPermission = domain.RequiredPermission
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 const (
 	PermissionRouteForwarding = domain.PermissionRouteForwarding
 	PermissionSyslogDrain     = domain.PermissionSyslogDrain
 	PermissionVolumeMount     = domain.PermissionVolumeMount
 )
 
-//Deprecated: Use github.com/pivotal-cf/brokerapi/domain
+// Deprecated: Use github.com/pivotal-cf/brokerapi/domain
 func GetJsonNames(s reflect.Value) (res []string) {
 	return domain.GetJsonNames(s)
 }
