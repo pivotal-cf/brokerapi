@@ -20,9 +20,9 @@ import (
 
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v8/auth"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v9/auth"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 )
 
 func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opts ...Option) http.Handler {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
-	"github.com/pivotal-cf/brokerapi/v8/utils"
+	"github.com/pivotal-cf/brokerapi/v9/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
+	"github.com/pivotal-cf/brokerapi/v9/utils"
 )
 
 const getCatalogLogKey = "getCatalog"
