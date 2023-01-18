@@ -19,7 +19,7 @@ vet: ## Run static code analysis
 	go run honnef.co/go/tools/cmd/staticcheck ./...
 
 ginkgo: ## Run tests using Ginkgo
-	go run github.com/onsi/ginkgo/ginkgo -r
+	go run github.com/onsi/ginkgo/v2/ginkgo -r
 
 fmt: ## Checks that the code is formatted correctly
 	@@if [ -n "$$(gofmt -s -e -l -d .)" ]; then                   \
