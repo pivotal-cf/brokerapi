@@ -26,16 +26,15 @@ import (
 	"net/url"
 	"strings"
 
-	"code.cloudfoundry.org/lager"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/drewolson/testflight"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v8"
-	"github.com/pivotal-cf/brokerapi/v8/fakes"
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v9"
+	"github.com/pivotal-cf/brokerapi/v9/fakes"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 )
 
 var _ = Describe("Service Broker API", func() {
@@ -530,7 +529,7 @@ var _ = Describe("Service Broker API", func() {
 			testServer.Close()
 		})
 
-		table.DescribeTable("Adds correlation id to the context", func(tc testCase) {
+		DescribeTable("Adds correlation id to the context", func(tc testCase) {
 			req.Header.Add(tc.correlationIDHeaderName, correlationID)
 
 			_, err := http.DefaultClient.Do(req)
@@ -540,19 +539,19 @@ var _ = Describe("Service Broker API", func() {
 			ctx := fakeServiceBroker.ServicesArgsForCall(0)
 			Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
 		},
-			table.Entry("X-Correlation-ID", testCase{
+			Entry("X-Correlation-ID", testCase{
 				correlationIDHeaderName: "X-Correlation-ID",
 			}),
-			table.Entry("X-CorrelationID", testCase{
+			Entry("X-CorrelationID", testCase{
 				correlationIDHeaderName: "X-CorrelationID",
 			}),
-			table.Entry("X-ForRequest-ID", testCase{
+			Entry("X-ForRequest-ID", testCase{
 				correlationIDHeaderName: "X-ForRequest-ID",
 			}),
-			table.Entry("X-Request-ID", testCase{
+			Entry("X-Request-ID", testCase{
 				correlationIDHeaderName: "X-Request-ID",
 			}),
-			table.Entry("X-Vcap-Request-Id", testCase{
+			Entry("X-Vcap-Request-Id", testCase{
 				correlationIDHeaderName: "X-Vcap-Request-Id",
 			}),
 		)

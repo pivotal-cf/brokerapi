@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"code.cloudfoundry.org/lager"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"code.cloudfoundry.org/lager/v3"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
 )
 
 const (

@@ -16,14 +16,14 @@
 package brokerapi_test
 
 import (
-	"github.com/pivotal-cf/brokerapi/v8"
+	"github.com/pivotal-cf/brokerapi/v9"
 
 	"errors"
 
 	"net/http"
 
-	"code.cloudfoundry.org/lager"
-	. "github.com/onsi/ginkgo"
+	"code.cloudfoundry.org/lager/v3"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 )

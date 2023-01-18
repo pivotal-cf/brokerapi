@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
-	"github.com/pivotal-cf/brokerapi/v8/utils"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
+	"github.com/pivotal-cf/brokerapi/v9/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
+	"github.com/pivotal-cf/brokerapi/v9/utils"
 )
 
 const lastOperationLogKey = "lastOperation"

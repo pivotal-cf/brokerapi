@@ -7,17 +7,17 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/pivotal-cf/brokerapi/v8/middlewares"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	brokerFakes "github.com/pivotal-cf/brokerapi/v8/fakes"
-	"github.com/pivotal-cf/brokerapi/v8/handlers"
-	"github.com/pivotal-cf/brokerapi/v8/handlers/fakes"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
+	"github.com/pivotal-cf/brokerapi/v9/domain/apiresponses"
+	brokerFakes "github.com/pivotal-cf/brokerapi/v9/fakes"
+	"github.com/pivotal-cf/brokerapi/v9/handlers"
+	"github.com/pivotal-cf/brokerapi/v9/handlers/fakes"
 	"github.com/pkg/errors"
 )
 

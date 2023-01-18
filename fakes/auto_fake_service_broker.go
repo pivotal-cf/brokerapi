@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
 )
 
 type AutoFakeServiceBroker struct {
