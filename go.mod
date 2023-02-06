@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/lager/v3 v3.0.0
 	github.com/drewolson/testflight v1.0.0
 	github.com/gorilla/mux v1.8.0
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.5.0
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
 	github.com/onsi/ginkgo/v2 v2.8.0
 	github.com/onsi/gomega v1.26.0
 	github.com/pborman/uuid v1.2.1
