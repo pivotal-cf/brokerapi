@@ -3,7 +3,7 @@ module github.com/pivotal-cf/brokerapi/v9
 go 1.19
 
 require (
-	code.cloudfoundry.org/lager/v3 v3.0.0
+	code.cloudfoundry.org/lager/v3 v3.0.1
 	github.com/drewolson/testflight v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
@@ -21,6 +21,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/google/uuid v1.0.0 // indirect
+	github.com/openzipkin/zipkin-go v0.4.1 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
