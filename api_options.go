@@ -19,11 +19,13 @@ import (
 	"net/http"
 
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v9/auth"
 	"github.com/pivotal-cf/brokerapi/v9/domain"
 	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 )
+
+type middlewareFunc func(http.Handler) http.Handler
 
 func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opts ...Option) http.Handler {
 	cfg := newDefaultConfig(logger)
@@ -35,7 +37,7 @@ func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opt
 
 type Option func(*config)
 
-func WithRouter(router *mux.Router) Option {
+func WithRouter(router *chi.Mux) Option {
 	return func(c *config) {
 		c.router = router
 		c.customRouter = true
@@ -48,15 +50,9 @@ func WithBrokerCredentials(brokerCredentials BrokerCredentials) Option {
 	}
 }
 
-func WithCustomAuth(authMiddleware mux.MiddlewareFunc) Option {
+func WithCustomAuth(authMiddleware middlewareFunc) Option {
 	return func(c *config) {
 		c.router.Use(authMiddleware)
-	}
-}
-
-func WithEncodedPath() Option {
-	return func(c *config) {
-		c.router.UseEncodedPath()
 	}
 }
 
@@ -82,14 +78,14 @@ func WithOptions(opts ...Option) Option {
 
 func newDefaultConfig(logger lager.Logger) *config {
 	return &config{
-		router:       mux.NewRouter(),
+		router:       chi.NewRouter(),
 		customRouter: false,
 		logger:       logger,
 	}
 }
 
 type config struct {
-	router       *mux.Router
+	router       *chi.Mux
 	customRouter bool
 	logger       lager.Logger
 }

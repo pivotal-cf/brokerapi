@@ -19,7 +19,7 @@ import (
 	"net/http"
 
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v9/handlers"
 )
 
@@ -32,27 +32,27 @@ func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials Bro
 	return NewWithOptions(serviceBroker, logger, WithBrokerCredentials(brokerCredentials))
 }
 
-func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMiddleware mux.MiddlewareFunc) http.Handler {
+func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMiddleware middlewareFunc) http.Handler {
 	return NewWithOptions(serviceBroker, logger, WithCustomAuth(authMiddleware))
 }
 
-func AttachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+func AttachRoutes(router *chi.Mux, serviceBroker ServiceBroker, logger lager.Logger) {
 	attachRoutes(router, serviceBroker, logger)
 }
 
-func attachRoutes(router *mux.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+func attachRoutes(router *chi.Mux, serviceBroker ServiceBroker, logger lager.Logger) {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
-	router.HandleFunc("/v2/catalog", apiHandler.Catalog).Methods("GET")
+	router.Get("/v2/catalog", apiHandler.Catalog)
 
-	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.GetInstance).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Provision).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Deprovision).Methods("DELETE")
-	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", apiHandler.LastOperation).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", apiHandler.Update).Methods("PATCH")
+	router.Get("/v2/service_instances/{instance_id}", apiHandler.GetInstance)
+	router.Put("/v2/service_instances/{instance_id}", apiHandler.Provision)
+	router.Delete("/v2/service_instances/{instance_id}", apiHandler.Deprovision)
+	router.Get("/v2/service_instances/{instance_id}/last_operation", apiHandler.LastOperation)
+	router.Patch("/v2/service_instances/{instance_id}", apiHandler.Update)
 
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods("DELETE")
+	router.Get("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding)
+	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind)
+	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind)
 
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation).Methods("GET")
+	router.Get("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation)
 }

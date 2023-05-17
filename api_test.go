@@ -29,7 +29,7 @@ import (
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/drewolson/testflight"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v9"
@@ -2736,13 +2736,13 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("WithRouter()", func() {
 			It("can take a supplied router", func() {
-				router := mux.NewRouter()
+				router := chi.NewRouter()
 				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(router))
 				Expect(router).To(Equal(brokerAPI))
 			})
 
 			It("does not attach middleware to the router", func() {
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(mux.NewRouter()))
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(chi.NewRouter()))
 				apiVersion = "1.14" // Wrong version
 
 				instanceID := uniqueInstanceID()
@@ -2752,21 +2752,12 @@ var _ = Describe("Service Broker API", func() {
 			})
 		})
 
-		Describe("WithEncodedPath()", func() {
+		It("will accept URL-encoded paths", func() {
 			const encodedInstanceID = "foo%2Fbar"
-
-			It("does not accept URL-encoded paths by default", func() {
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
-				response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusNotFound))
-			})
-
-			It("will accept URL-encoded paths when configured", func() {
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithEncodedPath(), brokerapi.WithBrokerCredentials(credentials))
-				response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
-				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(encodedInstanceID))
-			})
+			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
+			Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+			Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(encodedInstanceID))
 		})
 	})
 })
