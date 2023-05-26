@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/pivotal-cf/brokerapi/v9/middlewares"
-
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v9/domain"
@@ -18,6 +16,7 @@ import (
 	brokerFakes "github.com/pivotal-cf/brokerapi/v9/fakes"
 	"github.com/pivotal-cf/brokerapi/v9/handlers"
 	"github.com/pivotal-cf/brokerapi/v9/handlers/fakes"
+	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 	"github.com/pkg/errors"
 )
 
@@ -129,17 +128,18 @@ func newRequest(instanceID, bindingID, planID, serviceID, operation string) *htt
 	Expect(err).ToNot(HaveOccurred())
 	request.Header.Add("X-Broker-API-Version", "2.14")
 
-	request = mux.SetURLVars(request, map[string]string{
-		"instance_id": instanceID,
-		"binding_id":  bindingID,
-	})
-
 	request.Form = url.Values{}
 	request.Form.Add("plan_id", planID)
 	request.Form.Add("service_id", serviceID)
 	request.Form.Add("operation", operation)
 
-	newCtx := context.WithValue(request.Context(), middlewares.CorrelationIDKey, "fake-correlation-id")
-	request = request.WithContext(newCtx)
-	return request
+	rc := chi.NewRouteContext()
+	rc.URLParams.Add("instance_id", instanceID)
+	rc.URLParams.Add("binding_id", bindingID)
+
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rc)
+	ctx = context.WithValue(ctx, middlewares.CorrelationIDKey, "fake-correlation-id")
+
+	return request.WithContext(ctx)
 }

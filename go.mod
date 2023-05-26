@@ -5,7 +5,7 @@ go 1.19
 require (
 	code.cloudfoundry.org/lager/v3 v3.0.1
 	github.com/drewolson/testflight v1.0.0
-	github.com/gorilla/mux v1.8.0
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/onsi/gomega v1.27.7

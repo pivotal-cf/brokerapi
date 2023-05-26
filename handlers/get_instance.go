@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v9/domain"
-
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/pivotal-cf/brokerapi/v9/domain"
 	"github.com/pivotal-cf/brokerapi/v9/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 	"github.com/pivotal-cf/brokerapi/v9/utils"
@@ -17,8 +16,7 @@ import (
 const getInstanceLogKey = "getInstance"
 
 func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	instanceID := vars["instance_id"]
+	instanceID := chi.URLParam(req, "instance_id")
 
 	logger := h.logger.Session(getInstanceLogKey, lager.Data{
 		instanceIDLogKey: instanceID,

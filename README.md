@@ -4,7 +4,7 @@
 
 A Go package for building [V2 Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker/) compliant Service Brokers.
 
-## [Docs](https://godoc.org/github.com/pivotal-cf/brokerapi)
+## [Docs](https://godoc.org/github.com/pivotal-cf/brokerapi/v9)
 
 ## Dependencies
 
@@ -18,14 +18,15 @@ We appreciate and welcome open source contibution. We will try to review the cha
 ## Usage
 
 `brokerapi` defines a
-[`ServiceBroker`](https://godoc.org/github.com/pivotal-cf/brokerapi#ServiceBroker)
+[`ServiceBroker`](https://godoc.org/github.com/pivotal-cf/brokerapi/v9#ServiceBroker)
 interface. Pass an implementation of this to
-[`brokerapi.New`](https://godoc.org/github.com/pivotal-cf/brokerapi#New), which
-returns an `http.Handler` that you can use to serve handle HTTP requests.
+[`brokerapi.New`](https://godoc.org/github.com/pivotal-cf/brokerapi/v9#New)
+or [`brokerapi.NewWithOptions`](https://pkg.go.dev/github.com/pivotal-cf/brokerapi/v9#NewWithOptions),
+which returns an `http.Handler` that you can use to serve handle HTTP requests.
 
-Alternatively, if you already have a `*mux.Router` that you want to attach
+Alternatively, if you already have a `*chi.Mux` that you want to attach
 service broker routes to, you can use
-[`brokerapi.AttachRoutes`](https://godoc.org/github.com/pivotal-cf/brokerapi#AttachRoutes).
+[`brokerapi.AttachRoutes`](https://godoc.org/github.com/pivotal-cf/brokerapi/v9#AttachRoutes).
 Note in this case, the Basic Authentication and Originating Identity middleware
 will not be set up, so you will have to attach them manually if required.
 
@@ -55,7 +56,7 @@ values can be retrieved in a `brokerapi.ServiceBroker` implementation using
 utility methods `RetrieveServiceFromContext` and `RetrieveServicePlanFromContext`
 as shown below.
 
-```golang
+```go
 func (sb *ServiceBrokerImplementation) Provision(ctx context.Context,
   instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) {
 

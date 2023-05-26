@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v9/domain"
 	"github.com/pivotal-cf/brokerapi/v9/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v9/middlewares"
@@ -17,8 +17,7 @@ import (
 const updateLogKey = "update"
 
 func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	instanceID := vars["instance_id"]
+	instanceID := chi.URLParam(req, "instance_id")
 
 	logger := h.logger.Session(updateLogKey, lager.Data{
 		instanceIDLogKey: instanceID,

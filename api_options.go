@@ -19,11 +19,13 @@ import (
 	"net/http"
 
 	"code.cloudfoundry.org/lager/v3"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v9/auth"
 	"github.com/pivotal-cf/brokerapi/v9/domain"
 	"github.com/pivotal-cf/brokerapi/v9/middlewares"
 )
+
+type middlewareFunc func(http.Handler) http.Handler
 
 func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opts ...Option) http.Handler {
 	cfg := newDefaultConfig(logger)
@@ -35,7 +37,7 @@ func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opt
 
 type Option func(*config)
 
-func WithRouter(router *mux.Router) Option {
+func WithRouter(router *chi.Mux) Option {
 	return func(c *config) {
 		c.router = router
 		c.customRouter = true
@@ -48,16 +50,21 @@ func WithBrokerCredentials(brokerCredentials BrokerCredentials) Option {
 	}
 }
 
-func WithCustomAuth(authMiddleware mux.MiddlewareFunc) Option {
+func WithCustomAuth(authMiddleware middlewareFunc) Option {
 	return func(c *config) {
 		c.router.Use(authMiddleware)
 	}
 }
 
+// WithEncodedPath used to opt in to a gorilla/mux behaviour that would treat encoded
+// slashes "/" as IDs. For example, it would change `PUT /v2/service_instances/foo%2Fbar`
+// to treat `foo%2Fbar` as an instance ID, while the default behavior was to treat it
+// as `foo/bar`. However, with moving to go-chi/chi, this is now the default behavior
+// so this option no longer does anything.
+//
+// Deprecated: no longer has any effect
 func WithEncodedPath() Option {
-	return func(c *config) {
-		c.router.UseEncodedPath()
-	}
+	return func(*config) {}
 }
 
 func withDefaultMiddleware() Option {
@@ -82,14 +89,14 @@ func WithOptions(opts ...Option) Option {
 
 func newDefaultConfig(logger lager.Logger) *config {
 	return &config{
-		router:       mux.NewRouter(),
+		router:       chi.NewRouter(),
 		customRouter: false,
 		logger:       logger,
 	}
 }
 
 type config struct {
-	router       *mux.Router
+	router       *chi.Mux
 	customRouter bool
 	logger       lager.Logger
 }
