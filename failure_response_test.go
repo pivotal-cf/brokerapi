@@ -16,7 +16,7 @@
 package brokerapi_test
 
 import (
-	"github.com/pivotal-cf/brokerapi/v9"
+	"github.com/pivotal-cf/brokerapi/v10"
 
 	"errors"
 

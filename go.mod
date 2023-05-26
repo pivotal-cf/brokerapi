@@ -1,4 +1,4 @@
-module github.com/pivotal-cf/brokerapi/v9
+module github.com/pivotal-cf/brokerapi/v10
 
 go 1.19
 

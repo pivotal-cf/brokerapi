@@ -20,9 +20,9 @@ import (
 
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
-	"github.com/pivotal-cf/brokerapi/v9/auth"
-	"github.com/pivotal-cf/brokerapi/v9/domain"
-	"github.com/pivotal-cf/brokerapi/v9/middlewares"
+	"github.com/pivotal-cf/brokerapi/v10/auth"
+	"github.com/pivotal-cf/brokerapi/v10/domain"
+	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 )
 
 type middlewareFunc func(http.Handler) http.Handler

@@ -18,7 +18,7 @@ package brokerapi
 import (
 	"reflect"
 
-	"github.com/pivotal-cf/brokerapi/v9/domain"
+	"github.com/pivotal-cf/brokerapi/v10/domain"
 )
 
 // Deprecated: Use github.com/pivotal-cf/brokerapi/domain

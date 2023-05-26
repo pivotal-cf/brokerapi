@@ -3,7 +3,7 @@ package brokerapi
 import (
 	"context"
 
-	"github.com/pivotal-cf/brokerapi/v9/utils"
+	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 func AddServiceToContext(ctx context.Context, service *Service) context.Context {
