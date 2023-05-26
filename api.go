@@ -20,7 +20,7 @@ import (
 
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
-	"github.com/pivotal-cf/brokerapi/v9/handlers"
+	"github.com/pivotal-cf/brokerapi/v10/handlers"
 )
 
 type BrokerCredentials struct {
