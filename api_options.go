@@ -56,6 +56,17 @@ func WithCustomAuth(authMiddleware middlewareFunc) Option {
 	}
 }
 
+// WithEncodedPath used to opt in to a gorilla/mux behaviour that would treat encoded
+// slashes "/" as IDs. For example, it would change `PUT /v2/service_instances/foo%2Fbar`
+// to treat `foo%2Fbar` as an instance ID, while the default behavior was to treat it
+// as `foo/bar`. However, with moving to go-chi/chi, this is now the default behavior
+// so this option no longer does anything.
+//
+// Deprecated: no longer has any effect
+func WithEncodedPath() Option {
+	return func(*config) {}
+}
+
 func withDefaultMiddleware() Option {
 	return func(c *config) {
 		if !c.customRouter {
