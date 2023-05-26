@@ -13,7 +13,7 @@ A Go package for building [V2 Open Service Broker API](https://github.com/opense
 
 ## Contributing	
 
-We appreciate and welcome open source contibution. We will try to review the changes as soon as we can.	
+We appreciate and welcome open source contribution. We will try to review the changes as soon as we can.	
 
 ## Usage
 
