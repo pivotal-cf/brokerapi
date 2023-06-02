@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
@@ -99,7 +100,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 
 	provisionResponse, err := h.serviceBroker.Provision(req.Context(), instanceID, details, asyncAllowed)
 
-	if err != nil {
+	if err != nil && !reflect.ValueOf(err).IsNil() {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
