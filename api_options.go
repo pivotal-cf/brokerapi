@@ -37,7 +37,7 @@ func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opt
 
 type Option func(*config)
 
-func WithRouter(router *chi.Mux) Option {
+func WithRouter(router chi.Router) Option {
 	return func(c *config) {
 		c.router = router
 		c.customRouter = true
@@ -96,7 +96,7 @@ func newDefaultConfig(logger lager.Logger) *config {
 }
 
 type config struct {
-	router       *chi.Mux
+	router       chi.Router
 	customRouter bool
 	logger       lager.Logger
 }
