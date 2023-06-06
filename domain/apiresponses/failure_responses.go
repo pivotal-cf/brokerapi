@@ -33,7 +33,7 @@ func NewFailureResponse(err error, statusCode int, loggerAction string) *Failure
 // ErrorResponse returns an interface{} which will be JSON encoded and form the body
 // of the HTTP response
 func (f *FailureResponse) ErrorResponse() interface{} {
-	if f.emptyResponse {
+	if f == nil || f.emptyResponse {
 		return EmptyResponse{}
 	}
 
@@ -46,7 +46,7 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 // ValidatedStatusCode returns the HTTP response status code. If the code is not 4xx
 // or 5xx, an InternalServerError will be returned instead.
 func (f *FailureResponse) ValidatedStatusCode(logger lager.Logger) int {
-	if f.statusCode < 400 || 600 <= f.statusCode {
+	if f == nil || f.statusCode < 400 || 600 <= f.statusCode {
 		if logger != nil {
 			logger.Error("validating-status-code", fmt.Errorf("Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
 		}
@@ -57,11 +57,19 @@ func (f *FailureResponse) ValidatedStatusCode(logger lager.Logger) int {
 
 // LoggerAction returns the loggerAction, used as the action when logging
 func (f *FailureResponse) LoggerAction() string {
+	if f == nil {
+		return ""
+	}
+
 	return f.loggerAction
 }
 
 // AppendErrorMessage returns an error with the message updated. All other properties are preserved.
 func (f *FailureResponse) AppendErrorMessage(msg string) *FailureResponse {
+	if f == nil {
+		return &FailureResponse{error: fmt.Errorf("%s", msg)}
+	}
+
 	return &FailureResponse{
 		error:         fmt.Errorf("%s %s", f.Error(), msg),
 		statusCode:    f.statusCode,
@@ -69,6 +77,14 @@ func (f *FailureResponse) AppendErrorMessage(msg string) *FailureResponse {
 		emptyResponse: f.emptyResponse,
 		errorKey:      f.errorKey,
 	}
+}
+
+// Error returns the error message
+func (f *FailureResponse) Error() string {
+	if f == nil {
+		return "Error() called on uninitialized apiresponses.FailureResponse"
+	}
+	return f.error.Error()
 }
 
 // FailureResponseBuilder provides a fluent set of methods to build a *FailureResponse.

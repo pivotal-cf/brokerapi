@@ -108,4 +108,30 @@ var _ = Describe("FailureResponse", func() {
 			Expect(failureResponse.LoggerAction()).To(Equal("log-key"))
 		})
 	})
+
+	Describe("nil", func() {
+		// Because a FailureResponse is public, it's possible to create a nil one.
+		// If someone does that, we should not panic.
+		var e *apiresponses.FailureResponse = nil
+
+		It("allows Error() to be called", func() {
+			Expect(e.Error()).To(Equal("Error() called on uninitialized apiresponses.FailureResponse"))
+		})
+
+		It("allows AppendErrorMessage() to be called", func() {
+			Expect(e.AppendErrorMessage("ok")).To(MatchError("ok"))
+		})
+
+		It("allows LoggerAction() to be called", func() {
+			Expect(e.LoggerAction()).To(BeEmpty())
+		})
+
+		It("allows ValidatedStatusCode() to be called", func() {
+			Expect(e.ValidatedStatusCode(nil)).To(Equal(http.StatusInternalServerError))
+		})
+
+		It("allows ErrorResponse() to be called", func() {
+			Expect(e.ErrorResponse()).To(Equal(apiresponses.EmptyResponse{}))
+		})
+	})
 })
