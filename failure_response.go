@@ -17,12 +17,12 @@ import (
 type FailureResponse = apiresponses.FailureResponse
 
 // Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses
-// NewFailureResponse returns a pointer to a new instance of FailureResponse.
+// NewFailureResponse returns an error of type FailureResponse.
 // err will by default be used as both a logging message and HTTP response description.
 // statusCode is the HTTP status code to be returned, must be 4xx or 5xx
 // loggerAction is a short description which will be used as the action if the error is logged.
-func NewFailureResponse(err error, statusCode int, loggerAction string) *FailureResponse {
-	return (*FailureResponse)(apiresponses.NewFailureResponse(err, statusCode, loggerAction))
+func NewFailureResponse(err error, statusCode int, loggerAction string) error {
+	return apiresponses.NewFailureResponse(err, statusCode, loggerAction)
 }
 
 // Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses

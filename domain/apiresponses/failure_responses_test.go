@@ -15,7 +15,7 @@ import (
 var _ = Describe("FailureResponse", func() {
 	Describe("ErrorResponse", func() {
 		It("returns a ErrorResponse containing the error message", func() {
-			failureResponse := apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key")
+			failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key"))
 			Expect(failureResponse.ErrorResponse()).To(Equal(apiresponses.ErrorResponse{
 				Description: "my error message",
 			}))
@@ -71,7 +71,7 @@ var _ = Describe("FailureResponse", func() {
 
 	Describe("ValidatedStatusCode", func() {
 		It("returns the status code that was passed in", func() {
-			failureResponse := apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key")
+			failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key"))
 			Expect(failureResponse.ValidatedStatusCode(nil)).To(Equal(http.StatusForbidden))
 		})
 
@@ -82,7 +82,7 @@ var _ = Describe("FailureResponse", func() {
 
 		Context("when the status code is invalid", func() {
 			It("returns 500", func() {
-				failureResponse := apiresponses.NewFailureResponse(errors.New("my error message"), 600, "log-key")
+				failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), 600, "log-key"))
 				Expect(failureResponse.ValidatedStatusCode(nil)).To(Equal(http.StatusInternalServerError))
 			})
 
@@ -90,7 +90,7 @@ var _ = Describe("FailureResponse", func() {
 				log := gbytes.NewBuffer()
 				logger := lager.NewLogger("test")
 				logger.RegisterSink(lager.NewWriterSink(log, lager.DEBUG))
-				failureResponse := apiresponses.NewFailureResponse(errors.New("my error message"), 600, "log-key")
+				failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), 600, "log-key"))
 				failureResponse.ValidatedStatusCode(logger)
 				Expect(log).To(gbytes.Say("Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
 			})
@@ -104,8 +104,14 @@ var _ = Describe("FailureResponse", func() {
 		})
 
 		It("when error key is provided it returns the logger action that was passed in", func() {
-			failureResponse := apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key")
+			failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), http.StatusForbidden, "log-key"))
 			Expect(failureResponse.LoggerAction()).To(Equal("log-key"))
 		})
 	})
 })
+
+func asFailureResponse(err error) *apiresponses.FailureResponse {
+	GinkgoHelper()
+	Expect(err).To(BeAssignableToTypeOf(&apiresponses.FailureResponse{}))
+	return err.(*apiresponses.FailureResponse)
+}
