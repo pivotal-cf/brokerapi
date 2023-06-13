@@ -36,11 +36,11 @@ func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMid
 	return NewWithOptions(serviceBroker, logger, WithCustomAuth(authMiddleware))
 }
 
-func AttachRoutes(router *chi.Mux, serviceBroker ServiceBroker, logger lager.Logger) {
+func AttachRoutes(router chi.Router, serviceBroker ServiceBroker, logger lager.Logger) {
 	attachRoutes(router, serviceBroker, logger)
 }
 
-func attachRoutes(router *chi.Mux, serviceBroker ServiceBroker, logger lager.Logger) {
+func attachRoutes(router chi.Router, serviceBroker ServiceBroker, logger lager.Logger) {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	router.Get("/v2/catalog", apiHandler.Catalog)
 
