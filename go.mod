@@ -3,7 +3,7 @@ module github.com/pivotal-cf/brokerapi/v10
 go 1.19
 
 require (
-	code.cloudfoundry.org/lager/v3 v3.0.1
+	code.cloudfoundry.org/lager/v3 v3.0.2
 	github.com/drewolson/testflight v1.0.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.6.1
