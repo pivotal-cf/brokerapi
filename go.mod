@@ -1,6 +1,6 @@
 module github.com/pivotal-cf/brokerapi/v10
 
-go 1.19
+go 1.21
 
 require (
 	code.cloudfoundry.org/lager/v3 v3.0.2
