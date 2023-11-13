@@ -2,6 +2,29 @@
 
 .DEFAULT_GOAL = help
 
+GO-VERSION = 1.21.4
+GO-VER = go$(GO-VERSION)
+
+GO_OK := $(or $(USE_GO_CONTAINERS), $(shell which go 1>/dev/null 2>/dev/null; echo $$?))
+DOCKER_OK := $(shell which docker 1>/dev/null 2>/dev/null; echo $$?)
+
+ifeq ($(GO_OK), 0)  # use local go binary
+
+PAK_PATH=$(PWD)
+GO=go
+GOFMT=gofmt
+
+else ifeq ($(DOCKER_OK), 0)
+
+PAK_PATH=/brokerapi
+GO_DOCKER_OPTS=--rm -v $(PWD):$(PAK_PATH) -w $(PAK_PATH) --network=host
+GO=docker run $(GO_DOCKER_OPTS) golang:latest go
+GOFMT=docker run $(GO_DOCKER_OPTS) golang:latest gofmt
+
+else
+$(error either Go or Docker must be installed)
+endif
+
 .PHONY: help
 
 help:  ## list Makefile targets
@@ -9,26 +32,32 @@ help:  ## list Makefile targets
 
 ###### Targets ################################################################
 
-test: version download fmt vet ginkgo ## Runs all build, static analysis, and test steps
+test: deps-go-binary download fmt vet ginkgo ## Runs all build, static analysis, and test steps
 
 download: ## Download dependencies
-	go mod download
+	${GO} mod download
 
 vet: ## Run static code analysis
-	go vet ./...
-	go run honnef.co/go/tools/cmd/staticcheck ./...
+	${GO} vet ./...
+	${GO} run honnef.co/go/tools/cmd/staticcheck ./...
 
 ginkgo: ## Run tests using Ginkgo
-	go run github.com/onsi/ginkgo/v2/ginkgo -r
+	${GO} run github.com/onsi/ginkgo/v2/ginkgo -r
 
 fmt: ## Checks that the code is formatted correctly
-	@@if [ -n "$$(gofmt -s -e -l -d .)" ]; then                   \
+	@@if [ -n "$$(${GOFMT} -s -e -l -d .)" ]; then                   \
 		echo "gofmt check failed: run 'gofmt -d -e -l -w .'"; \
 		exit 1;                                               \
 	fi
 
 generate: ## Generates the fakes using counterfeiter
-	go generate ./...
+	${GO} generate ./...
 
-version: ## Display the version of Go
-	@@go version
+.PHONY: deps-go-binary
+deps-go-binary:
+ifeq ($(SKIP_GO_VERSION_CHECK),)
+	@@if [ "$$($(GO) version | awk '{print $$3}')" != "${GO-VER}" ]; then \
+		echo "Go version does not match: expected: ${GO-VER}, got $$($(GO) version | awk '{print $$3}')"; \
+		exit 1; \
+	fi
+endif
