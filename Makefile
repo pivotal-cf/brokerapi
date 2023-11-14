@@ -5,25 +5,8 @@
 GO-VERSION = 1.21.4
 GO-VER = go$(GO-VERSION)
 
-GO_OK := $(or $(USE_GO_CONTAINERS), $(shell which go 1>/dev/null 2>/dev/null; echo $$?))
-DOCKER_OK := $(shell which docker 1>/dev/null 2>/dev/null; echo $$?)
-
-ifeq ($(GO_OK), 0)  # use local go binary
-
-PAK_PATH=$(PWD)
 GO=go
 GOFMT=gofmt
-
-else ifeq ($(DOCKER_OK), 0)
-
-PAK_PATH=/brokerapi
-GO_DOCKER_OPTS=--rm -v $(PWD):$(PAK_PATH) -w $(PAK_PATH) --network=host
-GO=docker run $(GO_DOCKER_OPTS) golang:latest go
-GOFMT=docker run $(GO_DOCKER_OPTS) golang:latest gofmt
-
-else
-$(error either Go or Docker must be installed)
-endif
 
 .PHONY: help
 
