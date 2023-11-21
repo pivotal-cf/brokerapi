@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [ '1.20', '1.21' ]
+        version: [ 'stable', 'oldstable', '1.20' ]
     name: Go ${{ matrix.version }}
     outputs:
       pr_number: ${{ github.event.number }}
     steps:
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.version }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: make test
   call-dependabot-pr-workflow:
     needs: test
