@@ -27,9 +27,20 @@ import (
 
 type middlewareFunc func(http.Handler) http.Handler
 
+type config struct {
+	router               chi.Router
+	customRouter         bool
+	logger               lager.Logger
+	additionalMiddleware []middlewareFunc
+}
+
 func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opts ...Option) http.Handler {
-	cfg := newDefaultConfig(logger)
-	WithOptions(append(opts, withDefaultMiddleware())...)(cfg)
+	cfg := config{
+		router: chi.NewRouter(),
+		logger: logger,
+	}
+
+	WithOptions(append(opts, withDefaultMiddleware())...)(&cfg)
 	attachRoutes(cfg.router, serviceBroker, logger)
 
 	return cfg.router
@@ -50,9 +61,22 @@ func WithBrokerCredentials(brokerCredentials BrokerCredentials) Option {
 	}
 }
 
+// WithCustomAuth adds the specified middleware *before* any other middleware.
+// Despite the name, any middleware can be added whether nor not it has anything to do with authentication.
+// But `WithAdditionalMiddleware()` may be a better choice if the middleware is not related to authentication.
+// Can be called multiple times.
 func WithCustomAuth(authMiddleware middlewareFunc) Option {
 	return func(c *config) {
 		c.router.Use(authMiddleware)
+	}
+}
+
+// WithAdditionalMiddleware adds the specified middleware *after* the default middleware.
+// Can be called multiple times.
+// This option is ignored if `WithRouter()` is used.
+func WithAdditionalMiddleware(m middlewareFunc) Option {
+	return func(c *config) {
+		c.additionalMiddleware = append(c.additionalMiddleware, m)
 	}
 }
 
@@ -70,11 +94,17 @@ func WithEncodedPath() Option {
 func withDefaultMiddleware() Option {
 	return func(c *config) {
 		if !c.customRouter {
-			c.router.Use(middlewares.APIVersionMiddleware{LoggerFactory: c.logger}.ValidateAPIVersionHdr)
-			c.router.Use(middlewares.AddCorrelationIDToContext)
-			c.router.Use(middlewares.AddOriginatingIdentityToContext)
-			c.router.Use(middlewares.AddInfoLocationToContext)
-			c.router.Use(middlewares.AddRequestIdentityToContext)
+			defaults := []middlewareFunc{
+				middlewares.APIVersionMiddleware{LoggerFactory: c.logger}.ValidateAPIVersionHdr,
+				middlewares.AddCorrelationIDToContext,
+				middlewares.AddOriginatingIdentityToContext,
+				middlewares.AddInfoLocationToContext,
+				middlewares.AddRequestIdentityToContext,
+			}
+
+			for _, m := range append(defaults, c.additionalMiddleware...) {
+				c.router.Use(m)
+			}
 		}
 	}
 }
@@ -85,18 +115,4 @@ func WithOptions(opts ...Option) Option {
 			o(c)
 		}
 	}
-}
-
-func newDefaultConfig(logger lager.Logger) *config {
-	return &config{
-		router:       chi.NewRouter(),
-		customRouter: false,
-		logger:       logger,
-	}
-}
-
-type config struct {
-	router       chi.Router
-	customRouter bool
-	logger       lager.Logger
 }
