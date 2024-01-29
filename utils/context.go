@@ -2,8 +2,8 @@ package utils
 
 import (
 	"context"
+	"log/slog"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 )
@@ -43,13 +43,12 @@ func RetrieveServicePlanFromContext(ctx context.Context) *domain.ServicePlan {
 	return nil
 }
 
-func DataForContext(context context.Context, dataKeys ...middlewares.ContextKey) lager.Data {
-	data := lager.Data{}
+func ContextAttr(context context.Context, dataKeys ...middlewares.ContextKey) (result []any) {
 	for _, key := range dataKeys {
 		if value := context.Value(key); value != nil {
-			data[string(key)] = value
+			result = append(result, slog.Any(string(key), value))
 		}
 	}
 
-	return data
+	return
 }

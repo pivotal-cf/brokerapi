@@ -16,9 +16,9 @@
 package brokerapi
 
 import (
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/handlers"
 )
@@ -28,19 +28,19 @@ type BrokerCredentials struct {
 	Password string
 }
 
-func New(serviceBroker ServiceBroker, logger lager.Logger, brokerCredentials BrokerCredentials) http.Handler {
+func New(serviceBroker ServiceBroker, logger *slog.Logger, brokerCredentials BrokerCredentials) http.Handler {
 	return NewWithOptions(serviceBroker, logger, WithBrokerCredentials(brokerCredentials))
 }
 
-func NewWithCustomAuth(serviceBroker ServiceBroker, logger lager.Logger, authMiddleware middlewareFunc) http.Handler {
+func NewWithCustomAuth(serviceBroker ServiceBroker, logger *slog.Logger, authMiddleware middlewareFunc) http.Handler {
 	return NewWithOptions(serviceBroker, logger, WithCustomAuth(authMiddleware))
 }
 
-func AttachRoutes(router chi.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+func AttachRoutes(router chi.Router, serviceBroker ServiceBroker, logger *slog.Logger) {
 	attachRoutes(router, serviceBroker, logger)
 }
 
-func attachRoutes(router chi.Router, serviceBroker ServiceBroker, logger lager.Logger) {
+func attachRoutes(router chi.Router, serviceBroker ServiceBroker, logger *slog.Logger) {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	router.Get("/v2/catalog", apiHandler.Catalog)
 

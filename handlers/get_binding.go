@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
+	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
@@ -19,10 +21,10 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := h.logger.Session(getBindLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.With(append(
+		[]any{slog.String(instanceIDLogKey, instanceID), slog.String(bindingIDLogKey, bindingID)},
+		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
+	)...)
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
@@ -32,7 +34,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 		h.respond(w, http.StatusPreconditionFailed, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
-		logger.Error(middlewares.ApiVersionInvalidKey, err)
+		logger.Error(logutil.Join(getBindLogKey, middlewares.ApiVersionInvalidKey), logutil.Error(err))
 		return
 	}
 
@@ -45,10 +47,10 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+			logger.Error(logutil.Join(getBindLogKey, err.LoggerAction()), logutil.Error(err))
+			h.respond(w, err.ValidatedStatusCode(getBindLogKey, logger), requestId, err.ErrorResponse())
 		default:
-			logger.Error(unknownErrorKey, err)
+			logger.Error(logutil.Join(getBindLogKey, unknownErrorKey), logutil.Error(err))
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})

@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
@@ -17,9 +18,10 @@ const deprovisionLogKey = "deprovision"
 func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := h.logger.Session(deprovisionLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.With(append(
+		[]any{slog.String(instanceIDLogKey, instanceID)},
+		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
+	)...)
 
 	details := domain.DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),
@@ -33,7 +35,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
-		logger.Error(serviceIdMissingKey, serviceIdError)
+		logger.Error(logutil.Join(deprovisionLogKey, serviceIdMissingKey), logutil.Error(serviceIdError))
 		return
 	}
 
@@ -41,7 +43,7 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
-		logger.Error(planIdMissingKey, planIdError)
+		logger.Error(logutil.Join(deprovisionLogKey, planIdMissingKey), logutil.Error(planIdError))
 		return
 	}
 
@@ -51,10 +53,10 @@ func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+			logger.Error(logutil.Join(deprovisionLogKey, err.LoggerAction()), logutil.Error(err))
+			h.respond(w, err.ValidatedStatusCode(deprovisionLogKey, logger), requestId, err.ErrorResponse())
 		default:
-			logger.Error(unknownErrorKey, err)
+			logger.Error(logutil.Join(deprovisionLogKey, unknownErrorKey), logutil.Error(err))
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})

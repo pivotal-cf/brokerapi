@@ -2,6 +2,7 @@ package utils_test
 
 import (
 	"context"
+	"log/slog"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -83,10 +84,11 @@ var _ = Describe("Context", func() {
 				expectedValue := "123"
 				ctx = context.WithValue(ctx, testKey, expectedValue)
 
-				data := utils.DataForContext(ctx, testKey)
-				value, ok := data[string(testKey)]
-				Expect(ok).To(BeTrue())
-				Expect(value).Should(Equal(expectedValue))
+				data := utils.ContextAttr(ctx, testKey)
+				Expect(data).To(ConsistOf(slog.Attr{
+					Key:   string(testKey),
+					Value: slog.StringValue(expectedValue),
+				}))
 			})
 
 			Context("the key value is a struct", func() {
@@ -95,19 +97,19 @@ var _ = Describe("Context", func() {
 					expectedValue := testType{}
 					ctx = context.WithValue(ctx, testKey, expectedValue)
 
-					data := utils.DataForContext(ctx, testKey)
-					value, ok := data[string(testKey)]
-					Expect(ok).To(BeTrue())
-					Expect(value).Should(Equal(expectedValue))
+					data := utils.ContextAttr(ctx, testKey)
+					Expect(data).To(ConsistOf(slog.Attr{
+						Key:   string(testKey),
+						Value: slog.AnyValue(expectedValue),
+					}))
 				})
 			})
 		})
 
 		Context("the provided key is not in the context", func() {
 			It("returns data without the key", func() {
-				data := utils.DataForContext(ctx, testKey)
-				_, ok := data[string(testKey)]
-				Expect(ok).To(BeFalse())
+				data := utils.ContextAttr(ctx, testKey)
+				Expect(data).To(BeEmpty())
 			})
 		})
 	})

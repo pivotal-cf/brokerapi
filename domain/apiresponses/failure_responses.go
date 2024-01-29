@@ -2,9 +2,10 @@ package apiresponses
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
+	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
 )
 
 // FailureResponse can be returned from any of the `ServiceBroker` interface methods
@@ -43,12 +44,10 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	}
 }
 
-// ValidatedStatusCode returns the HTTP response status code. If the code is not 4xx
-// or 5xx, an InternalServerError will be returned instead.
-func (f *FailureResponse) ValidatedStatusCode(logger lager.Logger) int {
+func (f *FailureResponse) ValidatedStatusCode(prefix string, logger *slog.Logger) int {
 	if f.statusCode < 400 || 600 <= f.statusCode {
 		if logger != nil {
-			logger.Error("validating-status-code", fmt.Errorf("Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
+			logger.Error(logutil.Join(prefix, "validating-status-code"), slog.String("error", "Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
 		}
 		return http.StatusInternalServerError
 	}

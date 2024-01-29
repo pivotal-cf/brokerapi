@@ -16,9 +16,9 @@
 package brokerapi
 
 import (
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/auth"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
@@ -30,11 +30,11 @@ type middlewareFunc func(http.Handler) http.Handler
 type config struct {
 	router               chi.Router
 	customRouter         bool
-	logger               lager.Logger
+	logger               *slog.Logger
 	additionalMiddleware []middlewareFunc
 }
 
-func NewWithOptions(serviceBroker domain.ServiceBroker, logger lager.Logger, opts ...Option) http.Handler {
+func NewWithOptions(serviceBroker domain.ServiceBroker, logger *slog.Logger, opts ...Option) http.Handler {
 	cfg := config{
 		router: chi.NewRouter(),
 		logger: logger,
@@ -95,7 +95,7 @@ func withDefaultMiddleware() Option {
 	return func(c *config) {
 		if !c.customRouter {
 			defaults := []middlewareFunc{
-				middlewares.APIVersionMiddleware{LoggerFactory: c.logger}.ValidateAPIVersionHdr,
+				middlewares.APIVersionMiddleware{Logger: c.logger}.ValidateAPIVersionHdr,
 				middlewares.AddCorrelationIDToContext,
 				middlewares.AddOriginatingIdentityToContext,
 				middlewares.AddInfoLocationToContext,

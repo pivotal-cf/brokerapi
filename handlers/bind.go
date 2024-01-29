@@ -3,29 +3,30 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 const (
-	invalidBindDetailsErrorKey = "invalid-bind-details"
 	bindLogKey                 = "bind"
+	invalidBindDetailsErrorKey = "bind.invalid-bind-details"
 )
 
 func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := h.logger.Session(bindLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.With(append(
+		[]any{slog.String(instanceIDLogKey, instanceID), slog.String(bindingIDLogKey, bindingID)},
+		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
+	)...)
 
 	version := getAPIVersion(req)
 	asyncAllowed := false
@@ -37,7 +38,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 
 	var details domain.BindDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
-		logger.Error(invalidBindDetailsErrorKey, err)
+		logger.Error(invalidBindDetailsErrorKey, logutil.Error(err))
 		h.respond(w, http.StatusUnprocessableEntity, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
@@ -45,7 +46,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.ServiceID == "" {
-		logger.Error(serviceIdMissingKey, serviceIdError)
+		logger.Error(logutil.Join(bindLogKey, serviceIdMissingKey), logutil.Error(serviceIdError))
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
@@ -53,7 +54,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		logger.Error(planIdMissingKey, planIdError)
+		logger.Error(logutil.Join(bindLogKey, planIdMissingKey), logutil.Error(planIdError))
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
@@ -64,7 +65,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			statusCode := err.ValidatedStatusCode(logger)
+			statusCode := err.ValidatedStatusCode(bindLogKey, logger)
 			errorResponse := err.ErrorResponse()
 			if err == apiresponses.ErrInstanceDoesNotExist {
 				// work around ErrInstanceDoesNotExist having different pre-refactor behaviour to other actions
@@ -73,10 +74,10 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 				}
 				statusCode = http.StatusNotFound
 			}
-			logger.Error(err.LoggerAction(), err)
+			logger.Error(logutil.Join(bindLogKey, err.LoggerAction()), logutil.Error(err))
 			h.respond(w, statusCode, requestId, errorResponse)
 		default:
-			logger.Error(unknownErrorKey, err)
+			logger.Error(logutil.Join(bindLogKey, unknownErrorKey), logutil.Error(err))
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
@@ -108,7 +109,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		for _, vol := range binding.VolumeMounts {
 			experimentalConfig, err := json.Marshal(vol.Device.MountConfig)
 			if err != nil {
-				logger.Error(unknownErrorKey, err)
+				logger.Error(logutil.Join(bindLogKey, unknownErrorKey), logutil.Error(err))
 				h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{Description: err.Error()})
 				return
 			}

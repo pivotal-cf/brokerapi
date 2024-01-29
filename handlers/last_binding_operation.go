@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
+	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
@@ -24,9 +26,10 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.logger.Session(lastBindingOperationLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.With(append(
+		[]any{slog.String(instanceIDLogKey, instanceID)},
+		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
+	)...)
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
@@ -36,20 +39,20 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		h.respond(w, http.StatusPreconditionFailed, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
-		logger.Error(middlewares.ApiVersionInvalidKey, err)
+		logger.Error(logutil.Join(lastBindingOperationLogKey, middlewares.ApiVersionInvalidKey), logutil.Error(err))
 		return
 	}
 
-	logger.Info("starting-check-for-binding-operation")
+	logger.Info(logutil.Join(lastBindingOperationLogKey, "starting-check-for-binding-operation"))
 
 	lastOperation, err := h.serviceBroker.LastBindingOperation(req.Context(), instanceID, bindingID, pollDetails)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+			logger.Error(logutil.Join(lastBindingOperationLogKey, err.LoggerAction()), logutil.Error(err))
+			h.respond(w, err.ValidatedStatusCode(lastBindingOperationLogKey, logger), requestId, err.ErrorResponse())
 		default:
-			logger.Error(unknownErrorKey, err)
+			logger.Error(logutil.Join(lastBindingOperationLogKey, unknownErrorKey), logutil.Error(err))
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
@@ -57,7 +60,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-binding-operation")
+	logger.Info(logutil.Join(lastBindingOperationLogKey, "done-check-for-binding-operation"), slog.Any("state", lastOperation.State))
 
 	lastOperationResponse := apiresponses.LastOperationResponse{
 		State:       lastOperation.State,
