@@ -488,6 +488,7 @@ var _ = Describe("Service Broker API", func() {
 
 			})
 		})
+
 		When("X-Api-Info-Location is not passed", func() {
 			It("Adds empty infoLocation to the context", func() {
 				_, err := http.DefaultClient.Do(req)
@@ -529,16 +530,17 @@ var _ = Describe("Service Broker API", func() {
 			testServer.Close()
 		})
 
-		DescribeTable("Adds correlation id to the context", func(tc testCase) {
-			req.Header.Add(tc.correlationIDHeaderName, correlationID)
+		DescribeTable("Adds correlation id to the context",
+			func(tc testCase) {
+				req.Header.Add(tc.correlationIDHeaderName, correlationID)
 
-			_, err := http.DefaultClient.Do(req)
-			Expect(err).NotTo(HaveOccurred())
+				_, err := http.DefaultClient.Do(req)
+				Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
-			ctx := fakeServiceBroker.ServicesArgsForCall(0)
-			Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
-		},
+				Expect(fakeServiceBroker.ServicesCallCount()).To(Equal(1), "Services was not called")
+				ctx := fakeServiceBroker.ServicesArgsForCall(0)
+				Expect(ctx.Value(middlewares.CorrelationIDKey)).To(Equal(correlationID))
+			},
 			Entry("X-Correlation-ID", testCase{
 				correlationIDHeaderName: "X-Correlation-ID",
 			}),
@@ -2749,6 +2751,27 @@ var _ = Describe("Service Broker API", func() {
 				response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
 				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(instanceID))
+			})
+		})
+
+		Describe("WithAdditionalMiddleware()", func() {
+			It("adds additional middleware", func() {
+				const (
+					customMiddlewareError = "fake custom middleware error"
+					customMiddlewareCode  = http.StatusTeapot
+				)
+
+				By("adding some custom middleware that fails")
+				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithAdditionalMiddleware(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+						http.Error(w, customMiddlewareError, customMiddlewareCode)
+					})
+				}))
+
+				By("checking for the specific failure from the custom middleware")
+				response := makeInstanceProvisioningRequest(uniqueInstanceID(), provisionDetails, "")
+				Expect(response.RawResponse).To(HaveHTTPStatus(customMiddlewareCode))
+				Expect(response.Body).To(Equal(customMiddlewareError + "\n"))
 			})
 		})
 
