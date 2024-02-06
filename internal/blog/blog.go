@@ -1,8 +1,8 @@
 // Package blog is the brokerapi logger
-// BrokerAPI was originally written to use the CloudFoundry Lager logger, and it relied on some idiosyncrasies
-// of that logger that are not supported by the (subsequently written) standard library log/slog logger.
-// This package is a wrapper around log/slog that adds back the idiosyncrasies of lager, so that the behavior
-// is exactly the same.
+// BrokerAPI was originally written to use the CloudFoundry Lager logger (https://github.com/cloudfoundry/lager),
+// and it relied on some idiosyncrasies of that logger that are not found in the (subsequently written)
+// Go standard library log/slog logger. This package is a wrapper around log/slog that adds back the
+// idiosyncrasies of lager, minimizes boilerplate code, and keeps the behavior as similar as possible.
 package blog
 
 import (
@@ -24,12 +24,11 @@ type Blog struct {
 	prefix string
 }
 
-func New(ctx context.Context, logger *slog.Logger, prefix string, supplementary ...slog.Attr) Blog {
-	var attr []any
-	for _, s := range supplementary {
-		attr = append(attr, s)
-	}
+func New(logger *slog.Logger) Blog {
+	return Blog{logger: logger}
+}
 
+func (b Blog) Session(ctx context.Context, prefix string, attr ...any) Blog {
 	for _, key := range []middlewares.ContextKey{middlewares.CorrelationIDKey, middlewares.RequestIdentityKey} {
 		if value := ctx.Value(key); value != nil {
 			attr = append(attr, slog.Any(string(key), value))
@@ -37,13 +36,13 @@ func New(ctx context.Context, logger *slog.Logger, prefix string, supplementary 
 	}
 
 	return Blog{
-		logger: logger.With(attr...),
-		prefix: prefix,
+		logger: b.logger.With(attr...),
+		prefix: appendPrefix(b.prefix, prefix),
 	}
 }
 
-func (b Blog) Error(message string, err error) {
-	b.logger.Error(join(b.prefix, message), slog.Any(errorKey, err))
+func (b Blog) Error(message string, err error, attr ...any) {
+	b.logger.Error(join(b.prefix, message), append([]any{slog.Any(errorKey, err)}, attr...)...)
 }
 
 func (b Blog) Info(message string, attr ...any) {
@@ -65,4 +64,13 @@ func BindingID(bindingID string) slog.Attr {
 
 func join(s ...string) string {
 	return strings.Join(s, ".")
+}
+
+func appendPrefix(existing, addition string) string {
+	switch existing {
+	case "":
+		return addition
+	default:
+		return join(existing, addition)
+	}
 }

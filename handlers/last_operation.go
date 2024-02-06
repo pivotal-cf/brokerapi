@@ -22,7 +22,7 @@ func (h APIHandler) LastOperation(w http.ResponseWriter, req *http.Request) {
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := blog.New(req.Context(), h.logger, lastOperationLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), lastOperationLogKey, blog.InstanceID(instanceID))
 
 	logger.Info("starting-check-for-operation")
 

@@ -30,17 +30,13 @@ type middlewareFunc func(http.Handler) http.Handler
 type config struct {
 	router               chi.Router
 	customRouter         bool
-	logger               *slog.Logger
 	additionalMiddleware []middlewareFunc
 }
 
 func NewWithOptions(serviceBroker domain.ServiceBroker, logger *slog.Logger, opts ...Option) http.Handler {
-	cfg := config{
-		router: chi.NewRouter(),
-		logger: logger,
-	}
+	cfg := config{router: chi.NewRouter()}
 
-	WithOptions(append(opts, withDefaultMiddleware())...)(&cfg)
+	WithOptions(append(opts, withDefaultMiddleware(logger))...)(&cfg)
 	attachRoutes(cfg.router, serviceBroker, logger)
 
 	return cfg.router
@@ -91,11 +87,11 @@ func WithEncodedPath() Option {
 	return func(*config) {}
 }
 
-func withDefaultMiddleware() Option {
+func withDefaultMiddleware(logger *slog.Logger) Option {
 	return func(c *config) {
 		if !c.customRouter {
 			defaults := []middlewareFunc{
-				middlewares.APIVersionMiddleware{Logger: c.logger}.ValidateAPIVersionHdr,
+				middlewares.APIVersionMiddleware{Logger: logger}.ValidateAPIVersionHdr,
 				middlewares.AddCorrelationIDToContext,
 				middlewares.AddOriginatingIdentityToContext,
 				middlewares.AddInfoLocationToContext,

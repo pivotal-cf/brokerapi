@@ -18,7 +18,7 @@ const updateLogKey = "update"
 func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := blog.New(req.Context(), h.logger, updateLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), updateLogKey, blog.InstanceID(instanceID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 

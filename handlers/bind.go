@@ -22,7 +22,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := blog.New(req.Context(), h.logger, bindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
+	logger := h.logger.Session(req.Context(), bindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	version := getAPIVersion(req)
 	asyncAllowed := false

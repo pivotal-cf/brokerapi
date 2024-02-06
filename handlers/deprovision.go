@@ -17,7 +17,7 @@ const deprovisionLogKey = "deprovision"
 func (h APIHandler) Deprovision(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := blog.New(req.Context(), h.logger, deprovisionLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), deprovisionLogKey, blog.InstanceID(instanceID))
 
 	details := domain.DeprovisionDetails{
 		PlanID:    req.FormValue("plan_id"),

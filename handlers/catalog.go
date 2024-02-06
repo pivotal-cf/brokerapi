@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
-
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 )
@@ -13,7 +11,7 @@ import (
 const getCatalogLogKey = "getCatalog"
 
 func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
-	logger := blog.New(req.Context(), h.logger, getCatalogLogKey)
+	logger := h.logger.Session(req.Context(), getCatalogLogKey)
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	services, err := h.serviceBroker.Services(req.Context())

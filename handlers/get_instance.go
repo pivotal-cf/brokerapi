@@ -18,7 +18,7 @@ const getInstanceLogKey = "getInstance"
 func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := blog.New(req.Context(), h.logger, getInstanceLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), getInstanceLogKey, blog.InstanceID(instanceID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 

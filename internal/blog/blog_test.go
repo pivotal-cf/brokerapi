@@ -8,9 +8,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
-
 	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
+	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 )
 
 var _ = Describe("Context data", func() {
@@ -28,7 +27,7 @@ var _ = Describe("Context data", func() {
 			buffer := gbytes.NewBuffer()
 			logger := slog.New(slog.NewJSONHandler(buffer, nil))
 
-			blog.New(ctx, logger, "prefix").Info("hello")
+			blog.New(logger).Session(ctx, "prefix").Info("hello")
 
 			var receiver map[string]any
 			Expect(json.Unmarshal(buffer.Contents(), &receiver)).To(Succeed())
@@ -43,7 +42,7 @@ var _ = Describe("Context data", func() {
 			buffer := gbytes.NewBuffer()
 			logger := slog.New(slog.NewJSONHandler(buffer, nil))
 
-			blog.New(context.TODO(), logger, "prefix").Info("hello")
+			blog.New(logger).Session(context.TODO(), "prefix").Info("hello")
 
 			var receiver map[string]any
 			Expect(json.Unmarshal(buffer.Contents(), &receiver)).To(Succeed())

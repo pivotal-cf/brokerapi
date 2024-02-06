@@ -19,7 +19,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := blog.New(req.Context(), h.logger, getBindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
+	logger := h.logger.Session(req.Context(), getBindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 

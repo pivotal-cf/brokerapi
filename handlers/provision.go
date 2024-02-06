@@ -15,18 +15,16 @@ import (
 )
 
 const (
-	provisionLogKey = "provision"
-
+	provisionLogKey       = "provision"
 	instanceDetailsLogKey = "instance-details"
-
-	invalidServiceID = "invalid-service-id"
-	invalidPlanID    = "invalid-plan-id"
+	invalidServiceID      = "invalid-service-id"
+	invalidPlanID         = "invalid-plan-id"
 )
 
 func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := blog.New(req.Context(), h.logger, provisionLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), provisionLogKey, blog.InstanceID(instanceID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 

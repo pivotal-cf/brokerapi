@@ -17,7 +17,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := blog.New(req.Context(), h.logger, unbindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
+	logger := h.logger.Session(req.Context(), unbindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
