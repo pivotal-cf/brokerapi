@@ -2,10 +2,8 @@ package utils
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 )
 
 type contextKey string
@@ -41,14 +39,4 @@ func RetrieveServicePlanFromContext(ctx context.Context) *domain.ServicePlan {
 		return value.(*domain.ServicePlan)
 	}
 	return nil
-}
-
-func ContextAttr(context context.Context, dataKeys ...middlewares.ContextKey) (result []any) {
-	for _, key := range dataKeys {
-		if value := context.Value(key); value != nil {
-			result = append(result, slog.Any(string(key), value))
-		}
-	}
-
-	return
 }

@@ -6,11 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
@@ -27,16 +26,13 @@ const (
 func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 
-	logger := h.logger.With(append(
-		[]any{slog.String(instanceIDLogKey, instanceID)},
-		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
-	)...)
+	logger := blog.New(req.Context(), h.logger, provisionLogKey, blog.InstanceID(instanceID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
 	var details domain.ProvisionDetails
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
-		logger.Error(logutil.Join(provisionLogKey, invalidServiceDetailsErrorKey), logutil.Error(err))
+		logger.Error(invalidServiceDetailsErrorKey, err)
 		h.respond(w, http.StatusUnprocessableEntity, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
@@ -44,7 +40,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.ServiceID == "" {
-		logger.Error(logutil.Join(provisionLogKey, serviceIdMissingKey), logutil.Error(serviceIdError))
+		logger.Error(serviceIdMissingKey, serviceIdError)
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: serviceIdError.Error(),
 		})
@@ -52,7 +48,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if details.PlanID == "" {
-		logger.Error(logutil.Join(provisionLogKey, planIdMissingKey), logutil.Error(planIdError))
+		logger.Error(planIdMissingKey, planIdError)
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: planIdError.Error(),
 		})
@@ -69,7 +65,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if !valid {
-		logger.Error(logutil.Join(provisionLogKey, invalidServiceID), logutil.Error(invalidServiceIDError))
+		logger.Error(invalidServiceID, invalidServiceIDError)
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: invalidServiceIDError.Error(),
 		})
@@ -87,7 +83,7 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if !valid {
-		logger.Error(logutil.Join(provisionLogKey, invalidPlanID), logutil.Error(invalidPlanIDError))
+		logger.Error(invalidPlanID, invalidPlanIDError)
 		h.respond(w, http.StatusBadRequest, requestId, apiresponses.ErrorResponse{
 			Description: invalidPlanIDError.Error(),
 		})
@@ -103,10 +99,10 @@ func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			logger.Error(logutil.Join(provisionLogKey, err.LoggerAction()), logutil.Error(err))
-			h.respond(w, err.ValidatedStatusCode(provisionLogKey, logger), requestId, err.ErrorResponse())
+			logger.Error(err.LoggerAction(), err)
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
-			logger.Error(logutil.Join(provisionLogKey, unknownErrorKey), logutil.Error(err))
+			logger.Error(unknownErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})

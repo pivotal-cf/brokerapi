@@ -6,13 +6,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
-	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 const lastBindingOperationLogKey = "lastBindingOperation"
@@ -26,10 +24,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.logger.With(append(
-		[]any{slog.String(instanceIDLogKey, instanceID)},
-		utils.ContextAttr(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey)...,
-	)...)
+	logger := blog.New(req.Context(), h.logger, lastBindingOperationLogKey, blog.InstanceID(instanceID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
@@ -39,20 +34,20 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		h.respond(w, http.StatusPreconditionFailed, requestId, apiresponses.ErrorResponse{
 			Description: err.Error(),
 		})
-		logger.Error(logutil.Join(lastBindingOperationLogKey, middlewares.ApiVersionInvalidKey), logutil.Error(err))
+		logger.Error(middlewares.ApiVersionInvalidKey, err)
 		return
 	}
 
-	logger.Info(logutil.Join(lastBindingOperationLogKey, "starting-check-for-binding-operation"))
+	logger.Info("starting-check-for-binding-operation")
 
 	lastOperation, err := h.serviceBroker.LastBindingOperation(req.Context(), instanceID, bindingID, pollDetails)
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			logger.Error(logutil.Join(lastBindingOperationLogKey, err.LoggerAction()), logutil.Error(err))
-			h.respond(w, err.ValidatedStatusCode(lastBindingOperationLogKey, logger), requestId, err.ErrorResponse())
+			logger.Error(err.LoggerAction(), err)
+			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
 		default:
-			logger.Error(logutil.Join(lastBindingOperationLogKey, unknownErrorKey), logutil.Error(err))
+			logger.Error(unknownErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
 				Description: err.Error(),
 			})
@@ -60,7 +55,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	logger.Info(logutil.Join(lastBindingOperationLogKey, "done-check-for-binding-operation"), slog.Any("state", lastOperation.State))
+	logger.Info("done-check-for-binding-operation", slog.Any("state", lastOperation.State))
 
 	lastOperationResponse := apiresponses.LastOperationResponse{
 		State:       lastOperation.State,

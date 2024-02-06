@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-
-	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
 )
 
 const (
@@ -32,7 +30,7 @@ const (
 )
 
 type APIVersionMiddleware struct {
-	Logger *slog.Logger
+	Logger interface{ Error(string, ...any) }
 }
 
 type ErrorResponse struct {
@@ -43,7 +41,7 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		err := checkBrokerAPIVersionHdr(req)
 		if err != nil {
-			m.Logger.Error(logutil.Join(apiVersionLogKey, ApiVersionInvalidKey), logutil.Error(err))
+			m.Logger.Error(fmt.Sprintf("%s.%s", apiVersionLogKey, ApiVersionInvalidKey), slog.Any("error", err))
 
 			w.Header().Set("Content-type", "application/json")
 			setBrokerRequestIdentityHeader(req, w)
@@ -54,12 +52,7 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 				Description: err.Error(),
 			}
 			if err := json.NewEncoder(w).Encode(errorResp); err != nil {
-				m.Logger.Error(
-					logutil.Join(apiVersionLogKey, "encoding response"),
-					logutil.Error(err),
-					slog.Int("status", statusResponse),
-					slog.Any("response", errorResp),
-				)
+				m.Logger.Error(fmt.Sprintf("%s.%s", apiVersionLogKey, "encoding response"), slog.Any("error", err), slog.Int("status", statusResponse), slog.Any("response", errorResp))
 			}
 
 			return

@@ -8,17 +8,13 @@ import (
 	"net/http"
 
 	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/internal/logutil"
 )
 
 const (
 	invalidServiceDetailsErrorKey = "invalid-service-details"
-	instanceIDLogKey              = "instance-id"
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
 	unknownErrorKey               = "unknown-error"
-
-	bindingIDLogKey = "binding-id"
 )
 
 var (
@@ -48,7 +44,7 @@ func (h APIHandler) respond(w http.ResponseWriter, status int, requestIdentity s
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(response)
 	if err != nil {
-		h.logger.Error("encoding response", logutil.Error(err), slog.Int("status", status), slog.Any("response", response))
+		h.logger.Error("encoding response", slog.Any("error", err), slog.Int("status", status), slog.Any("response", response))
 	}
 }
 
