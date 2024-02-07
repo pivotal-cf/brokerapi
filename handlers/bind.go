@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
@@ -61,7 +62,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			statusCode := err.ValidatedStatusCode(logger)
+			statusCode := err.ValidatedStatusCode(slog.New(logger))
 			errorResponse := err.ErrorResponse()
 			if err == apiresponses.ErrInstanceDoesNotExist {
 				// work around ErrInstanceDoesNotExist having different pre-refactor behaviour to other actions

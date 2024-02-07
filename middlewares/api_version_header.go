@@ -30,7 +30,7 @@ const (
 )
 
 type APIVersionMiddleware struct {
-	Logger interface{ Error(string, ...any) }
+	Logger *slog.Logger
 }
 
 type ErrorResponse struct {

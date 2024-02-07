@@ -1,11 +1,9 @@
 package apiresponses
 
 import (
-	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-
-	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 )
 
 // FailureResponse can be returned from any of the `ServiceBroker` interface methods
@@ -44,9 +42,11 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	}
 }
 
-func (f *FailureResponse) ValidatedStatusCode(logger blog.Blog) int {
+func (f *FailureResponse) ValidatedStatusCode(logger *slog.Logger) int {
 	if f.statusCode < 400 || 600 <= f.statusCode {
-		logger.Error("validating-status-code", errors.New("Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
+		if logger != nil {
+			logger.Error("validating-status-code", slog.String("error", "Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))
+		}
 		return http.StatusInternalServerError
 	}
 	return f.statusCode

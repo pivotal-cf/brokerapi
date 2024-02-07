@@ -3,6 +3,9 @@
 // and it relied on some idiosyncrasies of that logger that are not found in the (subsequently written)
 // Go standard library log/slog logger. This package is a wrapper around log/slog that adds back the
 // idiosyncrasies of lager, minimizes boilerplate code, and keeps the behavior as similar as possible.
+// It also implements the slog.Handler interface so that it can easily be converted into a slog.Logger.
+// This is useful when calling public APIs (such as FailureResponse.ValidatedStatusCode) which take a
+// slog.Logger as an input, and because they are public cannot take a Blog as in input.
 package blog
 
 import (
@@ -28,6 +31,8 @@ func New(logger *slog.Logger) Blog {
 	return Blog{logger: logger}
 }
 
+// Session emulates a Lager logger session. It returns a new logger that will always log the
+// attributes, prefix, and data from the context.
 func (b Blog) Session(ctx context.Context, prefix string, attr ...any) Blog {
 	for _, key := range []middlewares.ContextKey{middlewares.CorrelationIDKey, middlewares.RequestIdentityKey} {
 		if value := ctx.Value(key); value != nil {
@@ -41,23 +46,62 @@ func (b Blog) Session(ctx context.Context, prefix string, attr ...any) Blog {
 	}
 }
 
+// Error logs an error. It takes an error type as a convenience, which is different to slog.Logger.Error()
 func (b Blog) Error(message string, err error, attr ...any) {
 	b.logger.Error(join(b.prefix, message), append([]any{slog.Any(errorKey, err)}, attr...)...)
 }
 
+// Info logs information. It behaves a lot file slog.Logger.Info()
 func (b Blog) Info(message string, attr ...any) {
 	b.logger.Info(join(b.prefix, message), attr...)
 }
 
+// With returns a logger that always logs the specified attributes
 func (b Blog) With(attr ...any) Blog {
 	b.logger = b.logger.With(attr...)
 	return b
 }
 
+// Enabled is required implement the slog.Handler interface
+func (b Blog) Enabled(context.Context, slog.Level) bool {
+	return true
+}
+
+// WithAttrs is required implement the slog.Handler interface
+func (b Blog) WithAttrs(attrs []slog.Attr) slog.Handler {
+	var attributes []any
+	for _, a := range attrs {
+		attributes = append(attributes, a)
+	}
+	return b.With(attributes...)
+}
+
+// WithGroup is required implement the slog.Handler interface
+func (b Blog) WithGroup(string) slog.Handler {
+	return b
+}
+
+func (b Blog) Handle(_ context.Context, record slog.Record) error {
+	switch record.Level {
+	case slog.LevelDebug:
+		b.logger.Debug(join(b.prefix, record.Message))
+	case slog.LevelInfo:
+		b.logger.Info(join(b.prefix, record.Message))
+	case slog.LevelWarn:
+		b.logger.Warn(join(b.prefix, record.Message))
+	default:
+		b.logger.Error(join(b.prefix, record.Message))
+	}
+
+	return nil
+}
+
+// InstanceID creates an attribute from an instance ID
 func InstanceID(instanceID string) slog.Attr {
 	return slog.String(instanceIDLogKey, instanceID)
 }
 
+// BindingID creates an attribute from an binding ID
 func BindingID(bindingID string) slog.Attr {
 	return slog.String(bindingIDLogKey, bindingID)
 }
