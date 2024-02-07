@@ -42,6 +42,8 @@ func (f *FailureResponse) ErrorResponse() interface{} {
 	}
 }
 
+// ValidatedStatusCode returns the HTTP response status code. If the code is not 4xx
+// or 5xx, an InternalServerError will be returned instead.
 func (f *FailureResponse) ValidatedStatusCode(logger *slog.Logger) int {
 	if f.statusCode < 400 || 600 <= f.statusCode {
 		if logger != nil {

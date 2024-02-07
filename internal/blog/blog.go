@@ -5,7 +5,7 @@
 // idiosyncrasies of lager, minimizes boilerplate code, and keeps the behavior as similar as possible.
 // It also implements the slog.Handler interface so that it can easily be converted into a slog.Logger.
 // This is useful when calling public APIs (such as FailureResponse.ValidatedStatusCode) which take a
-// slog.Logger as an input, and because they are public cannot take a Blog as in input.
+// slog.Logger as an input, and because they are public cannot take a Blog as an input.
 package blog
 
 import (
@@ -81,16 +81,18 @@ func (b Blog) WithGroup(string) slog.Handler {
 	return b
 }
 
+// Handle is required implement the slog.Handler interface
 func (b Blog) Handle(_ context.Context, record slog.Record) error {
+	msg := join(b.prefix, record.Message)
 	switch record.Level {
 	case slog.LevelDebug:
-		b.logger.Debug(join(b.prefix, record.Message))
+		b.logger.Debug(msg)
 	case slog.LevelInfo:
-		b.logger.Info(join(b.prefix, record.Message))
+		b.logger.Info(msg)
 	case slog.LevelWarn:
-		b.logger.Warn(join(b.prefix, record.Message))
+		b.logger.Warn(msg)
 	default:
-		b.logger.Error(join(b.prefix, record.Message))
+		b.logger.Error(msg)
 	}
 
 	return nil
