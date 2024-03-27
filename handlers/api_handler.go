@@ -4,20 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 )
 
 const (
 	invalidServiceDetailsErrorKey = "invalid-service-details"
-	instanceIDLogKey              = "instance-id"
 	serviceIdMissingKey           = "service-id-missing"
 	planIdMissingKey              = "plan-id-missing"
 	unknownErrorKey               = "unknown-error"
-
-	bindingIDLogKey = "binding-id"
 )
 
 var (
@@ -29,11 +27,11 @@ var (
 
 type APIHandler struct {
 	serviceBroker domain.ServiceBroker
-	logger        lager.Logger
+	logger        blog.Blog
 }
 
-func NewApiHandler(broker domain.ServiceBroker, logger lager.Logger) APIHandler {
-	return APIHandler{broker, logger}
+func NewApiHandler(broker domain.ServiceBroker, logger *slog.Logger) APIHandler {
+	return APIHandler{serviceBroker: broker, logger: blog.New(logger)}
 }
 
 func (h APIHandler) respond(w http.ResponseWriter, status int, requestIdentity string, response interface{}) {
@@ -47,7 +45,7 @@ func (h APIHandler) respond(w http.ResponseWriter, status int, requestIdentity s
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(response)
 	if err != nil {
-		h.logger.Error("encoding response", err, lager.Data{"status": status, "response": response})
+		h.logger.Error("encoding response", err, slog.Int("status", status), slog.Any("response", response))
 	}
 }
 

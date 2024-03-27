@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
 	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
@@ -71,43 +70,6 @@ var _ = Describe("Context", func() {
 				Expect(ctx.Err()).To(BeZero())
 				Expect(ctx.Value(contextValidatorKey).(string)).To(Equal(contextValidatorValue))
 				Expect(utils.RetrieveServicePlanFromContext(ctx).ID).To(Equal(plan.ID))
-			})
-		})
-	})
-
-	Describe("Log data for context", func() {
-		const testKey middlewares.ContextKey = "test-key"
-
-		Context("the provided key is present in the context", func() {
-			It("returns data containing the key", func() {
-				expectedValue := "123"
-				ctx = context.WithValue(ctx, testKey, expectedValue)
-
-				data := utils.DataForContext(ctx, testKey)
-				value, ok := data[string(testKey)]
-				Expect(ok).To(BeTrue())
-				Expect(value).Should(Equal(expectedValue))
-			})
-
-			Context("the key value is a struct", func() {
-				It("returns data containing the key", func() {
-					type testType struct{}
-					expectedValue := testType{}
-					ctx = context.WithValue(ctx, testKey, expectedValue)
-
-					data := utils.DataForContext(ctx, testKey)
-					value, ok := data[string(testKey)]
-					Expect(ok).To(BeTrue())
-					Expect(value).Should(Equal(expectedValue))
-				})
-			})
-		})
-
-		Context("the provided key is not in the context", func() {
-			It("returns data without the key", func() {
-				data := utils.DataForContext(ctx, testKey)
-				_, ok := data[string(testKey)]
-				Expect(ok).To(BeFalse())
 			})
 		})
 	})

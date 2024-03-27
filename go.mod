@@ -1,9 +1,8 @@
 module github.com/pivotal-cf/brokerapi/v10
 
-go 1.20
+go 1.21
 
 require (
-	code.cloudfoundry.org/lager/v3 v3.0.3
 	github.com/drewolson/testflight v1.0.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
@@ -21,7 +20,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/google/uuid v1.0.0 // indirect
-	github.com/openzipkin/zipkin-go v0.4.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect

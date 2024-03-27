@@ -19,15 +19,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-
-	"code.cloudfoundry.org/lager/v3"
 )
 
-const ApiVersionInvalidKey = "broker-api-version-invalid"
+const (
+	ApiVersionInvalidKey = "broker-api-version-invalid"
+
+	apiVersionLogKey = "version-header-check"
+)
 
 type APIVersionMiddleware struct {
-	LoggerFactory lager.Logger
+	Logger *slog.Logger
 }
 
 type ErrorResponse struct {
@@ -36,11 +39,9 @@ type ErrorResponse struct {
 
 func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		logger := m.LoggerFactory.Session("version-header-check", lager.Data{})
-
 		err := checkBrokerAPIVersionHdr(req)
 		if err != nil {
-			logger.Error(ApiVersionInvalidKey, err)
+			m.Logger.Error(fmt.Sprintf("%s.%s", apiVersionLogKey, ApiVersionInvalidKey), slog.Any("error", err))
 
 			w.Header().Set("Content-type", "application/json")
 			setBrokerRequestIdentityHeader(req, w)
@@ -50,9 +51,8 @@ func (m APIVersionMiddleware) ValidateAPIVersionHdr(next http.Handler) http.Hand
 			errorResp := ErrorResponse{
 				Description: err.Error(),
 			}
-			err = json.NewEncoder(w).Encode(errorResp)
-			if err != nil {
-				logger.Error("encoding response", err, lager.Data{"status": statusResponse, "response": errorResp})
+			if err := json.NewEncoder(w).Encode(errorResp); err != nil {
+				m.Logger.Error(fmt.Sprintf("%s.%s", apiVersionLogKey, "encoding response"), slog.Any("error", err), slog.Int("status", statusResponse), slog.Any("response", errorResp))
 			}
 
 			return

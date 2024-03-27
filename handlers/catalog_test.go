@@ -2,9 +2,9 @@ package handlers_test
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -31,7 +31,7 @@ var _ = Describe("Services", func() {
 
 		fakeServiceBroker = new(brokerFakes.AutoFakeServiceBroker)
 
-		apiHandler = handlers.NewApiHandler(fakeServiceBroker, lager.NewLogger("test"))
+		apiHandler = handlers.NewApiHandler(fakeServiceBroker, slog.New(slog.NewJSONHandler(GinkgoWriter, nil)))
 
 		fakeResponseWriter = new(fakes.FakeResponseWriter)
 		fakeResponseWriter.HeaderReturns(http.Header{})
