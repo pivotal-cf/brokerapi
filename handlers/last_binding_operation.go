@@ -24,7 +24,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.logger.Session(req.Context(), lastBindingOperationLogKey, blog.InstanceID(instanceID))
+	logger := h.logger.Session(req.Context(), lastBindingOperationLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
