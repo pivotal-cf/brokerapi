@@ -3,14 +3,14 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
-	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 const lastBindingOperationLogKey = "lastBindingOperation"
@@ -24,9 +24,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		OperationData: req.FormValue("operation"),
 	}
 
-	logger := h.logger.Session(lastBindingOperationLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.Session(req.Context(), lastBindingOperationLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
@@ -47,7 +45,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(slog.New(logger)), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
@@ -57,7 +55,7 @@ func (h APIHandler) LastBindingOperation(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	logger.WithData(lager.Data{"state": lastOperation.State}).Info("done-check-for-binding-operation")
+	logger.Info("done-check-for-binding-operation", slog.Any("state", lastOperation.State))
 
 	lastOperationResponse := apiresponses.LastOperationResponse{
 		State:       lastOperation.State,

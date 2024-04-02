@@ -3,29 +3,26 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
-	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 const (
-	invalidBindDetailsErrorKey = "invalid-bind-details"
 	bindLogKey                 = "bind"
+	invalidBindDetailsErrorKey = "invalid-bind-details"
 )
 
 func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := h.logger.Session(bindLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.Session(req.Context(), bindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	version := getAPIVersion(req)
 	asyncAllowed := false
@@ -64,7 +61,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
-			statusCode := err.ValidatedStatusCode(logger)
+			statusCode := err.ValidatedStatusCode(slog.New(logger))
 			errorResponse := err.ErrorResponse()
 			if err == apiresponses.ErrInstanceDoesNotExist {
 				// work around ErrInstanceDoesNotExist having different pre-refactor behaviour to other actions

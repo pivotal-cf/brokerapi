@@ -2,14 +2,13 @@ package apiresponses_test
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
-
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
 )
 
 var _ = Describe("FailureResponse", func() {
@@ -88,8 +87,7 @@ var _ = Describe("FailureResponse", func() {
 
 			It("logs that the status has been changed", func() {
 				log := gbytes.NewBuffer()
-				logger := lager.NewLogger("test")
-				logger.RegisterSink(lager.NewWriterSink(log, lager.DEBUG))
+				logger := slog.New(slog.NewJSONHandler(log, nil))
 				failureResponse := asFailureResponse(apiresponses.NewFailureResponse(errors.New("my error message"), 600, "log-key"))
 				failureResponse.ValidatedStatusCode(logger)
 				Expect(log).To(gbytes.Say("Invalid failure http response code: 600, expected 4xx or 5xx, returning internal server error: 500."))

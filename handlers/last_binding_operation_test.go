@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -39,7 +39,7 @@ var _ = Describe("LastBindingOperation", func() {
 
 		fakeServiceBroker = new(brokerFakes.AutoFakeServiceBroker)
 
-		apiHandler = handlers.NewApiHandler(fakeServiceBroker, lager.NewLogger("test"))
+		apiHandler = handlers.NewApiHandler(fakeServiceBroker, slog.New(slog.NewJSONHandler(GinkgoWriter, nil)))
 
 		fakeResponseWriter = new(fakes.FakeResponseWriter)
 		fakeResponseWriter.HeaderReturns(http.Header{})

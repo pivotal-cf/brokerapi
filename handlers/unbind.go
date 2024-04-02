@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v10/domain"
 	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v10/internal/blog"
 	"github.com/pivotal-cf/brokerapi/v10/middlewares"
-	"github.com/pivotal-cf/brokerapi/v10/utils"
 )
 
 const unbindLogKey = "unbind"
@@ -18,10 +18,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	instanceID := chi.URLParam(req, "instance_id")
 	bindingID := chi.URLParam(req, "binding_id")
 
-	logger := h.logger.Session(unbindLogKey, lager.Data{
-		instanceIDLogKey: instanceID,
-		bindingIDLogKey:  bindingID,
-	}, utils.DataForContext(req.Context(), middlewares.CorrelationIDKey, middlewares.RequestIdentityKey))
+	logger := h.logger.Session(req.Context(), unbindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
@@ -52,7 +49,7 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 		switch err := err.(type) {
 		case *apiresponses.FailureResponse:
 			logger.Error(err.LoggerAction(), err)
-			h.respond(w, err.ValidatedStatusCode(logger), requestId, err.ErrorResponse())
+			h.respond(w, err.ValidatedStatusCode(slog.New(logger)), requestId, err.ErrorResponse())
 		default:
 			logger.Error(unknownErrorKey, err)
 			h.respond(w, http.StatusInternalServerError, requestId, apiresponses.ErrorResponse{
@@ -69,5 +66,4 @@ func (h APIHandler) Unbind(w http.ResponseWriter, req *http.Request) {
 	} else {
 		h.respond(w, http.StatusOK, requestId, apiresponses.EmptyResponse{})
 	}
-
 }
