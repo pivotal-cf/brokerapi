@@ -1,6 +1,6 @@
 # brokerapi
 
-[![test](https://github.com/pivotal-cf/brokerapi/workflows/test/badge.svg?branch=main)](https://github.com/pivotal-cf/brokerapi/actions?query=workflow%3Atest+branch%3Amain)
+[![test](https://github.com/pivotal-cf/brokerapi/workflows/run-tests/badge.svg?branch=main)](https://github.com/pivotal-cf/brokerapi/actions/workflows/run-tests.yml?query=branch%3Amain)
 
 A Go package for building [V2 Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker/) compliant Service Brokers.
 
