@@ -20,9 +20,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/pivotal-cf/brokerapi/v10/auth"
-	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
+	"github.com/pivotal-cf/brokerapi/v11/auth"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 )
 
 type middlewareFunc func(http.Handler) http.Handler

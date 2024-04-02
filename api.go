@@ -20,7 +20,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/pivotal-cf/brokerapi/v10/handlers"
+	"github.com/pivotal-cf/brokerapi/v11/handlers"
 )
 
 type BrokerCredentials struct {

@@ -32,9 +32,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf/brokerapi/v10"
-	"github.com/pivotal-cf/brokerapi/v10/fakes"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
+	"github.com/pivotal-cf/brokerapi/v11"
+	"github.com/pivotal-cf/brokerapi/v11/fakes"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 )
 
 var _ = Describe("Service Broker API", func() {

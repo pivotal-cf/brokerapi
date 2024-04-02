@@ -23,8 +23,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf/brokerapi/v10"
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 )
 
 var _ = Describe("FailureResponse", func() {

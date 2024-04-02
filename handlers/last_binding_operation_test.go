@@ -11,12 +11,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
-	brokerFakes "github.com/pivotal-cf/brokerapi/v10/fakes"
-	"github.com/pivotal-cf/brokerapi/v10/handlers"
-	"github.com/pivotal-cf/brokerapi/v10/handlers/fakes"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
+	brokerFakes "github.com/pivotal-cf/brokerapi/v11/fakes"
+	"github.com/pivotal-cf/brokerapi/v11/handlers"
+	"github.com/pivotal-cf/brokerapi/v11/handlers/fakes"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 	"github.com/pkg/errors"
 )
 

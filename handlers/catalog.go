@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 )
 
 const getCatalogLogKey = "getCatalog"

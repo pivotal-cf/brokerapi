@@ -16,8 +16,8 @@
 package brokerapi
 
 import (
-	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 )
 
 // Deprecated: Use github.com/pivotal-cf/brokerapi/domain/apiresponses

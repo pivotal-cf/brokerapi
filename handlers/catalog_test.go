@@ -9,12 +9,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 
-	"github.com/pivotal-cf/brokerapi/v10/domain"
-	"github.com/pivotal-cf/brokerapi/v10/domain/apiresponses"
-	brokerFakes "github.com/pivotal-cf/brokerapi/v10/fakes"
-	"github.com/pivotal-cf/brokerapi/v10/handlers"
-	"github.com/pivotal-cf/brokerapi/v10/handlers/fakes"
-	"github.com/pivotal-cf/brokerapi/v10/middlewares"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
+	brokerFakes "github.com/pivotal-cf/brokerapi/v11/fakes"
+	"github.com/pivotal-cf/brokerapi/v11/handlers"
+	"github.com/pivotal-cf/brokerapi/v11/handlers/fakes"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 )
 
 var _ = Describe("Services", func() {
