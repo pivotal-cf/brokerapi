@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf/brokerapi/v10/auth"
+	"github.com/pivotal-cf/brokerapi/v11/auth"
 )
 
 var _ = Describe("Auth Wrapper", func() {

@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf/brokerapi/v10"
+	"github.com/pivotal-cf/brokerapi/v11"
 )
 
 var _ = Describe("Context Utilities", func() {
