@@ -2,10 +2,9 @@ package domain
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 type ServicePlanMetadata struct {
@@ -51,7 +50,7 @@ func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 
 	b, err := json.Marshal(Alias(spm))
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "unmarshallable content in AdditionalMetadata")
+		return nil, fmt.Errorf("unmarshallable content in AdditionalMetadata: %w", err)
 	}
 
 	var m map[string]interface{}
