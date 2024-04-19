@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v11/handlers"
 	"github.com/pivotal-cf/brokerapi/v11/handlers/fakes"
 	"github.com/pivotal-cf/brokerapi/v11/middlewares"
-	"github.com/pkg/errors"
 )
 
 var _ = Describe("LastBindingOperation", func() {
