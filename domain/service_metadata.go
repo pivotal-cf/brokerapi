@@ -26,7 +26,9 @@ func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 	}
 
 	var m map[string]interface{}
-	json.Unmarshal(b, &m)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
 	delete(m, additionalMetadataName)
 
 	for k, v := range sm.AdditionalMetadata {
