@@ -21,13 +21,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 
-	"github.com/drewolson/testflight"
 	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -49,10 +49,8 @@ var _ = Describe("Service Broker API", func() {
 
 	const requestIdentity = "Request Identity Name"
 
-	makeInstanceProvisioningRequest := func(instanceID string, details map[string]interface{}, queryString string) *testflight.Response {
-		response := &testflight.Response{}
-
-		testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+	makeInstanceProvisioningRequest := func(instanceID string, details map[string]interface{}, queryString string) (response *http.Response) {
+		withServer(brokerAPI, func(r requester) {
 			path := "/v2/service_instances/" + instanceID + queryString
 
 			buffer := &bytes.Buffer{}
@@ -70,7 +68,7 @@ var _ = Describe("Service Broker API", func() {
 		return response
 	}
 
-	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details map[string]interface{}, acceptsIncomplete bool) *testflight.Response {
+	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details map[string]interface{}, acceptsIncomplete bool) *http.Response {
 		var acceptsIncompleteFlag string
 
 		if acceptsIncomplete {
@@ -117,7 +115,7 @@ var _ = Describe("Service Broker API", func() {
 	Describe("response headers", func() {
 		makeRequest := func() *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+			request := must(http.NewRequest("GET", "/v2/catalog", nil))
 			request.SetBasicAuth(credentials.Username, credentials.Password)
 			brokerAPI.ServeHTTP(recorder, request)
 			return recorder
@@ -139,7 +137,7 @@ var _ = Describe("Service Broker API", func() {
 
 		makeRequest := func(method, path, body string) *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest(method, path, strings.NewReader(body))
+			request := must(http.NewRequest(method, path, strings.NewReader(body)))
 			request.Header.Add("X-Broker-API-Version", "2.14")
 			request.SetBasicAuth(credentials.Username, credentials.Password)
 			request = request.WithContext(ctx)
@@ -204,19 +202,17 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("authentication", func() {
-		makeRequestWithoutAuth := func() *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+		makeRequestWithoutAuth := func() (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
+				request := must(http.NewRequest("GET", "/v2/catalog", nil))
 				response = r.Do(request)
 			})
 			return response
 		}
 
-		makeRequestWithUnrecognizedAuth := func() *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-				request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+		makeRequestWithUnrecognizedAuth := func() (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
+				request := must(http.NewRequest("GET", "/v2/catalog", nil))
 				// dXNlcm5hbWU6cGFzc3dvcmQ= is base64 encoding of 'username:password',
 				// ie, a correctly encoded basic authorization header
 				request.Header["Authorization"] = []string{"NOTBASIC dXNlcm5hbWU6cGFzc3dvcmQ="}
@@ -227,10 +223,9 @@ var _ = Describe("Service Broker API", func() {
 		}
 
 		When("using default basic authentication", func() {
-			makeRequestWithBasicAuth := func(username string, password string) *testflight.Response {
-				response := &testflight.Response{}
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-					request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+			makeRequestWithBasicAuth := func(username string, password string) (response *http.Response) {
+				withServer(brokerAPI, func(r requester) {
+					request := must(http.NewRequest("GET", "/v2/catalog", nil))
 					request.SetBasicAuth(username, password)
 					request.Header.Add("Content-Type", "application/json")
 					request.Header.Add("X-Broker-API-Request-Identity", requestIdentity)
@@ -243,22 +238,22 @@ var _ = Describe("Service Broker API", func() {
 
 			It("returns 401 when the authorization header has an incorrect password", func() {
 				response := makeRequestWithBasicAuth("username", "fake_password")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnauthorized))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnauthorized))
 			})
 
 			It("returns 401 when the authorization header has an incorrect username", func() {
 				response := makeRequestWithBasicAuth("fake_username", "password")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnauthorized))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnauthorized))
 			})
 
 			It("returns 401 when there is no authorization header", func() {
 				response := makeRequestWithoutAuth()
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnauthorized))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnauthorized))
 			})
 
 			It("returns 401 when there is an unrecognized authorization header", func() {
 				response := makeRequestWithUnrecognizedAuth()
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnauthorized))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnauthorized))
 			})
 
 			It("does not call through to the service broker when not authenticated", func() {
@@ -279,10 +274,9 @@ var _ = Describe("Service Broker API", func() {
 		When("using custom authentication", func() {
 			expectedToken := "expected_token"
 
-			makeRequestWithBearerTokenAuth := func(token string) *testflight.Response {
-				response := &testflight.Response{}
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
-					request, _ := http.NewRequest("GET", "/v2/catalog", nil)
+			makeRequestWithBearerTokenAuth := func(token string) (response *http.Response) {
+				withServer(brokerAPI, func(r requester) {
+					request := must(http.NewRequest("GET", "/v2/catalog", nil))
 					request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 					request.Header.Add("Content-Type", "application/json")
 					request.Header.Add("X-Broker-API-Request-Identity", requestIdentity)
@@ -336,7 +330,7 @@ var _ = Describe("Service Broker API", func() {
 
 			It("returns 401 when the authorization header has an incorrect bearer token", func() {
 				response := makeRequestWithBearerTokenAuth("incorrect_token")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnauthorized))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnauthorized))
 			})
 
 			It("does not call through to the service broker when not authenticated", func() {
@@ -584,7 +578,7 @@ var _ = Describe("Service Broker API", func() {
 		const requestIdentity = "Request Identity Name"
 		makeCatalogRequest := func(apiVersion string, fail bool) *httptest.ResponseRecorder {
 			recorder := httptest.NewRecorder()
-			request, _ := http.NewRequest(http.MethodGet, "/v2/catalog", nil)
+			request := must(http.NewRequest(http.MethodGet, "/v2/catalog", nil))
 			if apiVersion != "" {
 				request.Header.Add("X-Broker-API-Version", apiVersion)
 			}
@@ -637,9 +631,8 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("instance lifecycle endpoint", func() {
-		makeGetInstanceWithQueryParamsRequest := func(instanceID string, params map[string]string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeGetInstanceWithQueryParamsRequest := func(instanceID string, params map[string]string) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s", instanceID)
 				request, err := http.NewRequest("GET", path, strings.NewReader(""))
 				Expect(err).NotTo(HaveOccurred())
@@ -656,13 +649,12 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeGetInstanceRequest := func(instanceID string) *testflight.Response {
+		makeGetInstanceRequest := func(instanceID string) *http.Response {
 			return makeGetInstanceWithQueryParamsRequest(instanceID, map[string]string{})
 		}
 
-		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, queryString string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeInstanceDeprovisioningRequestFull := func(instanceID, serviceID, planID, queryString string) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s?plan_id=%s&service_id=%s", instanceID, planID, serviceID)
 				if queryString != "" {
 					path = fmt.Sprintf("%s&%s", path, queryString)
@@ -678,7 +670,7 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeInstanceDeprovisioningRequest := func(instanceID, queryString string) *testflight.Response {
+		makeInstanceDeprovisioningRequest := func(instanceID, queryString string) *http.Response {
 			return makeInstanceDeprovisioningRequestFull(instanceID, "service-id", "plan-id", queryString)
 		}
 
@@ -731,7 +723,7 @@ var _ = Describe("Service Broker API", func() {
 				fakeServiceBroker.DashboardURL = "https://example.com/dashboard/some-instance"
 				resp := makeGetInstanceRequest(instanceID)
 				Expect(fakeServiceBroker.GetInstanceIDs).To(ContainElement(instanceID))
-				Expect(resp.Body).To(MatchJSON(fixture("get_instance.json")))
+				Expect(readBody(resp)).To(MatchJSON(fixture("get_instance.json")))
 				Expect(resp.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 			})
 
@@ -753,8 +745,8 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns the operation data to the cloud controller", func() {
-					resp := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(resp.Body).To(MatchJSON(fixture("operation_data_response.json")))
+					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
+					Expect(readBody(response)).To(MatchJSON(fixture("operation_data_response.json")))
 				})
 			})
 
@@ -812,8 +804,8 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the instance does not exist", func() {
 				It("returns a 201 with empty JSON", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
-					Expect(response.Body).To(MatchJSON(fixture("provisioning.json")))
+					Expect(response).To(HaveHTTPStatus(http.StatusCreated))
+					Expect(readBody(response)).To(MatchJSON(fixture("provisioning.json")))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 				})
 
@@ -824,7 +816,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns json with dashboard URL", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.Body).To(MatchJSON(fixture("provisioning_with_dashboard.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("provisioning_with_dashboard.json")))
 					})
 				})
 
@@ -838,8 +830,8 @@ var _ = Describe("Service Broker API", func() {
 					It("returns a 500 with error", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
-						Expect(response.Body).To(MatchJSON(fixture("instance_limit_error.json")))
+						Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
+						Expect(readBody(response)).To(MatchJSON(fixture("instance_limit_error.json")))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					})
 
@@ -858,8 +850,8 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 500 with error", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
-						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
+						Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
+						Expect(readBody(response)).To(MatchJSON(`{"description":"broker failed"}`))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					})
 
@@ -881,8 +873,8 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns status teapot with error", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusTeapot))
-						Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+						Expect(response).To(HaveHTTPStatus(http.StatusTeapot))
+						Expect(readBody(response)).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					})
 
@@ -900,9 +892,9 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 422", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+						Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-						Expect(response.Body).To(MatchJSON(`{"description":"The format of the parameters is not valid JSON"}`))
+						Expect(readBody(response)).To(MatchJSON(`{"description":"The format of the parameters is not valid JSON"}`))
 					})
 
 					It("logs an appropriate error", func() {
@@ -913,10 +905,8 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				Context("when we send invalid json", func() {
-					makeBadInstanceProvisioningRequest := func(instanceID string) *testflight.Response {
-						response := &testflight.Response{}
-
-						testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+					makeBadInstanceProvisioningRequest := func(instanceID string) (response *http.Response) {
+						withServer(brokerAPI, func(r requester) {
 							path := "/v2/service_instances/" + instanceID
 
 							body := strings.NewReader("{{{{{")
@@ -955,7 +945,7 @@ var _ = Describe("Service Broker API", func() {
 				Context("returns a StatusOK on", func() {
 					It("sync broker response", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					})
 
@@ -967,7 +957,7 @@ var _ = Describe("Service Broker API", func() {
 						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					})
 				})
@@ -980,13 +970,13 @@ var _ = Describe("Service Broker API", func() {
 						provisionDetails["space_guid"] = "space_guid"
 					}()
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusConflict))
+					Expect(response).To(HaveHTTPStatus(http.StatusConflict))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 				})
 
 				It("returns an empty JSON object", func() {
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-					Expect(response.Body).To(MatchJSON(`{}`))
+					Expect(readBody(response)).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error when respond with statusConflict", func() {
@@ -1042,7 +1032,7 @@ var _ = Describe("Service Broker API", func() {
 
 						It("returns a 202", func() {
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, true)
-							Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusAccepted))
+							Expect(response).To(HaveHTTPStatus(http.StatusAccepted))
 						})
 					})
 
@@ -1064,7 +1054,7 @@ var _ = Describe("Service Broker API", func() {
 
 						It("returns a 201", func() {
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, true)
-							Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+							Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 						})
 					})
 				})
@@ -1072,7 +1062,7 @@ var _ = Describe("Service Broker API", func() {
 				Context("when the accepts_incomplete flag is false", func() {
 					It("returns a 201", func() {
 						response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, false)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+						Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 					})
 
 					Context("when broker can only respond asynchronously", func() {
@@ -1093,8 +1083,8 @@ var _ = Describe("Service Broker API", func() {
 						It("returns a 422", func() {
 							acceptsIncomplete := false
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-							Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
-							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+							Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+							Expect(readBody(response)).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
 				})
@@ -1102,7 +1092,7 @@ var _ = Describe("Service Broker API", func() {
 				Context("when the accepts_incomplete flag is missing", func() {
 					It("returns a 201", func() {
 						response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+						Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 					})
 
 					Context("when broker can only respond asynchronously", func() {
@@ -1123,9 +1113,9 @@ var _ = Describe("Service Broker API", func() {
 						It("returns a 422", func() {
 							acceptsIncomplete := false
 							response := makeInstanceProvisioningRequestWithAcceptsIncomplete(instanceID, provisionDetails, acceptsIncomplete)
-							Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+							Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 							Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
 				})
@@ -1137,7 +1127,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -1148,7 +1138,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -1159,7 +1149,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "provision.service-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "service_id missing"))
@@ -1170,7 +1160,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "provision.plan-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "plan_id missing"))
@@ -1181,7 +1171,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "provision.invalid-service-id"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "service-id not in the catalog"))
@@ -1192,7 +1182,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "provision.invalid-plan-id"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "plan-id not in the catalog"))
@@ -1205,14 +1195,12 @@ var _ = Describe("Service Broker API", func() {
 				instanceID  string
 				details     map[string]interface{}
 				queryString string
-				response    *testflight.Response
+				response    *http.Response
 			)
 			const updateRequestIdentity = "Update Request Identity Name"
 
-			makeInstanceUpdateRequest := func(instanceID string, details map[string]interface{}, queryString string, apiVersion string) *testflight.Response {
-				response := &testflight.Response{}
-
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+			makeInstanceUpdateRequest := func(instanceID string, details map[string]interface{}, queryString string, apiVersion string) (response *http.Response) {
+				withServer(brokerAPI, func(r requester) {
 					path := "/v2/service_instances/" + instanceID + queryString
 
 					buffer := &bytes.Buffer{}
@@ -1267,7 +1255,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID := "instance-id"
 					response := makeInstanceUpdateRequest(instanceID, details, queryString, "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -1277,7 +1265,7 @@ var _ = Describe("Service Broker API", func() {
 					instanceID := "instance-id"
 					response := makeInstanceUpdateRequest(instanceID, details, queryString, "1.14")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -1288,7 +1276,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeInstanceUpdateRequest("instance-id", details, queryString, "2.14")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "update.service-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "service_id missing"))
@@ -1298,10 +1286,10 @@ var _ = Describe("Service Broker API", func() {
 			Context("when the broker returns no error", func() {
 				Context("when the broker responds synchronously", func() {
 					It("returns HTTP 200", func() {
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
-						Expect(response.RawResponse.Header.Get("Content-Type")).To(Equal("application/json"))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response.Header.Get("Content-Type")).To(Equal("application/json"))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
-						Expect(response.Body).To(Equal("{}\n"))
+						Expect(readBody(response)).To(Equal("{}\n"))
 					})
 
 					It("calls broker with instanceID and update details", func() {
@@ -1363,7 +1351,7 @@ var _ = Describe("Service Broker API", func() {
 					})
 
 					It("returns HTTP 202", func() {
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusAccepted))
+						Expect(response).To(HaveHTTPStatus(http.StatusAccepted))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 					})
 
@@ -1373,7 +1361,7 @@ var _ = Describe("Service Broker API", func() {
 						})
 
 						It("returns the operation data to the cloud controller", func() {
-							Expect(response.Body).To(MatchJSON(fixture("operation_data_response.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("operation_data_response.json")))
 						})
 					})
 				})
@@ -1385,7 +1373,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns json with dashboard URL", func() {
 						response := makeInstanceUpdateRequest(instanceID, details, "", "2.14")
-						Expect(response.Body).To(MatchJSON(fixture("updating_with_dashboard.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("updating_with_dashboard.json")))
 					})
 				})
 
@@ -1397,12 +1385,10 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns HTTP 422 with error", func() {
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+					Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 
-					var body map[string]string
-					err := json.Unmarshal([]byte(response.Body), &body)
-					Expect(err).ToNot(HaveOccurred())
+					body := unmarshalBody(response)
 					Expect(body["error"]).To(Equal("AsyncRequired"))
 					Expect(body["description"]).To(Equal("This service plan requires client support for asynchronous service operations."))
 				})
@@ -1414,12 +1400,10 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns HTTP 422 with error", func() {
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+					Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 
-					var body map[string]string
-					err := json.Unmarshal([]byte(response.Body), &body)
-					Expect(err).ToNot(HaveOccurred())
+					body := unmarshalBody(response)
 					Expect(body["error"]).To(Equal("PlanChangeNotSupported"))
 					Expect(body["description"]).To(Equal("The requested plan migration cannot be performed"))
 				})
@@ -1431,12 +1415,10 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("returns HTTP 500", func() {
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+					Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(updateRequestIdentity))
 
-					var body map[string]string
-					err := json.Unmarshal([]byte(response.Body), &body)
-					Expect(err).ToNot(HaveOccurred())
+					body := unmarshalBody(response)
 					Expect(body["description"]).To(Equal("some horrible internal error"))
 				})
 			})
@@ -1476,7 +1458,7 @@ var _ = Describe("Service Broker API", func() {
 				itReturnsEmptyJsonObject := func(queryString string) {
 					It("returns an empty JSON object", func() {
 						response := makeInstanceDeprovisioningRequest(instanceID, queryString)
-						Expect(response.Body).To(MatchJSON(`{}`))
+						Expect(readBody(response)).To(MatchJSON(`{}`))
 					})
 				}
 
@@ -1505,7 +1487,7 @@ var _ = Describe("Service Broker API", func() {
 
 						It("returns a descriptive error", func() {
 							response := makeInstanceDeprovisioningRequest(instanceID, "")
-							Expect(response.Body).To(MatchJSON(fixture("async_required.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("async_required.json")))
 						})
 					})
 
@@ -1527,7 +1509,7 @@ var _ = Describe("Service Broker API", func() {
 
 						It("returns the operation data to the cloud controller", func() {
 							response := makeInstanceDeprovisioningRequest(instanceID, "accepts_incomplete=true")
-							Expect(response.Body).To(MatchJSON(fixture("operation_data_response.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("operation_data_response.json")))
 						})
 					})
 				})
@@ -1585,9 +1567,9 @@ var _ = Describe("Service Broker API", func() {
 				It("returns a 410", func() {
 					response := makeInstanceDeprovisioningRequest(uniqueInstanceID(), "")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusGone))
+					Expect(response).To(HaveHTTPStatus(http.StatusGone))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-					Expect(response.Body).To(MatchJSON(`{}`))
+					Expect(readBody(response)).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -1620,9 +1602,9 @@ var _ = Describe("Service Broker API", func() {
 					It("returns a 500 with error", func() {
 						response := makeInstanceDeprovisioningRequest(instanceID, "")
 
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+						Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-						Expect(response.Body).To(MatchJSON(`{"description":"broker failed"}`))
+						Expect(readBody(response)).To(MatchJSON(`{"description":"broker failed"}`))
 					})
 
 					It("logs an appropriate error", func() {
@@ -1644,9 +1626,9 @@ var _ = Describe("Service Broker API", func() {
 					It("returns status teapot with error", func() {
 						response := makeInstanceDeprovisioningRequest(instanceID, "")
 
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusTeapot))
+						Expect(response).To(HaveHTTPStatus(http.StatusTeapot))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-						Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+						Expect(readBody(response)).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
 					})
 
 					It("logs an appropriate error", func() {
@@ -1661,7 +1643,7 @@ var _ = Describe("Service Broker API", func() {
 				It("missing header X-Broker-API-Version", func() {
 					apiVersion = ""
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -1670,7 +1652,7 @@ var _ = Describe("Service Broker API", func() {
 				It("has wrong version of API", func() {
 					apiVersion = "1.1"
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "plan-id", "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -1678,7 +1660,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing service-id", func() {
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "", "plan-id", "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "deprovision.service-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "service_id missing"))
@@ -1686,7 +1668,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing plan-id", func() {
 					response := makeInstanceDeprovisioningRequestFull("instance-id", "service-id", "", "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "deprovision.plan-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "plan_id missing"))
@@ -1700,7 +1682,7 @@ var _ = Describe("Service Broker API", func() {
 
 				response := makeGetInstanceRequest("instance-id")
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 				Expect(lastLogLine()).To(HaveKeyWithValue("msg", "getInstance.fire"))
 				Expect(lastLogLine()).To(HaveKeyWithValue("error", "some error"))
@@ -1711,7 +1693,7 @@ var _ = Describe("Service Broker API", func() {
 
 				response := makeGetInstanceRequest("instance-id")
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+				Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 				Expect(lastLogLine()).To(HaveKeyWithValue("msg", "getInstance.unknown-error"))
 				Expect(lastLogLine()).To(HaveKeyWithValue("error", "failed to get instance"))
@@ -1721,7 +1703,7 @@ var _ = Describe("Service Broker API", func() {
 				It("missing header X-Broker-API-Version", func() {
 					apiVersion = ""
 					response := makeGetInstanceRequest("instance-id")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -1730,7 +1712,7 @@ var _ = Describe("Service Broker API", func() {
 				It("has wrong version of API", func() {
 					apiVersion = "1.1"
 					response := makeGetInstanceRequest("instance-id")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -1739,7 +1721,7 @@ var _ = Describe("Service Broker API", func() {
 				It("is using api version < 2.14", func() {
 					apiVersion = "2.13"
 					response := makeGetInstanceRequest("instance-id")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "getInstance.broker-api-version-invalid"))
@@ -1748,7 +1730,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing instance-id", func() {
 					response := makeGetInstanceRequest("")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusNotFound))
+					Expect(response).To(HaveHTTPStatus(http.StatusNotFound))
 				})
 			})
 
@@ -1756,7 +1738,7 @@ var _ = Describe("Service Broker API", func() {
 				It("returns 200 when service_id and plan_id are not provided", func() {
 					response := makeGetInstanceWithQueryParamsRequest("instance-id", map[string]string{})
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+					Expect(response).To(HaveHTTPStatus(http.StatusOK))
 					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(""))
 					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(""))
 				})
@@ -1769,7 +1751,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+					Expect(response).To(HaveHTTPStatus(http.StatusOK))
 					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(params["service_id"]))
 					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(params["plan_id"]))
 				})
@@ -1781,7 +1763,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+					Expect(response).To(HaveHTTPStatus(http.StatusOK))
 					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(params["service_id"]))
 					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(""))
 				})
@@ -1793,7 +1775,7 @@ var _ = Describe("Service Broker API", func() {
 
 					response := makeGetInstanceWithQueryParamsRequest("instance-id", params)
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+					Expect(response).To(HaveHTTPStatus(http.StatusOK))
 					Expect(fakeServiceBroker.InstanceFetchDetails.ServiceID).To(Equal(""))
 					Expect(fakeServiceBroker.InstanceFetchDetails.PlanID).To(Equal(params["plan_id"]))
 				})
@@ -1804,9 +1786,8 @@ var _ = Describe("Service Broker API", func() {
 	Describe("binding lifecycle endpoint", func() {
 		const bindingRequestIdentity = "Bind Request Identity Name"
 
-		makeLastBindingOperationRequest := func(instanceID, bindingID string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeLastBindingOperationRequest := func(instanceID, bindingID string) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s/last_operation", instanceID, bindingID)
 
 				buffer := &bytes.Buffer{}
@@ -1825,9 +1806,8 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeGetBindingWithQueryParamsRequest := func(instanceID, bindingID string, params map[string]string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeGetBindingWithQueryParamsRequest := func(instanceID, bindingID string, params map[string]string) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s", instanceID, bindingID)
 
 				buffer := &bytes.Buffer{}
@@ -1850,9 +1830,8 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeGetBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, apiVersion string) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeGetBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, apiVersion string) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s", instanceID, bindingID)
 
 				buffer := &bytes.Buffer{}
@@ -1873,9 +1852,8 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]interface{}, apiVersion string, async bool) *testflight.Response {
-			response := &testflight.Response{}
-			testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]interface{}, apiVersion string, async bool) (response *http.Response) {
+			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?accepts_incomplete=%v",
 					instanceID, bindingID, async)
 
@@ -1901,11 +1879,11 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *testflight.Response {
+		makeBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *http.Response {
 			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.10", false)
 		}
 
-		makeAsyncBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *testflight.Response {
+		makeAsyncBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *http.Response {
 			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.14", true)
 		}
 
@@ -1953,9 +1931,9 @@ var _ = Describe("Service Broker API", func() {
 				It("returns a 201 with body", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+					Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-					Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+					Expect(readBody(response)).To(MatchJSON(fixture("binding.json")))
 				})
 
 				Context("when syslog_drain_url is being passed", func() {
@@ -1965,7 +1943,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("responds with the syslog drain url", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-						Expect(response.Body).To(MatchJSON(fixture("binding_with_syslog.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("binding_with_syslog.json")))
 					})
 				})
 
@@ -1976,7 +1954,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("responds with the route service url", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-						Expect(response.Body).To(MatchJSON(fixture("binding_with_route_service.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("binding_with_route_service.json")))
 					})
 				})
 
@@ -1997,21 +1975,21 @@ var _ = Describe("Service Broker API", func() {
 					Context("when the broker API version is greater than 2.9", func() {
 						It("responds with a volume mount", func() {
 							response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-							Expect(response.Body).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("binding_with_volume_mounts.json")))
 						})
 					})
 
 					Context("when the broker API version is 2.9", func() {
 						It("responds with an experimental volume mount", func() {
 							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.9", false)
-							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
 						})
 					})
 
 					Context("when the broker API version is 2.8", func() {
 						It("responds with an experimental volume mount", func() {
 							response := makeBindingRequestWithSpecificAPIVersion(uniqueInstanceID(), uniqueBindingID(), details, "2.8", false)
-							Expect(response.Body).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
+							Expect(readBody(response)).To(MatchJSON(fixture("binding_with_experimental_volume_mounts.json")))
 						})
 					})
 				})
@@ -2019,7 +1997,7 @@ var _ = Describe("Service Broker API", func() {
 				Context("when no bind details are being passed", func() {
 					It("returns a 422", func() {
 						response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), nil)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+						Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					})
 				})
@@ -2125,9 +2103,9 @@ var _ = Describe("Service Broker API", func() {
 						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource).NotTo(BeNil())
 						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource.BackupAgent).To(BeTrue())
 
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+						Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-						Expect(response.Body).To(MatchJSON(`{"backup_agent_url":"http://backup.example.com"}`))
+						Expect(readBody(response)).To(MatchJSON(`{"backup_agent_url":"http://backup.example.com"}`))
 					})
 				})
 			})
@@ -2141,9 +2119,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns a 404 with error", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusNotFound))
+					Expect(response).To(HaveHTTPStatus(http.StatusNotFound))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"instance does not exist"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"instance does not exist"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2173,7 +2151,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("sync broker response", func() {
 						response := makeBindingRequest(instanceID, bindingID, details)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					})
 
@@ -2184,20 +2162,20 @@ var _ = Describe("Service Broker API", func() {
 						brokerAPI = brokerapi.NewWithOptions(fakeAsyncServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 
 						response := makeAsyncBindingRequest(instanceID, bindingID, details)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					})
 				})
 
 				It("returns a statusConflict", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusConflict))
+					Expect(response).To(HaveHTTPStatus(http.StatusConflict))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 				})
 
 				It("returns an error JSON object", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.Body).To(MatchJSON(`{"description":"binding already exists"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"binding already exists"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2217,9 +2195,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns a generic 500 error response", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+					Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"unknown error"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"unknown error"}`))
 				})
 
 				It("logs a detailed error message", func() {
@@ -2241,9 +2219,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns status teapot and error", func() {
 					response := makeBindingRequest(uniqueInstanceID(), uniqueBindingID(), details)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusTeapot))
+					Expect(response).To(HaveHTTPStatus(http.StatusTeapot))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2268,14 +2246,14 @@ var _ = Describe("Service Broker API", func() {
 				When("the api version is < 2.14", func() {
 					It("successfully returns a sync binding response", func() {
 						response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.13", true)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+						Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("binding.json")))
 					})
 
 					It("fails for GetBinding request", func() {
 						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "1.13")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+						Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					})
 				})
@@ -2283,25 +2261,25 @@ var _ = Describe("Service Broker API", func() {
 				When("the api version is 2.14", func() {
 					It("returns an appropriate status code and operation data", func() {
 						response := makeAsyncBindingRequest(instanceID, bindingID, details)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusAccepted))
+						Expect(response).To(HaveHTTPStatus(http.StatusAccepted))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-						Expect(response.Body).To(MatchJSON(fixture("async_bind_response.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("async_bind_response.json")))
 					})
 
 					It("can be polled with lastBindingOperation", func() {
 						fakeAsyncServiceBroker.LastOperationState = "succeeded"
 						fakeAsyncServiceBroker.LastOperationDescription = "some description"
 						response := makeLastBindingOperationRequest(instanceID, bindingID)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-						Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("last_operation_succeeded.json")))
 					})
 
 					It("returns the binding for the async request on getBinding", func() {
 						response := makeGetBindingRequestWithSpecificAPIVersion(instanceID, bindingID, "2.14")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
-						Expect(response.Body).To(MatchJSON(fixture("binding.json")))
+						Expect(readBody(response)).To(MatchJSON(fixture("binding.json")))
 					})
 				})
 			})
@@ -2313,7 +2291,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing header X-Broker-API-Version", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -2321,7 +2299,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("has wrong version of API", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -2329,7 +2307,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing service-id", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14", false)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "bind.service-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "service_id missing"))
@@ -2337,7 +2315,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("missing plan-id", func() {
 					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14", false)
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "bind.plan-id-missing"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "plan_id missing"))
@@ -2348,12 +2326,11 @@ var _ = Describe("Service Broker API", func() {
 		Describe("unbinding", func() {
 			const unbindRequestIdentity = "Unbind Request Identity Name"
 
-			makeUnbindingRequestWithServiceIDPlanID := func(instanceID, bindingID, serviceID, planID, apiVersion string) *testflight.Response {
-				response := &testflight.Response{}
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+			makeUnbindingRequestWithServiceIDPlanID := func(instanceID, bindingID, serviceID, planID, apiVersion string) (response *http.Response) {
+				withServer(brokerAPI, func(r requester) {
 					path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?plan_id=%s&service_id=%s",
 						instanceID, bindingID, planID, serviceID)
-					request, _ := http.NewRequest("DELETE", path, strings.NewReader(""))
+					request := must(http.NewRequest("DELETE", path, strings.NewReader("")))
 					request.Header.Add("Content-Type", "application/json")
 					request.Header.Add("X-Broker-API-Version", apiVersion)
 					request.SetBasicAuth("username", "password")
@@ -2364,7 +2341,7 @@ var _ = Describe("Service Broker API", func() {
 				return response
 			}
 
-			makeUnbindingRequest := func(instanceID string, bindingID string) *testflight.Response {
+			makeUnbindingRequest := func(instanceID string, bindingID string) *http.Response {
 				return makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "2.13")
 			}
 
@@ -2393,7 +2370,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("missing header X-Broker-API-Version", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+						Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
 						Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 						Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -2401,7 +2378,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("has wrong version of API", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "plan-id", "1.1")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+						Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
 						Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 						Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -2409,7 +2386,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("missing service-id", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "", "plan-id", "2.13")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+						Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
 						Expect(lastLogLine()).To(HaveKeyWithValue("msg", "unbind.service-id-missing"))
 						Expect(lastLogLine()).To(HaveKeyWithValue("error", "service_id missing"))
@@ -2417,7 +2394,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("missing plan-id", func() {
 						response := makeUnbindingRequestWithServiceIDPlanID(instanceID, bindingID, "service-id", "", "2.13")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusBadRequest))
+						Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
 						Expect(lastLogLine()).To(HaveKeyWithValue("msg", "unbind.plan-id-missing"))
 						Expect(lastLogLine()).To(HaveKeyWithValue("error", "plan_id missing"))
@@ -2436,9 +2413,9 @@ var _ = Describe("Service Broker API", func() {
 
 					It("returns a 200", func() {
 						response := makeUnbindingRequest(instanceID, bindingID)
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+						Expect(response).To(HaveHTTPStatus(http.StatusOK))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
-						Expect(response.Body).To(MatchJSON(`{}`))
+						Expect(readBody(response)).To(MatchJSON(`{}`))
 					})
 
 					It("contains plan_id", func() {
@@ -2455,9 +2432,9 @@ var _ = Describe("Service Broker API", func() {
 				Context("but the binding does not exist", func() {
 					It("returns a 410", func() {
 						response := makeUnbindingRequest(instanceID, "does-not-exist")
-						Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusGone))
+						Expect(response).To(HaveHTTPStatus(http.StatusGone))
 						Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
-						Expect(response.Body).To(MatchJSON(`{}`))
+						Expect(readBody(response)).To(MatchJSON(`{}`))
 					})
 
 					It("logs an appropriate error message", func() {
@@ -2474,9 +2451,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns a 410", func() {
 					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusGone))
+					Expect(response).To(HaveHTTPStatus(http.StatusGone))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{}`))
+					Expect(readBody(response)).To(MatchJSON(`{}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2495,9 +2472,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns a generic 500 error response", func() {
 					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+					Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"unknown error"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"unknown error"}`))
 				})
 
 				It("logs a detailed error message", func() {
@@ -2519,9 +2496,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns status teapot with error", func() {
 					response := makeUnbindingRequest(uniqueInstanceID(), uniqueBindingID())
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusTeapot))
+					Expect(response).To(HaveHTTPStatus(http.StatusTeapot))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(unbindRequestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2533,15 +2510,14 @@ var _ = Describe("Service Broker API", func() {
 		})
 
 		Describe("last_operation", func() {
-			makeLastOperationRequest := func(instanceID, operationData, apiVersion string) *testflight.Response {
-				response := &testflight.Response{}
-				testflight.WithServer(brokerAPI, func(r *testflight.Requester) {
+			makeLastOperationRequest := func(instanceID, operationData, apiVersion string) (response *http.Response) {
+				withServer(brokerAPI, func(r requester) {
 					path := fmt.Sprintf("/v2/service_instances/%s/last_operation", instanceID)
 					if operationData != "" {
 						path = fmt.Sprintf("%s?operation=%s", path, url.QueryEscape(operationData))
 					}
 
-					request, _ := http.NewRequest("GET", path, strings.NewReader(""))
+					request := must(http.NewRequest("GET", path, strings.NewReader("")))
 					if apiVersion != "" {
 						request.Header.Add("X-Broker-API-Version", apiVersion)
 					}
@@ -2587,9 +2563,9 @@ var _ = Describe("Service Broker API", func() {
 				Expect(logs[1]).To(HaveKeyWithValue("instance-id", instanceID))
 				Expect(logs[1]).To(HaveKeyWithValue("state", BeEquivalentTo(fakeServiceBroker.LastOperationState)))
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+				Expect(response).To(HaveHTTPStatus(http.StatusOK))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-				Expect(response.Body).To(MatchJSON(fixture("last_operation_succeeded.json")))
+				Expect(readBody(response)).To(MatchJSON(fixture("last_operation_succeeded.json")))
 			})
 
 			It("should return a 410 and log in case the instance id is not found", func() {
@@ -2600,9 +2576,9 @@ var _ = Describe("Service Broker API", func() {
 				Expect(lastLogLine()).To(HaveKeyWithValue("msg", "lastOperation.instance-missing"))
 				Expect(lastLogLine()).To(HaveKeyWithValue("error", "instance does not exist"))
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusGone))
+				Expect(response).To(HaveHTTPStatus(http.StatusGone))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-				Expect(response.Body).To(MatchJSON(`{}`))
+				Expect(readBody(response)).To(MatchJSON(`{}`))
 			})
 
 			Context("when last_operation returns an unknown error", func() {
@@ -2613,9 +2589,9 @@ var _ = Describe("Service Broker API", func() {
 				It("returns a generic 500 error response", func() {
 					response := makeLastOperationRequest("instanceID", "", "2.14")
 
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+					Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description": "unknown error"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description": "unknown error"}`))
 				})
 
 				It("logs a detailed error message", func() {
@@ -2637,9 +2613,9 @@ var _ = Describe("Service Broker API", func() {
 
 				It("returns status teapot with error", func() {
 					response := makeLastOperationRequest("instanceID", "", "2.14")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusTeapot))
+					Expect(response).To(HaveHTTPStatus(http.StatusTeapot))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
-					Expect(response.Body).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
+					Expect(readBody(response)).To(MatchJSON(`{"description":"I failed in unique and interesting ways"}`))
 				})
 
 				It("logs an appropriate error", func() {
@@ -2652,7 +2628,7 @@ var _ = Describe("Service Broker API", func() {
 			Context("the request is malformed", func() {
 				It("missing header X-Broker-API-Version", func() {
 					response := makeLastOperationRequest("instance-id", "", "")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header not set"))
@@ -2660,7 +2636,7 @@ var _ = Describe("Service Broker API", func() {
 
 				It("has wrong version of API", func() {
 					response := makeLastOperationRequest("instance-id", "", "1.2")
-					Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusPreconditionFailed))
+					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(requestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
 					Expect(lastLogLine()).To(HaveKeyWithValue("error", "X-Broker-API-Version Header must be 2.x"))
@@ -2673,7 +2649,7 @@ var _ = Describe("Service Broker API", func() {
 				fakeServiceBroker.GetBindingError = errors.New("something failed")
 
 				response := makeGetBindingRequestWithSpecificAPIVersion("some-instance", "some-binding", "2.14")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusInternalServerError))
+				Expect(response).To(HaveHTTPStatus(http.StatusInternalServerError))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 				Expect(lastLogLine()).To(HaveKeyWithValue("msg", "getBinding.unknown-error"))
 				Expect(lastLogLine()).To(HaveKeyWithValue("error", "something failed"))
@@ -2683,7 +2659,7 @@ var _ = Describe("Service Broker API", func() {
 				fakeServiceBroker.GetBindingError = brokerapi.NewFailureResponse(errors.New("some error"), http.StatusUnprocessableEntity, "fire")
 
 				response := makeGetBindingRequestWithSpecificAPIVersion("some-instance", "some-binding", "2.14")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
+				Expect(response).To(HaveHTTPStatus(http.StatusUnprocessableEntity))
 				Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 				Expect(lastLogLine()).To(HaveKeyWithValue("msg", "getBinding.fire"))
 				Expect(lastLogLine()).To(HaveKeyWithValue("error", "some error"))
@@ -2694,7 +2670,7 @@ var _ = Describe("Service Broker API", func() {
 			It("returns 200 when service_id and plan_id are not provided", func() {
 				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", map[string]string{})
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+				Expect(response).To(HaveHTTPStatus(http.StatusOK))
 				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(""))
 				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(""))
 			})
@@ -2707,7 +2683,7 @@ var _ = Describe("Service Broker API", func() {
 
 				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+				Expect(response).To(HaveHTTPStatus(http.StatusOK))
 				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(params["service_id"]))
 				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(params["plan_id"]))
 			})
@@ -2719,7 +2695,7 @@ var _ = Describe("Service Broker API", func() {
 
 				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+				Expect(response).To(HaveHTTPStatus(http.StatusOK))
 				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(params["service_id"]))
 				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(""))
 			})
@@ -2731,7 +2707,7 @@ var _ = Describe("Service Broker API", func() {
 
 				response := makeGetBindingWithQueryParamsRequest("instance-id", "binding-id", params)
 
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusOK))
+				Expect(response).To(HaveHTTPStatus(http.StatusOK))
 				Expect(fakeServiceBroker.BindingFetchDetails.ServiceID).To(Equal(""))
 				Expect(fakeServiceBroker.BindingFetchDetails.PlanID).To(Equal(params["plan_id"]))
 			})
@@ -2763,7 +2739,7 @@ var _ = Describe("Service Broker API", func() {
 
 				instanceID := uniqueInstanceID()
 				response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+				Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(instanceID))
 			})
 		})
@@ -2784,8 +2760,8 @@ var _ = Describe("Service Broker API", func() {
 
 				By("checking for the specific failure from the custom middleware")
 				response := makeInstanceProvisioningRequest(uniqueInstanceID(), provisionDetails, "")
-				Expect(response.RawResponse).To(HaveHTTPStatus(customMiddlewareCode))
-				Expect(response.Body).To(Equal(customMiddlewareError + "\n"))
+				Expect(response).To(HaveHTTPStatus(customMiddlewareCode))
+				Expect(readBody(response)).To(Equal(customMiddlewareError + "\n"))
 			})
 		})
 
@@ -2793,8 +2769,44 @@ var _ = Describe("Service Broker API", func() {
 			const encodedInstanceID = "foo%2Fbar"
 			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
 			response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
-			Expect(response.RawResponse).To(HaveHTTPStatus(http.StatusCreated))
+			Expect(response).To(HaveHTTPStatus(http.StatusCreated))
 			Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(encodedInstanceID))
 		})
 	})
 })
+
+func must[A any](input A, err error) A {
+	GinkgoHelper()
+
+	Expect(err).NotTo(HaveOccurred())
+	return input
+}
+
+func readBody(res *http.Response) string {
+	GinkgoHelper()
+
+	body := must(io.ReadAll(res.Body))
+	res.Body.Close()
+	return string(body)
+}
+
+func unmarshalBody(res *http.Response) (body map[string]string) {
+	GinkgoHelper()
+
+	Expect(json.Unmarshal([]byte(readBody(res)), &body)).To(Succeed())
+	return
+}
+
+type requester func(*http.Request) *http.Response
+
+func (r requester) Do(req *http.Request) *http.Response {
+	return r(req)
+}
+
+func withServer(handler http.Handler, callback func(requester)) {
+	server := httptest.NewServer(handler)
+	callback(func(request *http.Request) *http.Response {
+		request.URL = must(url.Parse(fmt.Sprintf("%s%s", server.URL, request.URL)))
+		return must(server.Client().Do(request))
+	})
+}
