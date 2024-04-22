@@ -11,7 +11,7 @@ type ServicePlanMetadata struct {
 	DisplayName        string            `json:"displayName,omitempty"`
 	Bullets            []string          `json:"bullets,omitempty"`
 	Costs              []ServicePlanCost `json:"costs,omitempty"`
-	AdditionalMetadata map[string]interface{}
+	AdditionalMetadata map[string]any
 }
 
 type ServicePlanCost struct {
@@ -26,7 +26,7 @@ func (spm *ServicePlanMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	additionalMetadata := map[string]interface{}{}
+	additionalMetadata := map[string]any{}
 	if err := json.Unmarshal(data, &additionalMetadata); err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (spm ServicePlanMetadata) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("unmarshallable content in AdditionalMetadata: %w", err)
 	}
 
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}

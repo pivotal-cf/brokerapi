@@ -29,23 +29,23 @@ type CatalogResponse struct {
 }
 
 type ProvisioningResponse struct {
-	DashboardURL  string      `json:"dashboard_url,omitempty"`
-	OperationData string      `json:"operation,omitempty"`
-	Metadata      interface{} `json:"metadata,omitempty"`
+	DashboardURL  string `json:"dashboard_url,omitempty"`
+	OperationData string `json:"operation,omitempty"`
+	Metadata      any    `json:"metadata,omitempty"`
 }
 
 type GetInstanceResponse struct {
-	ServiceID    string      `json:"service_id"`
-	PlanID       string      `json:"plan_id"`
-	DashboardURL string      `json:"dashboard_url,omitempty"`
-	Parameters   interface{} `json:"parameters,omitempty"`
-	Metadata     interface{} `json:"metadata,omitempty"`
+	ServiceID    string `json:"service_id"`
+	PlanID       string `json:"plan_id"`
+	DashboardURL string `json:"dashboard_url,omitempty"`
+	Parameters   any    `json:"parameters,omitempty"`
+	Metadata     any    `json:"metadata,omitempty"`
 }
 
 type UpdateResponse struct {
-	DashboardURL  string      `json:"dashboard_url,omitempty"`
-	OperationData string      `json:"operation,omitempty"`
-	Metadata      interface{} `json:"metadata,omitempty"`
+	DashboardURL  string `json:"dashboard_url,omitempty"`
+	OperationData string `json:"operation,omitempty"`
+	Metadata      any    `json:"metadata,omitempty"`
 }
 
 type DeprovisionResponse struct {
@@ -62,7 +62,7 @@ type AsyncBindResponse struct {
 }
 
 type BindingResponse struct {
-	Credentials     interface{}          `json:"credentials,omitempty"`
+	Credentials     any                  `json:"credentials,omitempty"`
 	SyslogDrainURL  string               `json:"syslog_drain_url,omitempty"`
 	RouteServiceURL string               `json:"route_service_url,omitempty"`
 	VolumeMounts    []domain.VolumeMount `json:"volume_mounts,omitempty"`
@@ -71,7 +71,7 @@ type BindingResponse struct {
 
 type GetBindingResponse struct {
 	BindingResponse
-	Parameters interface{} `json:"parameters,omitempty"`
+	Parameters any `json:"parameters,omitempty"`
 }
 
 type UnbindResponse struct {
@@ -79,7 +79,7 @@ type UnbindResponse struct {
 }
 
 type ExperimentalVolumeMountBindingResponse struct {
-	Credentials     interface{}                      `json:"credentials,omitempty"`
+	Credentials     any                              `json:"credentials,omitempty"`
 	SyslogDrainURL  string                           `json:"syslog_drain_url,omitempty"`
 	RouteServiceURL string                           `json:"route_service_url,omitempty"`
 	VolumeMounts    []domain.ExperimentalVolumeMount `json:"volume_mounts,omitempty"`

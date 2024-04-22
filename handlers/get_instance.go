@@ -53,7 +53,7 @@ func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var metadata interface{}
+	var metadata any
 	if !instanceDetails.Metadata.IsEmpty() {
 		metadata = instanceDetails.Metadata
 	}

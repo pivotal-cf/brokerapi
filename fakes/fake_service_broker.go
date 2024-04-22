@@ -113,11 +113,11 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 					Schemas: &brokerapi.ServiceSchemas{
 						Instance: brokerapi.ServiceInstanceSchema{
 							Create: brokerapi.Schema{
-								Parameters: map[string]interface{}{
+								Parameters: map[string]any{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
-									"properties": map[string]interface{}{
-										"billing-account": map[string]interface{}{
+									"properties": map[string]any{
+										"billing-account": map[string]any{
 											"description": "Billing account number used to charge use of shared fake server.",
 											"type":        "string",
 										},
@@ -125,11 +125,11 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 								},
 							},
 							Update: brokerapi.Schema{
-								Parameters: map[string]interface{}{
+								Parameters: map[string]any{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
-									"properties": map[string]interface{}{
-										"billing-account": map[string]interface{}{
+									"properties": map[string]any{
+										"billing-account": map[string]any{
 											"description": "Billing account number used to charge use of shared fake server.",
 											"type":        "string",
 										},
@@ -139,11 +139,11 @@ func (fakeBroker *FakeServiceBroker) Services(ctx context.Context) ([]brokerapi.
 						},
 						Binding: brokerapi.ServiceBindingSchema{
 							Create: brokerapi.Schema{
-								Parameters: map[string]interface{}{
+								Parameters: map[string]any{
 									"$schema": "http://json-schema.org/draft-04/schema#",
 									"type":    "object",
-									"properties": map[string]interface{}{
-										"billing-account": map[string]interface{}{
+									"properties": map[string]any{
+										"billing-account": map[string]any{
 											"description": "Billing account number used to charge use of shared fake server.",
 											"type":        "string",
 										},
@@ -275,7 +275,7 @@ func (fakeBroker *FakeServiceBroker) GetInstance(context context.Context, instan
 		ServiceID:    fakeBroker.ServiceID,
 		PlanID:       fakeBroker.PlanID,
 		DashboardURL: fakeBroker.DashboardURL,
-		Parameters: map[string]interface{}{
+		Parameters: map[string]any{
 			"param1": "value1",
 		},
 	}, fakeBroker.GetInstanceError

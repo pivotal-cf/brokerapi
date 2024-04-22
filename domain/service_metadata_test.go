@@ -38,7 +38,7 @@ var _ = Describe("ServiceMetadata", func() {
 		It("encodes the AdditionalMetadata fields in the metadata fields", func() {
 			metadata := domain.ServiceMetadata{
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": "bar",
 					"baz": 1,
 				},
@@ -58,7 +58,7 @@ var _ = Describe("ServiceMetadata", func() {
 		It("it can marshal same structure in parallel requests", func() {
 			metadata := domain.ServiceMetadata{
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": "bar",
 					"baz": 1,
 				},
@@ -86,7 +86,7 @@ var _ = Describe("ServiceMetadata", func() {
 		It("returns an error when additional metadata is not marshallable", func() {
 			metadata := domain.ServiceMetadata{
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": make(chan int),
 				},
 			}
@@ -102,7 +102,7 @@ var _ = Describe("ServiceMetadata", func() {
 
 			err := json.Unmarshal([]byte(jsonString), &metadata)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]interface{}{"test"}))
+			Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]any{"test"}))
 			Expect(metadata.AdditionalMetadata["bar"]).To(Equal("Some display name"))
 		})
 

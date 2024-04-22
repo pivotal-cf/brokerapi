@@ -14,7 +14,7 @@ type ServiceMetadata struct {
 	DocumentationUrl    string `json:"documentationUrl,omitempty"`
 	SupportUrl          string `json:"supportUrl,omitempty"`
 	Shareable           *bool  `json:"shareable,omitempty"`
-	AdditionalMetadata  map[string]interface{}
+	AdditionalMetadata  map[string]any
 }
 
 func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
@@ -25,7 +25,7 @@ func (sm ServiceMetadata) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("unmarshallable content in AdditionalMetadata: %w", err)
 	}
 
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (sm *ServiceMetadata) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	additionalMetadata := map[string]interface{}{}
+	additionalMetadata := map[string]any{}
 	if err := json.Unmarshal(data, &additionalMetadata); err != nil {
 		return err
 	}
