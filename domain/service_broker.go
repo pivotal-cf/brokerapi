@@ -76,8 +76,8 @@ type VolumeMount struct {
 }
 
 type SharedDevice struct {
-	VolumeId    string                 `json:"volume_id"`
-	MountConfig map[string]interface{} `json:"mount_config"`
+	VolumeId    string         `json:"volume_id"`
+	MountConfig map[string]any `json:"mount_config"`
 }
 
 type ProvisionDetails struct {
@@ -115,10 +115,10 @@ type DeprovisionServiceSpec struct {
 }
 
 type GetInstanceDetailsSpec struct {
-	ServiceID    string      `json:"service_id"`
-	PlanID       string      `json:"plan_id"`
-	DashboardURL string      `json:"dashboard_url"`
-	Parameters   interface{} `json:"parameters"`
+	ServiceID    string `json:"service_id"`
+	PlanID       string `json:"plan_id"`
+	DashboardURL string `json:"dashboard_url"`
+	Parameters   any    `json:"parameters"`
 	Metadata     InstanceMetadata
 }
 
@@ -193,7 +193,7 @@ type Binding struct {
 	IsAsync         bool          `json:"is_async"`
 	AlreadyExists   bool          `json:"already_exists"`
 	OperationData   string        `json:"operation_data"`
-	Credentials     interface{}   `json:"credentials"`
+	Credentials     any           `json:"credentials"`
 	SyslogDrainURL  string        `json:"syslog_drain_url"`
 	RouteServiceURL string        `json:"route_service_url"`
 	BackupAgentURL  string        `json:"backup_agent_url,omitempty"`
@@ -201,11 +201,11 @@ type Binding struct {
 }
 
 type GetBindingSpec struct {
-	Credentials     interface{}
+	Credentials     any
 	SyslogDrainURL  string
 	RouteServiceURL string
 	VolumeMounts    []VolumeMount
-	Parameters      interface{}
+	Parameters      any
 }
 
 func (d ProvisionDetails) GetRawContext() json.RawMessage {

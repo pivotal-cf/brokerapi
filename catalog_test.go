@@ -169,7 +169,7 @@ var _ = Describe("Catalog", func() {
 				metadata := brokerapi.ServicePlanMetadata{
 					Bullets:     []string{"hello", "its me"},
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": "bar",
 						"baz": 1,
 					},
@@ -191,7 +191,7 @@ var _ = Describe("Catalog", func() {
 				metadata := brokerapi.ServicePlanMetadata{
 					Bullets:     []string{"hello", "its me"},
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": "bar",
 						"baz": 1,
 					},
@@ -221,7 +221,7 @@ var _ = Describe("Catalog", func() {
 				metadata := brokerapi.ServicePlanMetadata{
 					Bullets:     []string{"hello", "its me"},
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": make(chan int),
 					},
 				}
@@ -237,7 +237,7 @@ var _ = Describe("Catalog", func() {
 
 				err := json.Unmarshal([]byte(jsonString), &metadata)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]interface{}{"test"}))
+				Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]any{"test"}))
 				Expect(metadata.AdditionalMetadata["bar"]).To(Equal("Some display name"))
 			})
 
@@ -281,7 +281,7 @@ var _ = Describe("Catalog", func() {
 			It("encodes the AdditionalMetadata fields in the metadata fields", func() {
 				metadata := brokerapi.ServiceMetadata{
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": "bar",
 						"baz": 1,
 					},
@@ -301,7 +301,7 @@ var _ = Describe("Catalog", func() {
 			It("it can marshal same structure in parallel requests", func() {
 				metadata := brokerapi.ServiceMetadata{
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": "bar",
 						"baz": 1,
 					},
@@ -329,7 +329,7 @@ var _ = Describe("Catalog", func() {
 			It("returns an error when additional metadata is not marshallable", func() {
 				metadata := brokerapi.ServiceMetadata{
 					DisplayName: "name",
-					AdditionalMetadata: map[string]interface{}{
+					AdditionalMetadata: map[string]any{
 						"foo": make(chan int),
 					},
 				}
@@ -345,7 +345,7 @@ var _ = Describe("Catalog", func() {
 
 				err := json.Unmarshal([]byte(jsonString), &metadata)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]interface{}{"test"}))
+				Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]any{"test"}))
 				Expect(metadata.AdditionalMetadata["bar"]).To(Equal("Some display name"))
 			})
 

@@ -57,7 +57,7 @@ func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var metadata interface{}
+	var metadata any
 	if !updateServiceSpec.Metadata.IsEmpty() {
 		metadata = updateServiceSpec.Metadata
 	}

@@ -29,9 +29,9 @@ func NewFailureResponse(err error, statusCode int, loggerAction string) error {
 	}
 }
 
-// ErrorResponse returns an interface{} which will be JSON encoded and form the body
+// ErrorResponse returns an any which will be JSON encoded and form the body
 // of the HTTP response
-func (f *FailureResponse) ErrorResponse() interface{} {
+func (f *FailureResponse) ErrorResponse() any {
 	if f.emptyResponse {
 		return EmptyResponse{}
 	}

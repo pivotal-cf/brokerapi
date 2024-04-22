@@ -49,7 +49,7 @@ var _ = Describe("Service Broker API", func() {
 
 	const requestIdentity = "Request Identity Name"
 
-	makeInstanceProvisioningRequest := func(instanceID string, details map[string]interface{}, queryString string) (response *http.Response) {
+	makeInstanceProvisioningRequest := func(instanceID string, details map[string]any, queryString string) (response *http.Response) {
 		withServer(brokerAPI, func(r requester) {
 			path := "/v2/service_instances/" + instanceID + queryString
 
@@ -68,7 +68,7 @@ var _ = Describe("Service Broker API", func() {
 		return response
 	}
 
-	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details map[string]interface{}, acceptsIncomplete bool) *http.Response {
+	makeInstanceProvisioningRequestWithAcceptsIncomplete := func(instanceID string, details map[string]any, acceptsIncomplete bool) *http.Response {
 		var acceptsIncompleteFlag string
 
 		if acceptsIncomplete {
@@ -676,16 +676,16 @@ var _ = Describe("Service Broker API", func() {
 
 		Describe("provisioning", func() {
 			var instanceID string
-			var provisionDetails map[string]interface{}
+			var provisionDetails map[string]any
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
-				provisionDetails = map[string]interface{}{
+				provisionDetails = map[string]any{
 					"service_id":        fakeServiceBroker.ServiceID,
 					"plan_id":           "plan-id",
 					"organization_guid": "organization-guid",
 					"space_guid":        "space-guid",
-					"maintenance_info": map[string]interface{}{
+					"maintenance_info": map[string]any{
 						"public": map[string]string{
 							"k8s-version": "0.0.1-alpha2",
 						},
@@ -755,11 +755,11 @@ var _ = Describe("Service Broker API", func() {
 				var rawCtx string
 
 				BeforeEach(func() {
-					provisionDetails["parameters"] = map[string]interface{}{
+					provisionDetails["parameters"] = map[string]any{
 						"string": "some-string",
 						"number": 1,
 						"object": struct{ Name string }{"some-name"},
-						"array":  []interface{}{"a", "b", "c"},
+						"array":  []any{"a", "b", "c"},
 					}
 					rawParams = `{
 					"string":"some-string",
@@ -767,11 +767,11 @@ var _ = Describe("Service Broker API", func() {
 					"object": { "Name": "some-name" },
 					"array": [ "a", "b", "c" ]
 				}`
-					provisionDetails["context"] = map[string]interface{}{
+					provisionDetails["context"] = map[string]any{
 						"platform":      "fake-platform",
 						"serial-number": 12648430,
 						"object":        struct{ Name string }{"parameter"},
-						"array":         []interface{}{"1", "2", "3"},
+						"array":         []any{"1", "2", "3"},
 					}
 					rawCtx = `{
 					"platform":"fake-platform",
@@ -1193,13 +1193,13 @@ var _ = Describe("Service Broker API", func() {
 		Describe("updating", func() {
 			var (
 				instanceID  string
-				details     map[string]interface{}
+				details     map[string]any
 				queryString string
 				response    *http.Response
 			)
 			const updateRequestIdentity = "Update Request Identity Name"
 
-			makeInstanceUpdateRequest := func(instanceID string, details map[string]interface{}, queryString string, apiVersion string) (response *http.Response) {
+			makeInstanceUpdateRequest := func(instanceID string, details map[string]any, queryString string, apiVersion string) (response *http.Response) {
 				withServer(brokerAPI, func(r requester) {
 					path := "/v2/service_instances/" + instanceID + queryString
 
@@ -1221,22 +1221,22 @@ var _ = Describe("Service Broker API", func() {
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
-				details = map[string]interface{}{
+				details = map[string]any{
 					"service_id": "some-service-id",
 					"plan_id":    "new-plan",
-					"parameters": map[string]interface{}{
+					"parameters": map[string]any{
 						"new-param": "new-param-value",
 					},
-					"previous_values": map[string]interface{}{
+					"previous_values": map[string]any{
 						"service_id":      "service-id",
 						"plan_id":         "old-plan",
 						"organization_id": "org-id",
 						"space_id":        "space-id",
 					},
-					"context": map[string]interface{}{
+					"context": map[string]any{
 						"new-context": "new-context-value",
 					},
-					"maintenance_info": map[string]interface{}{
+					"maintenance_info": map[string]any{
 						"public": map[string]string{
 							"k8s-version": "0.0.1-alpha2",
 						},
@@ -1433,12 +1433,12 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the instance exists", func() {
 				var instanceID string
-				var provisionDetails map[string]interface{}
+				var provisionDetails map[string]any
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
 
-					provisionDetails = map[string]interface{}{
+					provisionDetails = map[string]any{
 						"service_id":        fakeServiceBroker.ServiceID,
 						"plan_id":           "plan-id",
 						"organization_guid": "organization-guid",
@@ -1582,11 +1582,11 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when instance deprovisioning fails", func() {
 				var instanceID string
-				var provisionDetails map[string]interface{}
+				var provisionDetails map[string]any
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					provisionDetails = map[string]interface{}{
+					provisionDetails = map[string]any{
 						"plan_id":           "plan-id",
 						"organization_guid": "organization-guid",
 						"space_guid":        "space-guid",
@@ -1852,7 +1852,7 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]interface{}, apiVersion string, async bool) (response *http.Response) {
+		makeBindingRequestWithSpecificAPIVersion := func(instanceID, bindingID string, details map[string]any, apiVersion string, async bool) (response *http.Response) {
 			withServer(brokerAPI, func(r requester) {
 				path := fmt.Sprintf("/v2/service_instances/%s/service_bindings/%s?accepts_incomplete=%v",
 					instanceID, bindingID, async)
@@ -1879,11 +1879,11 @@ var _ = Describe("Service Broker API", func() {
 			return response
 		}
 
-		makeBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *http.Response {
+		makeBindingRequest := func(instanceID, bindingID string, details map[string]any) *http.Response {
 			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.10", false)
 		}
 
-		makeAsyncBindingRequest := func(instanceID, bindingID string, details map[string]interface{}) *http.Response {
+		makeAsyncBindingRequest := func(instanceID, bindingID string, details map[string]any) *http.Response {
 			return makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, details, "2.14", true)
 		}
 
@@ -1891,17 +1891,17 @@ var _ = Describe("Service Broker API", func() {
 			var (
 				instanceID string
 				bindingID  string
-				details    map[string]interface{}
+				details    map[string]any
 			)
 
 			BeforeEach(func() {
 				instanceID = uniqueInstanceID()
 				bindingID = uniqueBindingID()
-				details = map[string]interface{}{
+				details = map[string]any{
 					"app_guid":   "app_guid",
 					"plan_id":    "plan_id",
 					"service_id": "service_id",
-					"parameters": map[string]interface{}{
+					"parameters": map[string]any{
 						"new-param": "new-param-value",
 					},
 				}
@@ -1967,7 +1967,7 @@ var _ = Describe("Service Broker API", func() {
 							DeviceType:   "shared",
 							Device: brokerapi.SharedDevice{
 								VolumeId:    "some-guid",
-								MountConfig: map[string]interface{}{"key": "value"},
+								MountConfig: map[string]any{"key": "value"},
 							},
 						}}
 					})
@@ -2009,18 +2009,18 @@ var _ = Describe("Service Broker API", func() {
 					)
 
 					BeforeEach(func() {
-						details["parameters"] = map[string]interface{}{
+						details["parameters"] = map[string]any{
 							"string": "some-string",
 							"number": 1,
 							"object": struct{ Name string }{"some-name"},
-							"array":  []interface{}{"a", "b", "c"},
+							"array":  []any{"a", "b", "c"},
 						}
 
-						details["context"] = map[string]interface{}{
+						details["context"] = map[string]any{
 							"platform":      "fake-platform",
 							"serial-number": 12648430,
 							"object":        struct{ Name string }{"parameter"},
-							"array":         []interface{}{"1", "2", "3"},
+							"array":         []any{"1", "2", "3"},
 						}
 
 						rawParams = `{
@@ -2061,7 +2061,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("calls Bind on the service broker with the bind_resource", func() {
 
-						details["bind_resource"] = map[string]interface{}{
+						details["bind_resource"] = map[string]any{
 							"app_guid":             "a-guid",
 							"space_guid":           "a-space-guid",
 							"route":                "route.cf-apps.com",
@@ -2081,7 +2081,7 @@ var _ = Describe("Service Broker API", func() {
 
 					It("calls Bind on the service broker with an empty bind_resource", func() {
 
-						details["bind_resource"] = map[string]interface{}{}
+						details["bind_resource"] = map[string]any{}
 
 						makeBindingRequest(instanceID, bindingID, details)
 						Expect(fakeServiceBroker.BoundBindings[bindingID].BindResource).NotTo(BeNil())
@@ -2094,7 +2094,7 @@ var _ = Describe("Service Broker API", func() {
 
 				When("backup_agent is requested", func() {
 					BeforeEach(func() {
-						details["bind_resource"] = map[string]interface{}{"backup_agent": true}
+						details["bind_resource"] = map[string]any{"backup_agent": true}
 						fakeServiceBroker.BackupAgentURL = "http://backup.example.com"
 					})
 
@@ -2290,7 +2290,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("missing header X-Broker-API-Version", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "", false)
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]any{}, "", false)
 					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
@@ -2298,7 +2298,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("has wrong version of API", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{}, "1.14", false)
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]any{}, "1.14", false)
 					Expect(response).To(HaveHTTPStatus(http.StatusPreconditionFailed))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "version-header-check.broker-api-version-invalid"))
@@ -2306,7 +2306,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("missing service-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"plan_id": "123"}, "2.14", false)
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]any{"plan_id": "123"}, "2.14", false)
 					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "bind.service-id-missing"))
@@ -2314,7 +2314,7 @@ var _ = Describe("Service Broker API", func() {
 				})
 
 				It("missing plan-id", func() {
-					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]interface{}{"service_id": "123"}, "2.14", false)
+					response := makeBindingRequestWithSpecificAPIVersion(instanceID, bindingID, map[string]any{"service_id": "123"}, "2.14", false)
 					Expect(response).To(HaveHTTPStatus(http.StatusBadRequest))
 					Expect(response.Header.Get("X-Broker-API-Request-Identity")).To(Equal(bindingRequestIdentity))
 					Expect(lastLogLine()).To(HaveKeyWithValue("msg", "bind.plan-id-missing"))
@@ -2347,11 +2347,11 @@ var _ = Describe("Service Broker API", func() {
 
 			Context("when the associated instance exists", func() {
 				var instanceID string
-				var provisionDetails map[string]interface{}
+				var provisionDetails map[string]any
 
 				BeforeEach(func() {
 					instanceID = uniqueInstanceID()
-					provisionDetails = map[string]interface{}{
+					provisionDetails = map[string]any{
 						"service_id":        fakeServiceBroker.ServiceID,
 						"plan_id":           "plan-id",
 						"organization_guid": "organization-guid",
@@ -2365,7 +2365,7 @@ var _ = Describe("Service Broker API", func() {
 
 					BeforeEach(func() {
 						bindingID = uniqueBindingID()
-						makeBindingRequest(instanceID, bindingID, map[string]interface{}{})
+						makeBindingRequest(instanceID, bindingID, map[string]any{})
 					})
 
 					It("missing header X-Broker-API-Version", func() {
@@ -2406,7 +2406,7 @@ var _ = Describe("Service Broker API", func() {
 
 					BeforeEach(func() {
 						bindingID = uniqueBindingID()
-						makeBindingRequest(instanceID, bindingID, map[string]interface{}{
+						makeBindingRequest(instanceID, bindingID, map[string]any{
 							"service_id": "service_id", "plan_id": "plan_id",
 						})
 					})
@@ -2715,10 +2715,10 @@ var _ = Describe("Service Broker API", func() {
 	})
 
 	Describe("NewWithOptions()", func() {
-		var provisionDetails map[string]interface{}
+		var provisionDetails map[string]any
 
 		BeforeEach(func() {
-			provisionDetails = map[string]interface{}{
+			provisionDetails = map[string]any{
 				"service_id":        fakeServiceBroker.ServiceID,
 				"plan_id":           "plan-id",
 				"organization_guid": "organization-guid",

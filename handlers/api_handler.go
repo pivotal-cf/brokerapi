@@ -34,7 +34,7 @@ func NewApiHandler(broker domain.ServiceBroker, logger *slog.Logger) APIHandler 
 	return APIHandler{serviceBroker: broker, logger: blog.New(logger)}
 }
 
-func (h APIHandler) respond(w http.ResponseWriter, status int, requestIdentity string, response interface{}) {
+func (h APIHandler) respond(w http.ResponseWriter, status int, requestIdentity string, response any) {
 	w.Header().Set("Content-Type", "application/json")
 	if requestIdentity != "" {
 		w.Header().Set("X-Broker-API-Request-Identity", requestIdentity)

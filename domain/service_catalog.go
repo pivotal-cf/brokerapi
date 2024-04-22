@@ -52,7 +52,7 @@ type ServiceBindingSchema struct {
 }
 
 type Schema struct {
-	Parameters map[string]interface{} `json:"parameters"`
+	Parameters map[string]any `json:"parameters"`
 }
 
 type RequiredPermission string

@@ -27,7 +27,7 @@ var _ = Describe("ServicePlanMetadata", func() {
 			metadata := domain.ServicePlanMetadata{
 				Bullets:     []string{"hello", "its me"},
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": "bar",
 					"baz": 1,
 				},
@@ -49,7 +49,7 @@ var _ = Describe("ServicePlanMetadata", func() {
 			metadata := domain.ServicePlanMetadata{
 				Bullets:     []string{"hello", "its me"},
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": "bar",
 					"baz": 1,
 				},
@@ -79,7 +79,7 @@ var _ = Describe("ServicePlanMetadata", func() {
 			metadata := domain.ServicePlanMetadata{
 				Bullets:     []string{"hello", "its me"},
 				DisplayName: "name",
-				AdditionalMetadata: map[string]interface{}{
+				AdditionalMetadata: map[string]any{
 					"foo": make(chan int),
 				},
 			}
@@ -95,7 +95,7 @@ var _ = Describe("ServicePlanMetadata", func() {
 
 			err := json.Unmarshal([]byte(jsonString), &metadata)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]interface{}{"test"}))
+			Expect(metadata.AdditionalMetadata["foo"]).To(Equal([]any{"test"}))
 			Expect(metadata.AdditionalMetadata["bar"]).To(Equal("Some display name"))
 		})
 
