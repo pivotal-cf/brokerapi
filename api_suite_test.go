@@ -16,8 +16,8 @@
 package brokerapi_test
 
 import (
-	"fmt"
-	"io/ioutil"
+	"embed"
+	"io"
 	"path"
 	"testing"
 
@@ -31,14 +31,15 @@ func TestAPI(t *testing.T) {
 	RunSpecs(t, "API Suite")
 }
 
-func fixture(name string) string {
-	filePath := path.Join("fixtures", name)
-	contents, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		panic(fmt.Sprintf("Could not read fixture: %s", name))
-	}
+//go:embed fixtures/*.json
+var fixtures embed.FS
 
-	return string(contents)
+func fixture(name string) string {
+	GinkgoHelper()
+
+	fh := must(fixtures.Open(path.Join("fixtures", name)))
+	defer fh.Close()
+	return string(must(io.ReadAll(fh)))
 }
 
 func uniqueID() string {
