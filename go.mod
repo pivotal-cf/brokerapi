@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
-	github.com/onsi/ginkgo/v2 v2.17.2
+	github.com/onsi/ginkgo/v2 v2.17.3
 	github.com/onsi/gomega v1.33.1
 	github.com/pborman/uuid v1.2.1
 	honnef.co/go/tools v0.4.7
