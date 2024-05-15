@@ -48,8 +48,8 @@ var _ = Describe("Provisioning Response", func() {
 			It("returns it in the JSON", func() {
 				provisioningResponse := apiresponses.ProvisioningResponse{
 					Metadata: domain.InstanceMetadata{
-						Labels:     map[string]string{"key1": "value1"},
-						Attributes: map[string]string{"key1": "value1"},
+						Labels:     map[string]any{"key1": "value1"},
+						Attributes: map[string]any{"key1": "value1"},
 					},
 				}
 				jsonString := `{"metadata":{"labels":{"key1":"value1"}, "attributes":{"key1":"value1"}}}`
@@ -82,8 +82,8 @@ var _ = Describe("Fetching Response", func() {
 					ServiceID: "sID",
 					PlanID:    "pID",
 					Metadata: domain.InstanceMetadata{
-						Labels:     map[string]string{"key1": "value1"},
-						Attributes: map[string]string{"key1": "value1"},
+						Labels:     map[string]any{"key1": "value1"},
+						Attributes: map[string]any{"key1": "value1"},
 					},
 				}
 				jsonString := `{"service_id":"sID", "plan_id":"pID", "metadata":{"labels":{"key1":"value1"}, "attributes":{"key1":"value1"}}}`
@@ -120,8 +120,8 @@ var _ = Describe("Update Response", func() {
 			It("returns it in the JSON", func() {
 				updateResponse := apiresponses.UpdateResponse{
 					Metadata: domain.InstanceMetadata{
-						Labels:     map[string]string{"key1": "value1"},
-						Attributes: map[string]string{"key1": "value1"},
+						Labels:     map[string]any{"key1": "value1"},
+						Attributes: map[string]any{"key1": "value1"},
 					},
 				}
 				jsonString := `{"metadata":{"labels":{"key1":"value1"}, "attributes":{"key1":"value1"}}}`
