@@ -99,8 +99,8 @@ type ProvisionedServiceSpec struct {
 }
 
 type InstanceMetadata struct {
-	Labels     map[string]string `json:"labels,omitempty"`
-	Attributes map[string]string `json:"attributes,omitempty"`
+	Labels     map[string]any `json:"labels,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 type DeprovisionDetails struct {
