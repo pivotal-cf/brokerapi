@@ -21,9 +21,9 @@ import (
 	"path"
 	"testing"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pborman/uuid"
 )
 
 func TestAPI(t *testing.T) {
@@ -43,7 +43,7 @@ func fixture(name string) string {
 }
 
 func uniqueID() string {
-	return uuid.NewRandom().String()
+	return uuid.NewString()
 }
 
 func uniqueInstanceID() string {

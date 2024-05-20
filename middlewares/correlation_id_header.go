@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 var correlationIDHeaders = []string{"X-Correlation-ID", "X-CorrelationID", "X-ForRequest-ID", "X-Request-ID", "X-Vcap-Request-Id"}
@@ -24,7 +24,7 @@ func AddCorrelationIDToContext(next http.Handler) http.Handler {
 		}
 
 		if !found {
-			correlationID = uuid.New()
+			correlationID = uuid.NewString()
 		}
 
 		newCtx := context.WithValue(req.Context(), CorrelationIDKey, correlationID)
