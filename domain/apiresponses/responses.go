@@ -71,7 +71,8 @@ type BindingResponse struct {
 
 type GetBindingResponse struct {
 	BindingResponse
-	Parameters any `json:"parameters,omitempty"`
+	Parameters any               `json:"parameters,omitempty"`
+	Endpoints  []domain.Endpoint `json:"endpoints,omitempty"`
 }
 
 type UnbindResponse struct {
