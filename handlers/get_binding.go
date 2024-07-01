@@ -61,5 +61,6 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 			VolumeMounts:    binding.VolumeMounts,
 		},
 		Parameters: binding.Parameters,
+		Endpoints: binding.Endpoints,
 	})
 }
