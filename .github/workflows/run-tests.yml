@@ -20,7 +20,7 @@ jobs:
     outputs:
       pr_number: ${{ github.event.number }}
     steps:
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v4
