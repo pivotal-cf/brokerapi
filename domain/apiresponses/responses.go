@@ -67,12 +67,12 @@ type BindingResponse struct {
 	RouteServiceURL string               `json:"route_service_url,omitempty"`
 	VolumeMounts    []domain.VolumeMount `json:"volume_mounts,omitempty"`
 	BackupAgentURL  string               `json:"backup_agent_url,omitempty"`
+	Endpoints       []domain.Endpoint    `json:"endpoints,omitempty"`
 }
 
 type GetBindingResponse struct {
 	BindingResponse
-	Parameters any               `json:"parameters,omitempty"`
-	Endpoints  []domain.Endpoint `json:"endpoints,omitempty"`
+	Parameters any `json:"parameters,omitempty"`
 }
 
 type UnbindResponse struct {
