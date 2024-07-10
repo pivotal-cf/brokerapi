@@ -198,6 +198,7 @@ type Binding struct {
 	RouteServiceURL string        `json:"route_service_url"`
 	BackupAgentURL  string        `json:"backup_agent_url,omitempty"`
 	VolumeMounts    []VolumeMount `json:"volume_mounts"`
+	Endpoints       []Endpoint    `json:"endpoints,omitempty"`
 }
 
 type GetBindingSpec struct {
