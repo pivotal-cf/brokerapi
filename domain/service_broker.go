@@ -198,6 +198,7 @@ type Binding struct {
 	RouteServiceURL string        `json:"route_service_url"`
 	BackupAgentURL  string        `json:"backup_agent_url,omitempty"`
 	VolumeMounts    []VolumeMount `json:"volume_mounts"`
+	Endpoints       []Endpoint    `json:"endpoints,omitempty"`
 }
 
 type GetBindingSpec struct {
@@ -206,6 +207,13 @@ type GetBindingSpec struct {
 	RouteServiceURL string
 	VolumeMounts    []VolumeMount
 	Parameters      any
+	Endpoints       []Endpoint
+}
+
+type Endpoint struct {
+	Host     string   `json:"host"`
+	Ports    []string `json:"ports"`
+	Protocol string   `json:"protocol,omitempty"`
 }
 
 func (d ProvisionDetails) GetRawContext() json.RawMessage {

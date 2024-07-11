@@ -59,6 +59,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 			SyslogDrainURL:  binding.SyslogDrainURL,
 			RouteServiceURL: binding.RouteServiceURL,
 			VolumeMounts:    binding.VolumeMounts,
+			Endpoints:       binding.Endpoints,
 		},
 		Parameters: binding.Parameters,
 	})
