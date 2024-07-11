@@ -1,5 +1,6 @@
 version: 2
-builds: []
+builds:
+  - skip: true
 archives: []
 changelog:
   sort: asc
