@@ -9,7 +9,7 @@ require (
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.8.1
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
-	honnef.co/go/tools v0.5.0
+	honnef.co/go/tools v0.5.1
 )
 
 require (
