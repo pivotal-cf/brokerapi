@@ -89,6 +89,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			VolumeMounts:    binding.VolumeMounts,
 			BackupAgentURL:  binding.BackupAgentURL,
 			Endpoints:       binding.Endpoints,
+			Metadata:        binding.Metadata,
 		})
 		return
 	}
@@ -140,5 +141,6 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		VolumeMounts:    binding.VolumeMounts,
 		BackupAgentURL:  binding.BackupAgentURL,
 		Endpoints:       binding.Endpoints,
+		Metadata:        binding.Metadata,
 	})
 }

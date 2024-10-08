@@ -62,12 +62,13 @@ type AsyncBindResponse struct {
 }
 
 type BindingResponse struct {
-	Credentials     any                  `json:"credentials,omitempty"`
-	SyslogDrainURL  string               `json:"syslog_drain_url,omitempty"`
-	RouteServiceURL string               `json:"route_service_url,omitempty"`
-	VolumeMounts    []domain.VolumeMount `json:"volume_mounts,omitempty"`
-	BackupAgentURL  string               `json:"backup_agent_url,omitempty"`
-	Endpoints       []domain.Endpoint    `json:"endpoints,omitempty"`
+	Credentials     any                    `json:"credentials,omitempty"`
+	SyslogDrainURL  string                 `json:"syslog_drain_url,omitempty"`
+	RouteServiceURL string                 `json:"route_service_url,omitempty"`
+	VolumeMounts    []domain.VolumeMount   `json:"volume_mounts,omitempty"`
+	BackupAgentURL  string                 `json:"backup_agent_url,omitempty"`
+	Endpoints       []domain.Endpoint      `json:"endpoints,omitempty"`
+	Metadata        domain.BindingMetadata `json:"metadata,omitempty"`
 }
 
 type GetBindingResponse struct {

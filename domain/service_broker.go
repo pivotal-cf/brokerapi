@@ -190,15 +190,20 @@ type UnbindSpec struct {
 }
 
 type Binding struct {
-	IsAsync         bool          `json:"is_async"`
-	AlreadyExists   bool          `json:"already_exists"`
-	OperationData   string        `json:"operation_data"`
-	Credentials     any           `json:"credentials"`
-	SyslogDrainURL  string        `json:"syslog_drain_url"`
-	RouteServiceURL string        `json:"route_service_url"`
-	BackupAgentURL  string        `json:"backup_agent_url,omitempty"`
-	VolumeMounts    []VolumeMount `json:"volume_mounts"`
-	Endpoints       []Endpoint    `json:"endpoints,omitempty"`
+	IsAsync         bool            `json:"is_async"`
+	AlreadyExists   bool            `json:"already_exists"`
+	OperationData   string          `json:"operation_data"`
+	Credentials     any             `json:"credentials"`
+	SyslogDrainURL  string          `json:"syslog_drain_url"`
+	RouteServiceURL string          `json:"route_service_url"`
+	BackupAgentURL  string          `json:"backup_agent_url,omitempty"`
+	VolumeMounts    []VolumeMount   `json:"volume_mounts"`
+	Endpoints       []Endpoint      `json:"endpoints,omitempty"`
+	Metadata        BindingMetadata `json:"metadata,omitempty"`
+}
+
+type BindingMetadata struct {
+	ExpiresAt string `json:"expires_at,omitempty"`
 }
 
 type GetBindingSpec struct {
@@ -208,6 +213,7 @@ type GetBindingSpec struct {
 	VolumeMounts    []VolumeMount
 	Parameters      any
 	Endpoints       []Endpoint
+	Metadata        BindingMetadata
 }
 
 type Endpoint struct {

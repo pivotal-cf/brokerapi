@@ -60,6 +60,7 @@ func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
 			RouteServiceURL: binding.RouteServiceURL,
 			VolumeMounts:    binding.VolumeMounts,
 			Endpoints:       binding.Endpoints,
+			Metadata:        binding.Metadata,
 		},
 		Parameters: binding.Parameters,
 	})
