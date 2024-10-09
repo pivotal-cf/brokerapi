@@ -68,6 +68,7 @@ type BindingResponse struct {
 	VolumeMounts    []domain.VolumeMount `json:"volume_mounts,omitempty"`
 	BackupAgentURL  string               `json:"backup_agent_url,omitempty"`
 	Endpoints       []domain.Endpoint    `json:"endpoints,omitempty"`
+	Metadata        any                  `json:"metadata,omitempty"`
 }
 
 type GetBindingResponse struct {

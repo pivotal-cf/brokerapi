@@ -81,6 +81,11 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var metadata any
+	if !binding.Metadata.IsEmpty() {
+		metadata = binding.Metadata
+	}
+
 	if binding.AlreadyExists {
 		h.respond(w, http.StatusOK, requestId, apiresponses.BindingResponse{
 			Credentials:     binding.Credentials,
@@ -89,6 +94,7 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 			VolumeMounts:    binding.VolumeMounts,
 			BackupAgentURL:  binding.BackupAgentURL,
 			Endpoints:       binding.Endpoints,
+			Metadata:        metadata,
 		})
 		return
 	}
@@ -140,5 +146,6 @@ func (h APIHandler) Bind(w http.ResponseWriter, req *http.Request) {
 		VolumeMounts:    binding.VolumeMounts,
 		BackupAgentURL:  binding.BackupAgentURL,
 		Endpoints:       binding.Endpoints,
+		Metadata:        metadata,
 	})
 }
