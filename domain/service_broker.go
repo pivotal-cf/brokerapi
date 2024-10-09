@@ -203,7 +203,8 @@ type Binding struct {
 }
 
 type BindingMetadata struct {
-	ExpiresAt string `json:"expires_at,omitempty"`
+	ExpiresAt   string `json:"expires_at,omitempty"`
+	RenewBefore string `json:"renew_before,omitempty"`
 }
 
 type GetBindingSpec struct {
