@@ -243,6 +243,10 @@ func (m InstanceMetadata) IsEmpty() bool {
 	return len(m.Attributes) == 0 && len(m.Labels) == 0
 }
 
+func (m BindingMetadata) IsEmpty() bool {
+	return len(m.ExpiresAt) == 0 && len(m.RenewBefore) == 0
+}
+
 func (d UpdateDetails) GetRawContext() json.RawMessage {
 	return d.RawContext
 }
