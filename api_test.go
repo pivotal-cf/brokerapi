@@ -28,7 +28,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -109,7 +108,7 @@ var _ = Describe("Service Broker API", func() {
 
 		logBuffer = gbytes.NewBuffer()
 		brokerLogger = slog.New(slog.NewJSONHandler(logBuffer, nil))
-		brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+		brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 	})
 
 	Describe("response headers", func() {
@@ -325,7 +324,7 @@ var _ = Describe("Service Broker API", func() {
 			}
 
 			BeforeEach(func() {
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithCustomAuth(authMiddleware))
+				brokerAPI = brokerapi.NewWithCustomAuth(fakeServiceBroker, brokerLogger, authMiddleware)
 			})
 
 			It("returns 401 when the authorization header has an incorrect bearer token", func() {
@@ -359,7 +358,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -408,7 +407,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -464,7 +463,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -520,7 +519,7 @@ var _ = Describe("Service Broker API", func() {
 
 		BeforeEach(func() {
 			fakeServiceBroker = new(fakes.AutoFakeServiceBroker)
-			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 
 			testServer = httptest.NewServer(brokerAPI)
 			var err error
@@ -2726,24 +2725,6 @@ var _ = Describe("Service Broker API", func() {
 			}
 		})
 
-		Describe("WithRouter()", func() {
-			It("can take a supplied router", func() {
-				router := chi.NewRouter()
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(router))
-				Expect(router).To(Equal(brokerAPI))
-			})
-
-			It("does not attach middleware to the router", func() {
-				brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithRouter(chi.NewRouter()))
-				apiVersion = "1.14" // Wrong version
-
-				instanceID := uniqueInstanceID()
-				response := makeInstanceProvisioningRequest(instanceID, provisionDetails, "")
-				Expect(response).To(HaveHTTPStatus(http.StatusCreated))
-				Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(instanceID))
-			})
-		})
-
 		Describe("WithAdditionalMiddleware()", func() {
 			It("adds additional middleware", func() {
 				const (
@@ -2767,10 +2748,10 @@ var _ = Describe("Service Broker API", func() {
 
 		It("will accept URL-encoded paths", func() {
 			const encodedInstanceID = "foo%2Fbar"
-			brokerAPI = brokerapi.NewWithOptions(fakeServiceBroker, brokerLogger, brokerapi.WithBrokerCredentials(credentials))
+			brokerAPI = brokerapi.New(fakeServiceBroker, brokerLogger, credentials)
 			response := makeInstanceProvisioningRequest(encodedInstanceID, provisionDetails, "")
 			Expect(response).To(HaveHTTPStatus(http.StatusCreated))
-			Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey(encodedInstanceID))
+			Expect(fakeServiceBroker.ProvisionedInstances).To(HaveKey("foo/bar"))
 		})
 	})
 })
