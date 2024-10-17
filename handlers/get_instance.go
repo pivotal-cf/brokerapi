@@ -8,7 +8,6 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v11/internal/blog"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v11/middlewares"
@@ -17,7 +16,7 @@ import (
 const getInstanceLogKey = "getInstance"
 
 func (h APIHandler) GetInstance(w http.ResponseWriter, req *http.Request) {
-	instanceID := chi.URLParam(req, "instance_id")
+	instanceID := req.PathValue("instance_id")
 
 	logger := h.logger.Session(req.Context(), getInstanceLogKey, blog.InstanceID(instanceID))
 

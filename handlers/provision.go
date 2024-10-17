@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v11/internal/blog"
@@ -22,7 +21,7 @@ const (
 )
 
 func (h *APIHandler) Provision(w http.ResponseWriter, req *http.Request) {
-	instanceID := chi.URLParam(req, "instance_id")
+	instanceID := req.PathValue("instance_id")
 
 	logger := h.logger.Session(req.Context(), provisionLogKey, blog.InstanceID(instanceID))
 

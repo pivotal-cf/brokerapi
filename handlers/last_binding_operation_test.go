@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-chi/chi/v5"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
@@ -133,12 +132,7 @@ func newRequest(instanceID, bindingID, planID, serviceID, operation string) *htt
 	request.Form.Add("service_id", serviceID)
 	request.Form.Add("operation", operation)
 
-	rc := chi.NewRouteContext()
-	rc.URLParams.Add("instance_id", instanceID)
-	rc.URLParams.Add("binding_id", bindingID)
-
 	ctx := request.Context()
-	ctx = context.WithValue(ctx, chi.RouteCtxKey, rc)
 	ctx = context.WithValue(ctx, middlewares.CorrelationIDKey, "fake-correlation-id")
 
 	return request.WithContext(ctx)
