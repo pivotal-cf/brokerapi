@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v11/internal/blog"
@@ -16,8 +15,8 @@ import (
 const getBindLogKey = "getBinding"
 
 func (h APIHandler) GetBinding(w http.ResponseWriter, req *http.Request) {
-	instanceID := chi.URLParam(req, "instance_id")
-	bindingID := chi.URLParam(req, "binding_id")
+	instanceID := req.PathValue("instance_id")
+	bindingID := req.PathValue("binding_id")
 
 	logger := h.logger.Session(req.Context(), getBindLogKey, blog.InstanceID(instanceID), blog.BindingID(bindingID))
 
