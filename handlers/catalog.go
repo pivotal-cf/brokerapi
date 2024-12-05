@@ -11,7 +11,7 @@ import (
 
 const getCatalogLogKey = "getCatalog"
 
-func (h *APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
+func (h APIHandler) Catalog(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.Session(req.Context(), getCatalogLogKey)
 	requestId := fmt.Sprintf("%v", req.Context().Value(middlewares.RequestIdentityKey))
 
