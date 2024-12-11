@@ -24,7 +24,7 @@ jobs:
       with:
         go-version: ${{ matrix.version }}
     - uses: actions/checkout@v4
-    - run: make test
+    - run: GOTOOLCHAIN=local make test
   call-dependabot-pr-workflow:
     needs: test
     if: ${{ success() && github.actor == 'dependabot[bot]' }}
