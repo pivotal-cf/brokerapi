@@ -19,8 +19,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/pivotal-cf/brokerapi/v11/internal/middleware"
+
+	"github.com/pivotal-cf/brokerapi/v11/auth"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/handlers"
+	"github.com/pivotal-cf/brokerapi/v11/middlewares"
 )
 
 type BrokerCredentials struct {
@@ -28,31 +32,90 @@ type BrokerCredentials struct {
 	Password string
 }
 
-func New(serviceBroker ServiceBroker, logger *slog.Logger, brokerCredentials BrokerCredentials) http.Handler {
-	return NewWithOptions(serviceBroker, logger, WithBrokerCredentials(brokerCredentials))
+func New(serviceBroker domain.ServiceBroker, logger *slog.Logger, brokerCredentials BrokerCredentials, opts ...Option) http.Handler {
+	return NewWithOptions(serviceBroker, logger, append([]Option{WithBrokerCredentials(brokerCredentials)}, opts...)...)
 }
 
-func NewWithCustomAuth(serviceBroker ServiceBroker, logger *slog.Logger, authMiddleware middlewareFunc) http.Handler {
+func NewWithOptions(serviceBroker domain.ServiceBroker, logger *slog.Logger, opts ...Option) http.Handler {
+	var cfg config
+	WithOptions(opts...)(&cfg)
+
+	mw := append(append(cfg.authMiddleware, defaultMiddleware(logger)...), cfg.additionalMiddleware...)
+	r := router(serviceBroker, logger)
+
+	return middleware.Use(r, mw...)
+}
+
+func NewWithCustomAuth(serviceBroker domain.ServiceBroker, logger *slog.Logger, authMiddleware func(handler http.Handler) http.Handler) http.Handler {
 	return NewWithOptions(serviceBroker, logger, WithCustomAuth(authMiddleware))
 }
 
-func AttachRoutes(router chi.Router, serviceBroker ServiceBroker, logger *slog.Logger) {
-	attachRoutes(router, serviceBroker, logger)
+type config struct {
+	authMiddleware       []func(http.Handler) http.Handler
+	additionalMiddleware []func(http.Handler) http.Handler
 }
 
-func attachRoutes(router chi.Router, serviceBroker ServiceBroker, logger *slog.Logger) {
+type Option func(*config)
+
+func WithBrokerCredentials(brokerCredentials BrokerCredentials) Option {
+	return func(c *config) {
+		c.authMiddleware = append(c.authMiddleware, auth.NewWrapper(brokerCredentials.Username, brokerCredentials.Password).Wrap)
+	}
+}
+
+// WithCustomAuth adds the specified middleware *before* any other middleware.
+// Despite the name, any middleware can be added whether nor not it has anything to do with authentication.
+// But `WithAdditionalMiddleware()` may be a better choice if the middleware is not related to authentication.
+// Can be called multiple times.
+func WithCustomAuth(authMiddleware func(handler http.Handler) http.Handler) Option {
+	return func(c *config) {
+		c.authMiddleware = append(c.authMiddleware, authMiddleware)
+	}
+}
+
+// WithAdditionalMiddleware adds the specified middleware *after* the default middleware.
+// Can be called multiple times.
+func WithAdditionalMiddleware(m func(http.Handler) http.Handler) Option {
+	return func(c *config) {
+		c.additionalMiddleware = append(c.additionalMiddleware, m)
+	}
+}
+
+func WithOptions(opts ...Option) Option {
+	return func(c *config) {
+		for _, o := range opts {
+			o(c)
+		}
+	}
+}
+
+func router(serviceBroker ServiceBroker, logger *slog.Logger) http.Handler {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
-	router.Get("/v2/catalog", apiHandler.Catalog)
+	r := http.NewServeMux()
+	r.HandleFunc("GET /v2/catalog", apiHandler.Catalog)
 
-	router.Get("/v2/service_instances/{instance_id}", apiHandler.GetInstance)
-	router.Put("/v2/service_instances/{instance_id}", apiHandler.Provision)
-	router.Delete("/v2/service_instances/{instance_id}", apiHandler.Deprovision)
-	router.Get("/v2/service_instances/{instance_id}/last_operation", apiHandler.LastOperation)
-	router.Patch("/v2/service_instances/{instance_id}", apiHandler.Update)
+	r.HandleFunc("PUT /v2/service_instances/{instance_id}", apiHandler.Provision)
+	r.HandleFunc("GET /v2/service_instances/{instance_id}", apiHandler.GetInstance)
+	r.HandleFunc("PATCH /v2/service_instances/{instance_id}", apiHandler.Update)
+	r.HandleFunc("DELETE /v2/service_instances/{instance_id}", apiHandler.Deprovision)
 
-	router.Get("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding)
-	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind)
-	router.Delete("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind)
+	r.HandleFunc("GET /v2/service_instances/{instance_id}/last_operation", apiHandler.LastOperation)
 
-	router.Get("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation)
+	r.HandleFunc("PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind)
+	r.HandleFunc("GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding)
+	r.HandleFunc("DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind)
+
+	r.HandleFunc("GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation", apiHandler.LastBindingOperation)
+
+	return r
+}
+
+func defaultMiddleware(logger *slog.Logger) []func(http.Handler) http.Handler {
+	return []func(http.Handler) http.Handler{
+		middlewares.APIVersionMiddleware{Logger: logger}.ValidateAPIVersionHdr,
+		middlewares.AddCorrelationIDToContext,
+		middlewares.AddOriginatingIdentityToContext,
+		middlewares.AddInfoLocationToContext,
+		middlewares.AddRequestIdentityToContext,
+	}
 }
