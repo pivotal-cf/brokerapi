@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [ 'stable', 'oldstable', '1.21' ]
+        version: [ 'stable', 'oldstable', '1.22' ]
     name: Go ${{ matrix.version }}
     outputs:
       pr_number: ${{ github.event.number }}
