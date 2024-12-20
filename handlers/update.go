@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v11/internal/blog"
@@ -17,7 +16,7 @@ import (
 const updateLogKey = "update"
 
 func (h APIHandler) Update(w http.ResponseWriter, req *http.Request) {
-	instanceID := chi.URLParam(req, "instance_id")
+	instanceID := req.PathValue("instance_id")
 
 	logger := h.logger.Session(req.Context(), updateLogKey, blog.InstanceID(instanceID))
 
