@@ -19,12 +19,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v11/internal/middleware"
+	"github.com/pivotal-cf/brokerapi/v12/internal/middleware"
 
-	"github.com/pivotal-cf/brokerapi/v11/auth"
-	"github.com/pivotal-cf/brokerapi/v11/domain"
-	"github.com/pivotal-cf/brokerapi/v11/handlers"
-	"github.com/pivotal-cf/brokerapi/v11/middlewares"
+	"github.com/pivotal-cf/brokerapi/v12/auth"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/handlers"
+	"github.com/pivotal-cf/brokerapi/v12/middlewares"
 )
 
 type BrokerCredentials struct {

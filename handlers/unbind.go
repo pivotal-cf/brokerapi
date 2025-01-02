@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/pivotal-cf/brokerapi/v11/domain"
-	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
-	"github.com/pivotal-cf/brokerapi/v11/internal/blog"
-	"github.com/pivotal-cf/brokerapi/v11/middlewares"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/internal/blog"
+	"github.com/pivotal-cf/brokerapi/v12/middlewares"
 )
 
 const unbindLogKey = "unbind"

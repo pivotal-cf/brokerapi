@@ -13,7 +13,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/pivotal-cf/brokerapi/v11/middlewares"
+	"github.com/pivotal-cf/brokerapi/v12/middlewares"
 )
 
 const (

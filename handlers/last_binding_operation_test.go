@@ -12,11 +12,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v11"
-	"github.com/pivotal-cf/brokerapi/v11/domain"
-	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
-	brokerFakes "github.com/pivotal-cf/brokerapi/v11/fakes"
-	"github.com/pivotal-cf/brokerapi/v11/middlewares"
+	"github.com/pivotal-cf/brokerapi/v12"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	brokerFakes "github.com/pivotal-cf/brokerapi/v12/fakes"
+	"github.com/pivotal-cf/brokerapi/v12/middlewares"
 )
 
 var _ = Describe("LastBindingOperation", func() {

@@ -16,8 +16,8 @@
 package brokerapi
 
 import (
-	"github.com/pivotal-cf/brokerapi/v11/domain"
-	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate

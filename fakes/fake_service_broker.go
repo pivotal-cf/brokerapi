@@ -5,9 +5,9 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/pivotal-cf/brokerapi/v11"
-	"github.com/pivotal-cf/brokerapi/v11/domain"
-	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 )
 
 type FakeServiceBroker struct {

@@ -3,7 +3,7 @@ package utils
 import (
 	"context"
 
-	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type contextKey string

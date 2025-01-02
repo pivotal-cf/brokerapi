@@ -1,7 +1,7 @@
 package brokerapi
 
 import (
-	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 // Deprecated: Use github.com/pivotal-cf/brokerapi/domain
