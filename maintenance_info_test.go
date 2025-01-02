@@ -3,7 +3,7 @@ package brokerapi_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/brokerapi/v11"
+	"github.com/pivotal-cf/brokerapi/v12"
 )
 
 var _ = Describe("MaintenanceInfo", func() {
